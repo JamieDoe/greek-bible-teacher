@@ -4,14 +4,25 @@ import { createApp } from "./app";
 import { parseEnv } from "./env";
 
 const WEB_ORIGIN = "http://localhost:3000";
-const app = createApp(parseEnv({ NODE_ENV: "test", WEB_ORIGIN }));
+const env = parseEnv({ NODE_ENV: "test", WEB_ORIGIN, DATABASE_URL: "postgres://unused" });
+const app = createApp(env, { pingDb: async () => {} });
 
 describe("GET /health", () => {
-  it("returns ok in the shared response shape", async () => {
+  it("returns ok when the database answers", async () => {
     const res = await app.request("/health");
     expect(res.status).toBe(200);
     const body = healthResponseSchema.parse(await res.json());
-    expect(body.status).toBe("ok");
+    expect(body).toMatchObject({ status: "ok", db: "ok" });
+  });
+
+  it("returns 503 degraded when the database is unreachable", async () => {
+    const down = createApp(env, {
+      pingDb: () => Promise.reject(new Error("connection refused")),
+    });
+    const res = await down.request("/health");
+    expect(res.status).toBe(503);
+    const body = healthResponseSchema.parse(await res.json());
+    expect(body).toMatchObject({ status: "degraded", db: "unavailable" });
   });
 });
 

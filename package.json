@@ -15,7 +15,9 @@
     "format:check": "prettier --check .",
     "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
     "db:up": "docker compose up -d --wait db",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @gbt/api db:generate",
+    "db:migrate": "pnpm --filter @gbt/api db:migrate"
   },
   "devDependencies": {
     "@eslint/js": "^9",

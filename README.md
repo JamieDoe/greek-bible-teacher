@@ -23,6 +23,7 @@ docs/            STATUS.md (where we are) and DECISIONS.md (why)
 cp .env.example .env    # then change POSTGRES_PASSWORD (and DATABASE_URL to match)
 pnpm install
 pnpm db:up              # Postgres 18 on 127.0.0.1:5432, waits until healthy
+pnpm db:migrate         # apply migrations
 pnpm dev                # web on :3000, API on :8787
 ```
 
@@ -35,7 +36,9 @@ Check the API: `curl localhost:8787/health`.
 | `pnpm dev`          | Web + API in watch mode                         |
 | `pnpm typecheck`    | `tsc --noEmit` in every package                 |
 | `pnpm lint`         | ESLint in every package                         |
-| `pnpm test`         | Vitest in every package that has tests          |
+| `pnpm test`         | Vitest in every package (API tests need the DB) |
 | `pnpm format`       | Prettier write (`format:check` to verify only)  |
 | `pnpm check`        | typecheck + lint + format:check + test          |
 | `pnpm db:up / down` | Start / stop the Postgres container (data kept) |
+| `pnpm db:generate`  | Generate a SQL migration from schema changes    |
+| `pnpm db:migrate`   | Apply pending migrations                        |

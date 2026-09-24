@@ -6,7 +6,12 @@ import { logger } from "hono/logger";
 import type { Env } from "./env";
 import { healthRoutes } from "./routes/health";
 
-export function createApp(env: Env) {
+export interface AppDeps {
+  /** Resolves when the database answers a trivial query. */
+  pingDb: () => Promise<void>;
+}
+
+export function createApp(env: Env, deps: AppDeps) {
   const app = new Hono();
 
   if (env.NODE_ENV !== "test") app.use(logger());
@@ -21,7 +26,7 @@ export function createApp(env: Env) {
     }),
   );
 
-  app.route("/health", healthRoutes);
+  app.route("/health", healthRoutes(deps.pingDb));
 
   app.notFound((c) => {
     const body: ApiError = { error: { code: "not_found", message: "Not found" } };

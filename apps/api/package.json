@@ -8,16 +8,22 @@
     "start": "tsx --env-file-if-exists=../../.env src/index.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:check": "drizzle-kit check",
+    "db:migrate": "tsx --env-file-if-exists=../../.env src/scripts/migrate.ts"
   },
   "dependencies": {
     "@gbt/shared": "workspace:*",
     "@hono/node-server": "^2",
+    "drizzle-orm": "^0.45.3",
     "hono": "^4",
+    "postgres": "^3.4.9",
     "zod": "^4"
   },
   "devDependencies": {
     "@types/node": "^22",
+    "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "tsx": "^4",
     "typescript": "^5",
