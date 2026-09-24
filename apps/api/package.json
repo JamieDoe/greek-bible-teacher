@@ -14,7 +14,8 @@
     "db:migrate": "tsx --env-file-if-exists=../../.env src/scripts/migrate.ts",
     "data:fetch": "tsx src/scripts/fetch-data.ts",
     "ingest": "tsx --env-file-if-exists=../../.env src/scripts/ingest.ts",
-    "seed": "tsx --env-file-if-exists=../../.env src/scripts/seed.ts"
+    "seed": "tsx --env-file-if-exists=../../.env src/scripts/seed.ts",
+    "release": "tsx --env-file-if-exists=../../.env src/scripts/release.ts"
   },
   "dependencies": {
     "@gbt/shared": "workspace:*",
@@ -22,13 +23,13 @@
     "drizzle-orm": "^0.45.3",
     "hono": "^4",
     "postgres": "^3.4.9",
+    "tsx": "^4",
     "zod": "^4"
   },
   "devDependencies": {
     "@types/node": "^22",
     "drizzle-kit": "^0.31.11",
     "eslint": "^9",
-    "tsx": "^4",
     "typescript": "^5",
     "vitest": "^4"
   }

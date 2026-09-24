@@ -1,7 +1,7 @@
 # Status
 
-**Current phase:** Koinē redesign ✅ complete (2026-09-24), after Phase 8. Phase 9 is next.
-**MVP acceptance test passes.**
+**Current phase:** 9 — Deployment ✅ complete (2026-09-24). All MVP phases are done.
+**MVP acceptance test passes**, including against the production stack.
 
 ## Done
 
@@ -112,11 +112,30 @@
   welcome → onboarding) passes on desktop and mobile, and the `pwa` project passes against a
   production build.
 
+- **Phase 9 (Deployment):** see docs/DEPLOYMENT.md and DECISIONS 023.
+  - Production images: the API (Node 24, tsx) and the web (Next standalone), both non-root with
+    health checks.
+  - `deploy/docker-compose.yml`: Postgres, a one-off `release` step (migrate, import, seed), the
+    API, the web app and Caddy (automatic HTTPS, HSTS). Only Caddy is published.
+  - Nginx alternative, `deploy/backup.sh` (`pg_dump` with 14-day retention), and restore and
+    rollback steps.
+  - `pnpm release` runs the same step locally. The web `start` script and the `pwa` e2e project
+    use the standalone server.
+- Verified locally with `DOMAIN=localhost`:
+  - a fresh release took 18s, and a repeat 12s;
+  - all 32 desktop and mobile e2e tests passed through Caddy over HTTPS;
+  - a redeploy kept learner data;
+  - a backup restored into a scratch database with matching counts.
+- Tests: shared 113, web 30, API 182, Playwright 34.
+
 ## Next
 
-- **Phase 9 (Deployment):** production Dockerfiles, Compose for a VPS, reverse-proxy notes,
-  migrate-on-deploy, and a Postgres backup note. Set `API_INTERNAL_URL` at `next build` (Next
-  bakes the rewrites in at build time).
+The MVP is complete. Possible next steps, none started:
+
+- Deploy to a real VPS and take the first off-server backup.
+- The AI phase (designed only, DECISIONS 024): `POST /ai/explain`, once auth exists.
+- The deferred design extras (DECISIONS 022): sense lines, declension chips, placement check,
+  reminders.
 
 ## Known issues / open questions
 

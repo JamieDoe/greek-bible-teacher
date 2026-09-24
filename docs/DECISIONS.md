@@ -432,7 +432,8 @@ _Icons are now set in Literata, lapis on ground (022)._
 - **Offline behaviour:** recently read passages open and their inline gloss/morphology panel
   works; token details that were looked up online are also cached. Mutations (lookups,
   finishing) fail quietly or with the existing error states. A banner shows while offline.
-- **Tests:** a Playwright `pwa` project runs against `next build && next start` on :3100. It
+- **Tests:** a Playwright `pwa` project runs against a production build on :3100 (since 023, the
+  standalone server). It
   checks the manifest, icons and `sw.js` headers, then reads a passage online, goes offline,
   reloads it, looks up a word, and hits the offline fallback's saved list.
 - **Polish:** Greek word buttons get a larger invisible tap area (a pseudo-element, so layout is
@@ -527,6 +528,101 @@ than wrapped.
 Koinē look lives in the tokens plus about ten edited component files. Registry updates must be
 merged by hand into those files: check `git diff` after any `shadcn add --overwrite`.
 
+## 023 — Deployment: Docker Compose on one VPS, Caddy, release step
+
+**Context.** Phase 9 needs production images, Compose for a VPS, a reverse proxy,
+migration-on-deploy and a backup story. It is one server, one instance of each service.
+
+**Decision.**
+
+- **API image** (`apps/api/Dockerfile`, Node 24 LTS alpine): a production-only filtered
+  `pnpm install`, then the TypeScript source run with `node --import tsx`. `tsx` moves from dev
+  to runtime dependencies.
+  - Why not compile? A `tsc` build would need `.js` import specifiers across the API and shared.
+  - Why not bundle? Bundling breaks the `import.meta.url` paths to `drizzle/` and `data/`.
+  - Why not Node's type stripping? It can't resolve extensionless imports.
+  - The cost is a one-off transform at start-up (under a second). The repo layout is kept in
+    the image, so those paths resolve unchanged.
+- **Release step** (`src/scripts/release.ts`): a one-off Compose service that runs migrations, the
+  NT import and the content seed on every deploy. The API starts only after it succeeds
+  (`service_completed_successfully`).
+  - It re-imports every time (about 12s) rather than tracking what changed. The import is
+    already idempotent and transactional, and the database then always matches the pinned
+    data and curated content in the image.
+- **Web image** (`apps/web/Dockerfile`): `output: "standalone"`, traced from the monorepo root
+  (`outputFileTracingRoot`) so `@gbt/shared` is included. It runs as a non-root user with a
+  health check.
+  - `API_INTERNAL_URL` is a build argument, because the rewrite is fixed at build time. It is
+    also a runtime variable, for Server Components.
+  - The `start` script and the `pwa` e2e project now run this same standalone server, since
+    `next start` doesn't support standalone output.
+- **Caddy** (`caddy:2-alpine`) is the only published service. It gives automatic HTTPS, the
+  HTTP→HTTPS redirect and HSTS with a ten-line Caddyfile. It flushes streamed responses of
+  unknown length by default, so Next streaming works.
+  - Nginx notes are in docs/DEPLOYMENT.md, for servers that already run it.
+  - The API is reachable only through Next's `/api/*` rewrite, which keeps the session cookie
+    first-party.
+- **Backups:** `deploy/backup.sh` runs `pg_dump` (custom format) with 14-day retention via cron.
+  Restore steps and a restore drill are documented.
+- The prod Compose project is named `greek-bible-teacher-prod`, so it can't collide with the dev
+  database's project on a developer machine.
+
+**Consequences.** One command deploys (`up -d --build --wait`); the images are built on the
+server, so it needs about 2 GB RAM. Migrations run while the old API still serves, so they must
+be backward compatible (expand, then contract). Rolling back code does not roll back the schema;
+the pre-deploy backup covers that. A single instance: Next's file cache and in-memory state are
+fine as they are. Verified locally: the full stack behind Caddy (DOMAIN=localhost) passed all 32
+desktop and mobile e2e tests, a redeploy kept learner data, and a backup restored with matching
+counts.
+
+## 024 — AI explanations (Phase 2): design only, not implemented
+
+**Context.** CLAUDE.md asks for a design, without code, of a future endpoint where a model
+explains a Greek sentence to the learner. The risk is a model that confidently misparses Greek.
+The app already has authoritative data for every token, so the model's job is to explain it, not
+to analyse the Greek.
+
+**Decision (future work).**
+
+- **Endpoint.** `POST /ai/explain`, body `{ tokenId }` or `{ verseId }`, validated with Zod. The
+  client sends only ids and never any text or prompt. The server assembles everything else.
+- **Context object** (a shared Zod schema, and the only thing the model sees besides the
+  instructions):
+  - the target sentence (verse ref and surface text);
+  - its tokens, each with word, lemma, gloss and source, POS, the decoded morphology and labels,
+    and the parse code;
+  - the surrounding verses (±1);
+  - the learner's known lemmas (in review, interval ≥ 1 day), studied concepts, disclosure level
+    and experience level;
+  - the curated grammar concepts matched by `grammar_concept_rules`.
+- **Context builder.** A pure function in `packages/shared`, fed by existing queries rather than
+  new SQL:
+  - `getPassage` / `getTokenDetail` (reading/queries.ts): tokens with lemma and morphology, and
+    matched concepts;
+  - `verseSnippet`, called once for each neighbouring verse;
+  - `knownLemmasInPassage` and the grammar progress query: what the learner knows.
+- **Grounding rules**, in the system prompt and checked after generation:
+  - The model explains the supplied analysis. It must not assert a case, tense, voice, mood,
+    person, number or gender that contradicts the token data.
+  - A post-check parses the answer's claims about each word against the token's morphology. On a
+    mismatch it drops the sentence, or retries once and otherwise returns the curated note only.
+  - No translations of whole verses; the MVP ships no English translation (CLAUDE.md).
+- **Provider** behind an `Explainer` interface (`explain(context) → { text, model }`), with the
+  model id from env. The provider key is a server-only secret.
+- **Access and cost:**
+  - Auth is required, so the anonymous cookie is not enough.
+  - Per-user and global rate limits: a small daily quota, and a token bucket keyed by user
+    id in Postgres, to avoid a new service.
+  - Responses are cached by (context hash, model), since many learners ask about the same
+    token.
+  - Each call is logged with its user, token and latency, but never with prompt text beyond
+    the ids.
+- **UI.** An "Explain more" action in the word sheet, clearly labelled as AI-generated, and shown
+  below the curated "Why this form?" note, never in place of it.
+
+**Consequences.** Nothing is built now. The data needed already exists and is exposed by
+functions that can be reused as they are. Auth is the prerequisite.
+
 ## Dependencies
 
 One line each, for why the dependency exists.
@@ -534,7 +630,7 @@ One line each, for why the dependency exists.
 - `hono`: API framework (specified).
 - `@hono/node-server`: runs Hono on Node's HTTP server.
 - `zod`: runtime validation for env, requests and shared response schemas (specified).
-- `tsx`: runs the TS API in dev and watch mode without a build step.
+- `tsx`: runs the TS API without a build step, in dev (watch) and in production (023).
 - `vitest`: unit and API tests. It runs TS natively and Hono's `app.request()` makes route tests cheap.
 - `prettier`: formatting.
 - `typescript-eslint`, `@eslint/js`: lint rules for the non-Next packages.
@@ -553,3 +649,4 @@ One line each, for why the dependency exists.
 - `tw-animate-css` (web): the enter and exit animations shadcn components reference.
 - `shadcn` (web, dev): the CLI for adding registry components, and its `shadcn/tailwind.css`
   base styles.
+- `caddy:2-alpine` (deploy image, not a package): TLS and reverse proxy in production (023).

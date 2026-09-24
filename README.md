@@ -9,7 +9,8 @@ apps/web         Next.js 16 front end (talks to the API over HTTP only)
 apps/api         Hono REST API on Node
 packages/shared  Pure domain logic + shared request/response schemas (Zod)
 data/            Pinned upstream data + licences (see data/README.md)
-docs/            STATUS.md (where we are) and DECISIONS.md (why)
+deploy/          Production Compose stack, Caddyfile, backup script (docs/DEPLOYMENT.md)
+docs/            STATUS.md (where we are), DECISIONS.md (why), DEPLOYMENT.md (how to run it)
 ```
 
 ## Prerequisites
@@ -31,6 +32,16 @@ pnpm dev                # web on :3000, API on :8787
 ```
 
 Then open http://localhost:3000. Check the API: `curl localhost:8787/health`.
+
+## Deploying
+
+One VPS with Docker Compose: Caddy (HTTPS) → Next standalone → Hono API → Postgres, with a
+release step that migrates, imports and seeds on every deploy. See docs/DEPLOYMENT.md.
+
+```bash
+cp deploy/.env.example deploy/.env   # DOMAIN, ACME_EMAIL, POSTGRES_PASSWORD
+docker compose -f deploy/docker-compose.yml up -d --build --wait
+```
 
 ## Design system
 
@@ -59,4 +70,5 @@ the tokens.
 | `pnpm data:fetch`   | Re-download and verify the pinned files in data/                                                              |
 | `pnpm ingest`       | Import the NT text, morphology and glosses                                                                    |
 | `pnpm seed`         | Upsert curated passages, grammar and lessons                                                                  |
+| `pnpm release`      | Migrate, import and seed in one go (what each production deploy runs)                                         |
 | `pnpm test:e2e`     | Playwright (needs DB ingested + seeded; reuses running servers; the `pwa` project builds and serves on :3100) |

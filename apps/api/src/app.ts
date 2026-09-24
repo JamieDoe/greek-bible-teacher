@@ -35,7 +35,11 @@ export interface AppEnv {
 export function createApp(deps: AppDeps) {
   const app = new Hono<AppEnv>();
 
-  if (deps.env.NODE_ENV !== "test") app.use(logger());
+  if (deps.env.NODE_ENV !== "test") {
+    // Container healthchecks hit /health every few seconds; keep them out of the request log.
+    const log = logger();
+    app.use((c, next) => (c.req.path === "/health" ? next() : log(c, next)));
+  }
 
   app.use(
     cors({

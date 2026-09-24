@@ -1,0 +1,22 @@
+# Caddy terminates TLS (automatic Let's Encrypt certificates) and proxies everything to Next.
+# The browser only ever talks to the web origin; /api/* is forwarded to the API by Next.
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	# Next streams responses; Caddy flushes responses of unknown length immediately by default.
+	reverse_proxy web:3000
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

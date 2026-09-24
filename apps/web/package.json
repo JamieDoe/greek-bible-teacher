@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "cp -R public .next/standalone/apps/web/ && cp -R .next/static .next/standalone/apps/web/.next/ && node .next/standalone/apps/web/server.js",
     "typecheck": "next typegen && tsc --noEmit",
     "lint": "eslint .",
     "test:e2e": "playwright test",

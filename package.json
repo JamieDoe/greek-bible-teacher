@@ -21,6 +21,7 @@
     "data:fetch": "pnpm --filter @gbt/api data:fetch",
     "ingest": "pnpm --filter @gbt/api ingest",
     "seed": "pnpm --filter @gbt/api seed",
+    "release": "pnpm --filter @gbt/api release",
     "test:e2e": "pnpm --filter @gbt/web test:e2e"
   },
   "devDependencies": {

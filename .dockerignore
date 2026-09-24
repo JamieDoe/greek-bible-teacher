@@ -1,0 +1,18 @@
+# Build context is the repo root for both images (apps/*/Dockerfile). Keep it small and secret-free.
+**/node_modules
+**/.next
+**/test-results
+**/playwright-report
+**/coverage
+**/*.tsbuildinfo
+.git
+.env
+.env.*
+!.env.example
+deploy/.env
+deploy/backups
+docs
+**/*.test.ts
+**/*.test.tsx
+apps/api/test
+apps/web/e2e

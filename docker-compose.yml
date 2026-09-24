@@ -1,4 +1,4 @@
-# Local development database. Production compose arrives in Phase 9.
+# Local development database. Production: deploy/docker-compose.yml (docs/DEPLOYMENT.md).
 name: greek-bible-teacher
 
 services:

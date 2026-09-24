@@ -25,3 +25,7 @@ npm-debug.log*
 # playwright
 test-results/
 playwright-report/
+
+# production deploy
+deploy/backups/
+deploy/docker-compose.override.yml
