@@ -2,6 +2,7 @@ export * from "./api/errors";
 export * from "./api/grammar";
 export * from "./api/health";
 export * from "./api/lessons";
+export * from "./api/progress";
 export * from "./api/reading";
 export * from "./api/review";
 export * from "./api/session";

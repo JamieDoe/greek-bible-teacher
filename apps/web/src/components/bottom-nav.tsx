@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-// Progress joins in Phase 7, when its screen exists.
 const TABS = [
   { href: "/", label: "Today", match: (p: string) => p === "/" },
   { href: "/read", label: "Read", match: (p: string) => p.startsWith("/read") },
   { href: "/review", label: "Review", match: (p: string) => p.startsWith("/review") },
+  { href: "/progress", label: "Progress", match: (p: string) => p.startsWith("/progress") },
 ] as const;
 
 export function BottomNav() {

@@ -374,6 +374,31 @@ open for More or Full.
   personal. Daily minutes are shown on Today but don't yet change the lesson.
 - **Acceptance test:** defined in `docs/ACCEPTANCE.md` and automated in Playwright.
 
+## 019 — Progress metrics
+
+**Decision.** `GET /progress?tz=<IANA>&days=7–90` returns real counts only; there is no
+proficiency percentage.
+
+- **Words learned** means an SRS interval of at least 21 days (`LEARNED_INTERVAL_DAYS`,
+  shared), a common "mature card" threshold. Words below it that are scheduled count as "in
+  progress".
+- **Greek words read** is the sum of tokens over finished read-throughs, re-reads included.
+- **Other counts:** passages completed (distinct), and concepts marked studied.
+- **Review accuracy** is the share of grades other than "again", overall and for the last 7
+  days. It is always shown with its raw "n of m".
+- **Activity over time** is words read and reviews per local day, zero-filled. Days are
+  bucketed in the learner's IANA time zone, which the client sends and the API validates. This
+  needed an append-only **`reading_events`** log (migration 0003), written in the same
+  transaction as `POST /reading/:id/complete`. `user_reading_progress` only keeps the first and
+  last dates. There are no users yet, so nothing is backfilled.
+- **Chart:** two single-series daily column charts rather than one chart with two y-axes,
+  because the two measures differ in scale by about 10×. Each has one warm hue (`--chart`),
+  checked with the dataviz palette validator on each mode's surface. The UI accent failed the
+  chroma floor, so charts use their own token. Bars are at most 24px thick with 4px rounded
+  tops, hairline grid, whole-number ticks, and a hover or focus tooltip over a full-column hit
+  target. Each chart has a table view. It is drawn at the container's real width, so labels
+  stay at true pixel sizes on phones.
+
 ## Dependencies
 
 One line each, for why the dependency exists.

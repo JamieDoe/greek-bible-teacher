@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 6 — Daily session ✅ complete (2026-09-24). **MVP acceptance test passes.**
+**Current phase:** 7 — Progress ✅ complete (2026-09-24). **MVP acceptance test passes.**
 
 ## Done
 
@@ -71,11 +71,21 @@
 - Tests: shared 113, web 8, API 160, Playwright 22. The acceptance flow (docs/ACCEPTANCE.md) runs
   end to end on desktop and mobile.
 
+- **Phase 7:**
+  - `GET /progress` and the `/progress` screen, with a Progress tab in the bottom nav.
+  - Metrics: words learned (interval ≥ 21 days) and in progress, Greek words read, passages
+    completed, grammar studied, and review accuracy (with n of m, overall and for 7 days).
+  - 28-day activity charts for words read and reviews, bucketed by the learner's time zone, with
+    table views.
+  - `reading_events` (migration 0003).
+  - The acceptance test now also checks the Progress screen.
+- Tests: shared 113, web 17, API 170, Playwright 22.
+
 ## Next
 
-- **Phase 7 (Progress):** the metrics screen. It shows words learned (a stable interval of at
-  least N days), Greek words read, passages completed, concepts studied, review accuracy and
-  reading activity over time. The Progress tab joins the bottom nav.
+- **Phase 8 (PWA/mobile polish):** manifest and icons so the app installs; offline caching of the
+  app shell and recently read passages; typography and dark-mode refinement. A manual theme
+  toggle would need to be scoped then.
 
 ## Known issues / open questions
 

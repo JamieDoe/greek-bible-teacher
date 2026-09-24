@@ -119,4 +119,15 @@ test("MVP acceptance: onboard → daily lesson loop → Today and progress", asy
   await expect(progress).toContainText("Grammar studied1");
   await expect(progress).toContainText("Lessons done1");
   await expect(page.getByTestId("due-count")).toHaveText("0");
+
+  // 5. Progress shows real counts from the session (no proficiency percentage).
+  await page.getByRole("link", { name: "Progress" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Progress" })).toBeVisible();
+  const stats = page.getByTestId("progress-stats");
+  await expect(stats).toContainText("Greek words read122"); // John 1:1–5 (61 words) read twice
+  await expect(stats).toContainText("Passages completed1");
+  await expect(stats).toContainText("Grammar studied1");
+  await expect(stats).toContainText("Review accuracy100%");
+  await expect(page.getByTestId("words-learned")).toHaveText("0"); // none has lasted 21 days yet
+  await expect(page.getByRole("img", { name: /Greek words read: 122 words/ })).toBeVisible();
 });

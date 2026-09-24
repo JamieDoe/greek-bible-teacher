@@ -10,6 +10,8 @@
   --accent: #8b4a2b;
   --accent-soft: rgb(139 74 43 / 0.1);
   --backdrop: rgb(43 39 35 / 0.28);
+  /* Chart marks: validated (dataviz validate_palette) against --paper in each mode. */
+  --chart: #a14f1e;
   color-scheme: light;
 }
 
@@ -23,6 +25,7 @@
     --accent: #d9a273;
     --accent-soft: rgb(217 162 115 / 0.14);
     --backdrop: rgb(0 0 0 / 0.5);
+    --chart: #c97a36;
     color-scheme: dark;
   }
 }
@@ -35,6 +38,7 @@
   --color-rule: var(--rule);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-chart: var(--chart);
   --font-greek: var(--font-gentium), "Gentium", serif;
   --font-serif: var(--font-gentium), "Gentium", Georgia, serif;
 }

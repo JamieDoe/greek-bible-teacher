@@ -2,7 +2,14 @@ import { sm2Scheduler as scheduler } from "@gbt/shared";
 import { and, eq, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { Db } from "../db/client";
-import { passages, tokens, userReadingProgress, userWordProgress, verses } from "../db/schema";
+import {
+  passages,
+  readingEvents,
+  tokens,
+  userReadingProgress,
+  userWordProgress,
+  verses,
+} from "../db/schema";
 import { findWordProgress, toSrsState } from "../review/progress";
 
 const startVerse = alias(verses, "start_verse");
@@ -76,25 +83,49 @@ export async function recordLookup(
   });
 }
 
-/** Marks a read-through as finished. The first completion date is kept. */
+/** Greek tokens in a passage. */
+async function passageTokenCount(db: Pick<Db, "select">, passageId: number): Promise<number> {
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(tokens)
+    .innerJoin(verses, eq(verses.id, tokens.verseId))
+    .innerJoin(passages, eq(passages.id, passageId))
+    .innerJoin(startVerse, eq(startVerse.id, passages.startVerseId))
+    .innerJoin(endVerse, eq(endVerse.id, passages.endVerseId))
+    .where(sql`${verses.ordinal} between ${startVerse.ordinal} and ${endVerse.ordinal}`);
+  return row?.n ?? 0;
+}
+
+/**
+ * Marks a read-through as finished: bumps the passage's progress (keeping the first
+ * completion date) and appends a reading event for activity over time.
+ */
 export async function recordCompletion(
   db: Db,
   { userId, passageId, now }: { userId: string; passageId: number; now: Date },
 ) {
-  const [row] = await db
-    .insert(userReadingProgress)
-    .values({ userId, passageId, timesRead: 1, completedAt: now, lastReadAt: now })
-    .onConflictDoUpdate({
-      target: [userReadingProgress.userId, userReadingProgress.passageId],
-      set: {
-        timesRead: sql`${userReadingProgress.timesRead} + 1`,
-        completedAt: sql`coalesce(${userReadingProgress.completedAt}, ${now.toISOString()}::timestamptz)`,
-        lastReadAt: now,
-      },
-    })
-    .returning({
-      timesRead: userReadingProgress.timesRead,
-      completedAt: userReadingProgress.completedAt,
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(userReadingProgress)
+      .values({ userId, passageId, timesRead: 1, completedAt: now, lastReadAt: now })
+      .onConflictDoUpdate({
+        target: [userReadingProgress.userId, userReadingProgress.passageId],
+        set: {
+          timesRead: sql`${userReadingProgress.timesRead} + 1`,
+          completedAt: sql`coalesce(${userReadingProgress.completedAt}, ${now.toISOString()}::timestamptz)`,
+          lastReadAt: now,
+        },
+      })
+      .returning({
+        timesRead: userReadingProgress.timesRead,
+        completedAt: userReadingProgress.completedAt,
+      });
+    await tx.insert(readingEvents).values({
+      userId,
+      passageId,
+      completedAt: now,
+      tokensRead: await passageTokenCount(tx, passageId),
     });
-  return row!;
+    return row!;
+  });
 }

@@ -153,3 +153,25 @@ export const userLessonProgress = pgTable(
     check("user_lesson_progress_step_nonneg", sql`${t.currentStep} >= 0`),
   ],
 );
+
+/**
+ * Append-only log of finished read-throughs, for reading activity over time (the progress
+ * screen). Not in the original sketch; see DECISIONS 019.
+ */
+export const readingEvents = pgTable(
+  "reading_events",
+  {
+    id: bigint("id", { mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
+    userId: userId(),
+    passageId: integer("passage_id")
+      .notNull()
+      .references(() => passages.id),
+    completedAt: timestamptz("completed_at").notNull().defaultNow(),
+    /** Greek tokens in the passage at the time it was read. */
+    tokensRead: integer("tokens_read").notNull(),
+  },
+  (t) => [
+    index("reading_events_user_completed_idx").on(t.userId, t.completedAt),
+    check("reading_events_tokens_nonneg", sql`${t.tokensRead} >= 0`),
+  ],
+);

@@ -8,6 +8,7 @@ import type { Env } from "./env";
 import { grammarRoutes } from "./grammar/routes";
 import { ApiHttpError } from "./http/errors";
 import { lessonRoutes } from "./lessons/routes";
+import { progressRoutes } from "./progress/routes";
 import { readingProgressRoutes } from "./reading/progress-routes";
 import { readingRoutes } from "./reading/routes";
 import { reviewRoutes } from "./review/routes";
@@ -58,6 +59,7 @@ export function createApp(deps: AppDeps) {
   app.route("/", grammarRoutes);
   app.route("/", lessonRoutes);
   app.route("/", todayRoutes);
+  app.route("/", progressRoutes);
   app.route("/", sourcesRoutes);
 
   app.notFound((c) => {
