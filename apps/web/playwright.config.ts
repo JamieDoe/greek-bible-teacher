@@ -21,7 +21,7 @@ export default defineConfig({
     {
       name: "pwa",
       testMatch: /pwa\.spec\.ts/,
-      use: { ...devices["Pixel 7"], baseURL: "http://localhost:3100" },
+      use: { ...devices["Pixel 7"], baseURL: "http://127.0.0.1:3100" },
     },
   ],
   webServer: [
@@ -38,8 +38,11 @@ export default defineConfig({
       cwd: "../..",
     },
     {
-      command: "pnpm --filter @gbt/web build && PORT=3100 pnpm --filter @gbt/web start",
-      url: "http://localhost:3100",
+      // HOSTNAME is set explicitly: Next binds to it, and in containers it is the container id.
+      // 127.0.0.1 is a secure context, so the service worker still registers.
+      command:
+        "pnpm --filter @gbt/web build && PORT=3100 HOSTNAME=127.0.0.1 pnpm --filter @gbt/web start",
+      url: "http://127.0.0.1:3100",
       reuseExistingServer: true,
       timeout: 240_000,
       cwd: "../..",

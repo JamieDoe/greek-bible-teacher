@@ -127,6 +127,15 @@ server {
 `DOMAIN` must still be set in `deploy/.env`: the API allows `https://$DOMAIN` as its CORS origin.
 (Compose also requires `ACME_EMAIL` to be set, even though Caddy isn't started.)
 
+## Rate limits
+
+The API limits each client IP to 600 requests a minute and 60 new anonymous users an hour
+(DECISIONS 025). Over the limit it answers `429` with `Retry-After`. If many learners share one
+address (a school or an office), raise `NEW_SESSIONS_PER_HOUR` (and, if needed,
+`RATE_LIMIT_PER_MINUTE`) in `deploy/.env` and run `up -d` again. `0` turns a limit off. The
+limits rely on the proxy writing the client address into `X-Forwarded-For`, which both Caddy and
+the Nginx config above do.
+
 ## Operations
 
 - Logs: `docker compose -f deploy/docker-compose.yml logs -f api web caddy`. The API logs each

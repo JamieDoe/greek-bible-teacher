@@ -2,6 +2,7 @@ import { onboardingRequestSchema, updatePreferencesRequestSchema } from "@gbt/sh
 import { Hono } from "hono";
 import type { AppEnv } from "../app";
 import { ApiHttpError } from "../http/errors";
+import { clientIp, tooManyRequests } from "../http/rate-limit";
 import { validBody } from "../http/validate";
 import { readSessionUserId, writeSessionCookie } from "./cookie";
 import { requireUser } from "./require-user";
@@ -21,7 +22,15 @@ export const sessionRoutes = new Hono<AppEnv>()
     const existing = existingId ? await findUser(db, existingId) : null;
     if (existing) return c.json(toSessionResponse(existing), 200);
 
+    // Each new visitor is a users row, so creating them has its own, tighter per-IP budget.
+    const { newSessions } = c.var.limits;
+    const ip = clientIp(c);
+    const now = c.var.deps.now().getTime();
+    const wait = newSessions?.retryAfter(ip, now) ?? null;
+    if (wait !== null) throw tooManyRequests(c, wait);
+
     const user = await createUser(db);
+    newSessions?.record(ip, now);
     writeSessionCookie(c, env, user.id);
     return c.json(toSessionResponse(user), 201);
   })

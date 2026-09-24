@@ -50,6 +50,9 @@ services:
       NODE_ENV: production
       API_PORT: "8787"
       WEB_ORIGIN: https://${DOMAIN:?set DOMAIN in deploy/.env}
+      # Per-IP limits; empty means the production defaults (600/min, 60 new users/hour).
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-}
+      NEW_SESSIONS_PER_HOUR: ${NEW_SESSIONS_PER_HOUR:-}
     depends_on:
       release:
         condition: service_completed_successfully

@@ -623,6 +623,74 @@ to analyse the Greek.
 **Consequences.** Nothing is built now. The data needed already exists and is exposed by
 functions that can be reused as they are. Auth is the prerequisite.
 
+## 025 — API rate limiting: in-memory, per client IP
+
+**Context.** Before a public deploy there was no rate limiting. Each `POST /session/anonymous`
+without a cookie creates a `users` row, so one script could fill the table. Every other endpoint
+was unlimited too.
+
+**Decision.**
+
+- **Two limits, both per client IP, with fixed windows** (`src/http/rate-limit.ts`):
+  - all requests: 600 a minute;
+  - new anonymous users: 60 an hour. Returning learners (with a valid cookie) are never limited
+    by this one.
+- Both answer `429` in the shared error shape (`rate_limited`), with `Retry-After`.
+  `/health` and CORS preflights don't count.
+- **The key is the last `X-Forwarded-For` entry.** The API only receives requests through
+  Caddy (or Nginx) and then Next's `/api` rewrite:
+  - The API's socket peer is always the web container, so keying on the socket would put every
+    learner in one bucket.
+  - Caddy replaces a client-supplied `X-Forwarded-For` with the real address, and Next passes
+    it through. This was verified on the local production stack: a spoofed value arrived
+    replaced, and spoofing different values didn't get round the new-user limit.
+  - Nginx's `$proxy_add_x_forwarded_for` appends, so the last entry is right there too.
+- **In memory.** There is one API instance, so a `Map` of windows (pruned once per window) is
+  enough, and no new service is needed. Several instances would need Postgres or Redis.
+- **Configuration:**
+  - On by default only in production. `RATE_LIMIT_PER_MINUTE` and `NEW_SESSIONS_PER_HOUR`
+    override the limits, and 0 turns one off.
+  - Development and tests default to off, so e2e runs, which create a user per test from one
+    IP, never trip them.
+  - An empty value (Compose passing an unset variable) means the default, not 0.
+
+**Consequences.** Limits reset when the API restarts, which is acceptable for abuse protection.
+Many learners behind one IP (a school) share a budget: 60 new users an hour is enough for a
+class, and it can be raised in `deploy/.env`. There is no limit at the proxy layer, since the
+standard Caddy image has no rate-limit module.
+
+## 026 — Continuous integration: GitHub Actions
+
+**Decision.** `.github/workflows/ci.yml` runs on pull requests and pushes to `main`, with three
+parallel jobs:
+
+- **check:** `pnpm check` (typecheck, lint, format, unit and API tests) against a Postgres 18
+  service container.
+- **e2e:** `pnpm release` (migrate, full NT import, seed), then Chromium and every Playwright
+  project, including the PWA project against a production build. Traces are uploaded on
+  failure.
+- **docker:** both production images build.
+
+Details:
+
+- Setup is `pnpm/setup@v3`, which reads pnpm from `packageManager` and installs Node 24, with
+  the pnpm store cached and a frozen-lockfile install. `actions/checkout@v7`. The versions were
+  checked against each action's latest release and README.
+- Permissions are read-only, and superseded runs are cancelled.
+
+**Verified before committing:**
+
+- actionlint is clean.
+- The check and e2e steps were run in a clean `node:24-bookworm` container from a fresh copy of
+  the repo (no `.env`, no `node_modules`) with a Postgres 18 container. Everything passed, after
+  two fixes the dry run found:
+  - Next's standalone server binds to `$HOSTNAME`, which in containers is the container id, so
+    the PWA test server is now started with `HOSTNAME=127.0.0.1`. The production image already
+    sets `HOSTNAME=0.0.0.0`.
+  - The font-coverage e2e test compared whole NFD strings, which Linux Chromium shapes
+    differently from macOS. The app renders only NFC, so the test now checks the rendered
+    passage, precomposed forms and each combining mark on its own.
+
 ## Dependencies
 
 One line each, for why the dependency exists.

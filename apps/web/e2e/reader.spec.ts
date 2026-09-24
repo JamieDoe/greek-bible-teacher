@@ -28,14 +28,18 @@ test.describe("reader", () => {
       );
       // Measure the same text with two different fallbacks behind the font: equal widths mean
       // no character fell back, i.e. the font covers every letter and mark. Checked for the
-      // passage itself and for loose combining marks (breathings, accents, iota subscript).
+      // passage itself, precomposed polytonic forms, and each combining mark on its own
+      // (breathings, accents, diaeresis, iota subscript). The app only renders NFC text (the
+      // ingest normalises it); whole NFD clusters are shaped differently by Chromium on Linux
+      // and macOS, so they are not compared as strings.
       const ctx = document.createElement("canvas").getContext("2d")!;
       const width = (fallback: string, text: string) => {
         ctx.font = `48px "${family}", ${fallback}`;
         return ctx.measureText(text).width;
       };
       const passage = el.textContent ?? "";
-      const samples = [passage, "ἀρχῇ ᾧ ὢν Ἐν ῥῆμα Μωϋσῆς", "ἀρχῇ ᾧ ὢν Ἐν".normalize("NFD")];
+      const marks = ["\u0300", "\u0301", "\u0308", "\u0313", "\u0314", "\u0342", "\u0345"];
+      const samples = [passage, "ἀρχῇ ᾧ ὢν Ἐν ῥῆμα Μωϋσῆς ἐλήλυθεν", ...marks];
       const gaps = samples.map((t) => Math.abs(width("monospace", t) - width("serif", t)));
       return { family, loaded, passageLength: passage.length, maxGap: Math.max(...gaps) };
     });

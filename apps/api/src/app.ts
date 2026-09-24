@@ -7,6 +7,7 @@ import type { Db } from "./db/client";
 import type { Env } from "./env";
 import { grammarRoutes } from "./grammar/routes";
 import { ApiHttpError } from "./http/errors";
+import { clientIp, createRateLimits, type RateLimits, tooManyRequests } from "./http/rate-limit";
 import { lessonRoutes } from "./lessons/routes";
 import { progressRoutes } from "./progress/routes";
 import { readingProgressRoutes } from "./reading/progress-routes";
@@ -29,11 +30,12 @@ export interface AppDeps {
 
 /** Hono generics for route modules: dependencies are available as `c.var.deps`. */
 export interface AppEnv {
-  Variables: { deps: AppDeps; userId: string };
+  Variables: { deps: AppDeps; limits: RateLimits; userId: string };
 }
 
 export function createApp(deps: AppDeps) {
   const app = new Hono<AppEnv>();
+  const limits = createRateLimits(deps.env);
 
   if (deps.env.NODE_ENV !== "test") {
     // Container healthchecks hit /health every few seconds; keep them out of the request log.
@@ -52,6 +54,19 @@ export function createApp(deps: AppDeps) {
   );
   app.use(async (c, next) => {
     c.set("deps", deps);
+    c.set("limits", limits);
+    await next();
+  });
+  // Per-IP request budget (after CORS, so a 429 still carries CORS headers).
+  app.use(async (c, next) => {
+    const counter = limits.requests;
+    if (counter && c.req.method !== "OPTIONS" && c.req.path !== "/health") {
+      const key = clientIp(c);
+      const now = deps.now().getTime();
+      const wait = counter.retryAfter(key, now);
+      if (wait !== null) throw tooManyRequests(c, wait);
+      counter.record(key, now);
+    }
     await next();
   });
 

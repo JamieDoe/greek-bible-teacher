@@ -128,10 +128,18 @@
   - a backup restored into a scratch database with matching counts.
 - Tests: shared 113, web 30, API 182, Playwright 34.
 
+- **After Phase 9:**
+  - Per-IP API rate limits: 600 requests a minute and 60 new anonymous users an hour, with
+    429 and `Retry-After`; on by default in production (DECISIONS 025).
+  - GitHub Actions CI with check, e2e and Docker jobs (DECISIONS 026), dry-run in a clean Linux
+    container.
+- Tests: shared 113, web 30, API 189, Playwright 34.
+
 ## Next
 
 The MVP is complete. Possible next steps, none started:
 
+- Push the branch and open a PR to `main`, so CI runs on GitHub for the first time.
 - Deploy to a real VPS and take the first off-server backup.
 - The AI phase (designed only, DECISIONS 024): `POST /ai/explain`, once auth exists.
 - The deferred design extras (DECISIONS 022): sense lines, declension chips, placement check,

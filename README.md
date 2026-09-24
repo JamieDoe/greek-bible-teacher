@@ -33,6 +33,12 @@ pnpm dev                # web on :3000, API on :8787
 
 Then open http://localhost:3000. Check the API: `curl localhost:8787/health`.
 
+## CI
+
+GitHub Actions (`.github/workflows/ci.yml`) runs `pnpm check`, the Playwright suite against a
+freshly imported database, and both Docker image builds on every pull request and push to
+`main`.
+
 ## Deploying
 
 One VPS with Docker Compose: Caddy (HTTPS) → Next standalone → Hono API → Postgres, with a

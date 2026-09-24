@@ -10,7 +10,32 @@ describe("parseEnv", () => {
       API_PORT: 8787,
       WEB_ORIGIN: "http://localhost:3000",
       DATABASE_URL,
+      RATE_LIMIT_PER_MINUTE: 0,
+      NEW_SESSIONS_PER_HOUR: 0,
     });
+  });
+
+  it("turns rate limits on by default only in production, and allows overrides", () => {
+    expect(parseEnv({ DATABASE_URL, NODE_ENV: "production" })).toMatchObject({
+      RATE_LIMIT_PER_MINUTE: 600,
+      NEW_SESSIONS_PER_HOUR: 60,
+    });
+    expect(
+      parseEnv({
+        DATABASE_URL,
+        NODE_ENV: "production",
+        RATE_LIMIT_PER_MINUTE: "0",
+        NEW_SESSIONS_PER_HOUR: "5",
+      }),
+    ).toMatchObject({ RATE_LIMIT_PER_MINUTE: 0, NEW_SESSIONS_PER_HOUR: 5 });
+    // An empty value (an unset variable passed through by Compose) keeps the default.
+    expect(
+      parseEnv({ DATABASE_URL, NODE_ENV: "production", RATE_LIMIT_PER_MINUTE: "" })
+        .RATE_LIMIT_PER_MINUTE,
+    ).toBe(600);
+    expect(() => parseEnv({ DATABASE_URL, RATE_LIMIT_PER_MINUTE: "-1" })).toThrow(
+      /RATE_LIMIT_PER_MINUTE/,
+    );
   });
 
   it("coerces the port from a string", () => {
