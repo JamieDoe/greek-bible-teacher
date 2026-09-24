@@ -52,6 +52,14 @@ export function Reader({
     setSelected(null);
   }, [selected]);
 
+  // Keep this passage available offline (the service worker saves its page).
+  useEffect(() => {
+    navigator.serviceWorker?.controller?.postMessage({
+      type: "cache-page",
+      path: `/read/${passage.id}`,
+    });
+  }, [passage.id]);
+
   // After the sheet has unmounted (and its modal dialog closed, so the page is no longer inert),
   // return focus to the word without scrolling, so the reader stays exactly in place.
   useEffect(() => {
@@ -105,7 +113,7 @@ export function Reader({
                       aria-haspopup="dialog"
                       aria-expanded={selected?.token.id === token.id}
                       onClick={() => open(token, verse.displayRef)}
-                      className="cursor-pointer rounded-[3px] px-[0.06em] leading-[1.25] transition-colors hover:bg-accent-soft aria-expanded:bg-accent-soft aria-expanded:text-accent"
+                      className="relative cursor-pointer rounded-[3px] px-[0.06em] leading-[1.25] transition-colors after:absolute after:-inset-x-0.5 after:-inset-y-2 after:content-[''] hover:bg-accent-soft aria-expanded:bg-accent-soft aria-expanded:text-accent"
                     >
                       {token.word}
                     </button>

@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 7 — Progress ✅ complete (2026-09-24). **MVP acceptance test passes.**
+**Current phase:** 8 — PWA/mobile polish ✅ complete (2026-09-24). **MVP acceptance test passes.**
 
 ## Done
 
@@ -81,11 +81,20 @@
   - The acceptance test now also checks the Progress screen.
 - Tests: shared 113, web 17, API 170, Playwright 22.
 
+- **Phase 8:**
+  - The app is installable: manifest, generated λ icons (including maskable) and iOS metadata.
+  - A service worker caches the app shell, the last 20 pages visited and public reading data.
+  - Recently read passages work offline, including the lookup panel. There is an offline page
+    listing saved passages and an offline banner.
+  - Larger tap targets for Greek words, safe-area viewport, and measured contrast in both themes.
+- Tests: shared 113, web 17, API 170, Playwright 24 (desktop, mobile, and a `pwa` project
+  against a production build).
+
 ## Next
 
-- **Phase 8 (PWA/mobile polish):** manifest and icons so the app installs; offline caching of the
-  app shell and recently read passages; typography and dark-mode refinement. A manual theme
-  toggle would need to be scoped then.
+- **Phase 9 (Deployment):** production Dockerfiles, Compose for a VPS, reverse-proxy notes,
+  migrate-on-deploy, and a Postgres backup note. Set `API_INTERNAL_URL` at `next build` (Next
+  bakes the rewrites in at build time).
 
 ## Known issues / open questions
 

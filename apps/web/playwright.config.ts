@@ -14,8 +14,15 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [
-    { name: "desktop", use: { ...devices["Desktop Chrome"] } },
-    { name: "mobile", use: { ...devices["Pixel 7"] } },
+    { name: "desktop", testIgnore: /pwa/, use: { ...devices["Desktop Chrome"] } },
+    { name: "mobile", testIgnore: /pwa/, use: { ...devices["Pixel 7"] } },
+    // The service worker registers only in production builds, so PWA tests run against
+    // `next build && next start` on port 3100.
+    {
+      name: "pwa",
+      testMatch: /pwa\.spec\.ts/,
+      use: { ...devices["Pixel 7"], baseURL: "http://localhost:3100" },
+    },
   ],
   webServer: [
     {
@@ -28,6 +35,13 @@ export default defineConfig({
       command: "pnpm --filter @gbt/web dev",
       url: "http://localhost:3000",
       reuseExistingServer: true,
+      cwd: "../..",
+    },
+    {
+      command: "pnpm --filter @gbt/web build && pnpm --filter @gbt/web exec next start -p 3100",
+      url: "http://localhost:3100",
+      reuseExistingServer: true,
+      timeout: 240_000,
       cwd: "../..",
     },
   ],
