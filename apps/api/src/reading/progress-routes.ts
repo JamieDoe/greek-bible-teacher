@@ -1,12 +1,32 @@
-import { idParamSchema, lookupRequestSchema, type ReadingCompleteResponse } from "@gbt/shared";
+import {
+  idParamSchema,
+  lookupRequestSchema,
+  type PassageFamiliarityResponse,
+  type ReadingCompleteResponse,
+} from "@gbt/shared";
 import { Hono } from "hono";
 import type { AppEnv } from "../app";
 import { ApiHttpError, notFound } from "../http/errors";
 import { validBody, validParam } from "../http/validate";
 import { requireUser } from "../session/require-user";
-import { lemmaOfTokenInPassage, passageExists, recordCompletion, recordLookup } from "./progress";
+import {
+  knownLemmasInPassage,
+  lemmaOfTokenInPassage,
+  passageExists,
+  recordCompletion,
+  recordLookup,
+} from "./progress";
 
 export const readingProgressRoutes = new Hono<AppEnv>()
+  .get("/passages/:passageId/familiarity", requireUser, async (c) => {
+    const passageId = validParam(c, "passageId", idParamSchema);
+    const { db } = c.var.deps;
+    if (!(await passageExists(db, passageId))) throw notFound("Passage");
+    const body: PassageFamiliarityResponse = {
+      knownLemmaIds: await knownLemmasInPassage(db, c.var.userId, passageId),
+    };
+    return c.json(body);
+  })
   .use("/reading/*", requireUser)
   .post("/reading/:passageId/lookup", async (c) => {
     const passageId = validParam(c, "passageId", idParamSchema);
@@ -28,6 +48,8 @@ export const readingProgressRoutes = new Hono<AppEnv>()
     const body: ReadingCompleteResponse = {
       timesRead: row.timesRead,
       completedAt: row.completedAt!.toISOString(),
+      wordsInPassage: row.wordsInPassage,
+      totalWordsRead: row.totalWordsRead,
     };
     return c.json(body);
   });

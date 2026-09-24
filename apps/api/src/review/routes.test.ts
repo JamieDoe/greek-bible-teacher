@@ -1,4 +1,5 @@
 import {
+  addToReviewResponseSchema,
   apiErrorSchema,
   gradeResponseSchema,
   reviewQueueResponseSchema,
@@ -59,6 +60,7 @@ describe("GET /review/queue", () => {
     expect(q.items.map((i) => i.lemma.lemma)).toEqual(expected.map((r) => r.lemma));
     expect(q.items[0]!.lemma.lemma).toBe("ὁ");
     expect(q.items.every((i) => i.kind === "new" && i.exercise.type === "gloss")).toBe(true);
+    expect(q.items.every((i) => i.srs === null && i.example !== null)).toBe(true);
   });
 
   it("builds four distinct options containing the answer", async () => {
@@ -131,6 +133,9 @@ describe("POST /review/:lemmaId", () => {
     const q = await queue();
     expect(q.dueCount).toBe(1);
     expect(q.items[0]).toMatchObject({ lemmaId: id, kind: "due" });
+    // Its schedule comes with it, so the client can preview the next interval.
+    expect(q.items[0]!.srs).toMatchObject({ intervalDays: 1, nextReviewAt: days(1).toISOString() });
+    expect(q.items[0]!.example?.displayRef).toBe("John 1:1");
     // Recalled once already, so it is now asked in its verse.
     expect(q.items[0]!.exercise.type).toBe("context");
     const ctx = q.items[0]!.exercise.context!;
@@ -175,5 +180,34 @@ describe("POST /review/:lemmaId", () => {
       body: JSON.stringify({ grade: "good" }),
     });
     expect(res.status).toBe(401);
+  });
+});
+
+describe("POST /review/:lemmaId/add", () => {
+  it("puts an unscheduled word into review now, and leaves a scheduled one alone", async () => {
+    const [logos, theos] = [await lemmaId("λόγος"), await lemmaId("θεός")];
+    const added = addToReviewResponseSchema.parse(
+      await (
+        await app.request(`/review/${logos}/add`, { method: "POST", headers: { Cookie: cookie } })
+      ).json(),
+    );
+    expect(added).toEqual({ lemmaId: logos, nextReviewAt: T0.toISOString(), added: true });
+    expect((await queue("?mode=due")).items.map((i) => i.lemmaId)).toEqual([logos]);
+
+    await grade(theos, { grade: "good" });
+    const kept = addToReviewResponseSchema.parse(
+      await (
+        await app.request(`/review/${theos}/add`, { method: "POST", headers: { Cookie: cookie } })
+      ).json(),
+    );
+    expect(kept).toMatchObject({ added: false, nextReviewAt: days(1).toISOString() });
+  });
+
+  it("404s for an unknown word", async () => {
+    const res = await app.request("/review/999999/add", {
+      method: "POST",
+      headers: { Cookie: cookie },
+    });
+    expect(res.status).toBe(404);
   });
 });

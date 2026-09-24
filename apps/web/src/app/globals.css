@@ -1,91 +1,118 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-/* Quiet paper (light) and true dark themes. One warm accent. */
+/* Koinē design system v0.1 (docs/DECISIONS 022). Koinē's colours are mapped onto shadcn's
+   variable names so every shadcn component inherits them:
+     ground → background · surface → card/popover · sunken → muted/secondary
+     line → border/input · ink → foreground · muted → muted-foreground
+     lapis → primary (and ring) · lapis soft → accent · rubric (new words) · correct
+   Theme: `.dark` on <html>, set before first paint from the System/Light/Dark setting. */
+
+@custom-variant dark (&:is(.dark *));
+
 :root {
-  --paper: #f6f2ea;
-  --sheet: #fbf8f3;
-  --ink: #2b2723;
-  --muted: #6b6258;
-  --rule: #e2dacd;
-  --accent: #8b4a2b;
-  --accent-soft: rgb(139 74 43 / 0.1);
-  --backdrop: rgb(43 39 35 / 0.28);
-  /* Chart marks: validated (dataviz validate_palette) against --paper in each mode. */
-  --chart: #a14f1e;
+  --background: #f5f2ec;
+  --foreground: #1a1916;
+  --card: #ffffff;
+  --card-foreground: #1a1916;
+  --popover: #ffffff;
+  --popover-foreground: #1a1916;
+  --primary: #2b3fbf;
+  --primary-foreground: #ffffff;
+  --secondary: #ece8e0;
+  --secondary-foreground: #1a1916;
+  --muted: #ece8e0;
+  --muted-foreground: #6b655b;
+  --accent: #e7eafb;
+  --accent-foreground: #2b3fbf;
+  --destructive: #b3402a;
+  --border: #e0dbd1;
+  --input: #e0dbd1;
+  --ring: #2b3fbf;
+  --rubric: #b3402a;
+  --correct: #2b6f4e;
+  --backdrop: rgb(26 25 22 / 0.32);
+  --radius: 1rem;
+  --greek-size: 1.3125rem; /* 21pt default; the reader's Aa setting overrides it */
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #161412;
-    --sheet: #201d1a;
-    --ink: #ebe5dc;
-    --muted: #a39a8e;
-    --rule: #34302b;
-    --accent: #d9a273;
-    --accent-soft: rgb(217 162 115 / 0.14);
-    --backdrop: rgb(0 0 0 / 0.5);
-    --chart: #c97a36;
-    color-scheme: dark;
-  }
+.dark {
+  --background: #11100e;
+  --foreground: #eeeae2;
+  --card: #1b1a17;
+  --card-foreground: #eeeae2;
+  --popover: #1b1a17;
+  --popover-foreground: #eeeae2;
+  --primary: #9aa6ff;
+  --primary-foreground: #11100e;
+  --secondary: #252320;
+  --secondary-foreground: #eeeae2;
+  --muted: #252320;
+  --muted-foreground: #9e978b;
+  --accent: #242a52;
+  --accent-foreground: #9aa6ff;
+  --destructive: #ee8d71;
+  --border: #312e29;
+  --input: #312e29;
+  --ring: #9aa6ff;
+  --rubric: #ee8d71;
+  --correct: #7fcba2;
+  --backdrop: rgb(0 0 0 / 0.55);
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-paper: var(--paper);
-  --color-sheet: var(--sheet);
-  --color-ink: var(--ink);
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-greek: var(--font-literata), Georgia, serif;
+  --font-serif: var(--font-literata), Georgia, serif;
+  --font-heading: var(--font-literata), Georgia, serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
-  --color-rule: var(--rule);
+  --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
-  --color-accent-soft: var(--accent-soft);
-  --color-chart: var(--chart);
-  --font-greek: var(--font-gentium), "Gentium", serif;
-  --font-serif: var(--font-gentium), "Gentium", Georgia, serif;
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-rubric: var(--rubric);
+  --color-rubric-soft: color-mix(in oklab, var(--rubric) 12%, var(--card));
+  --color-correct: var(--correct);
+  --color-correct-soft: color-mix(in oklab, var(--correct) 12%, var(--card));
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.25);
+  --radius-2xl: calc(var(--radius) * 1.5);
+  --radius-3xl: calc(var(--radius) * 1.75);
+  --radius-4xl: calc(var(--radius) * 2);
+  --text-greek: var(--greek-size);
 }
 
-html {
-  scrollbar-gutter: stable;
-}
-
-body {
-  background: var(--paper);
-  color: var(--ink);
-  font-family:
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    sans-serif;
-}
-
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* Token lookup bottom sheet (native <dialog>). The dialog itself is the full-viewport click
-   target for "tap outside"; the panel inside holds the content. */
-dialog.token-sheet {
-  margin: 0;
-  inset: auto 0 0 0;
-  width: 100%;
-  max-width: none;
-  max-height: none;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-}
-dialog.token-sheet::backdrop {
-  background: var(--backdrop);
-}
-@media (prefers-reduced-motion: no-preference) {
-  dialog.token-sheet[open] > div {
-    animation: sheet-in 180ms ease-out;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
-@keyframes sheet-in {
-  from {
-    transform: translateY(24px);
-    opacity: 0;
+  html {
+    scrollbar-gutter: stable;
+  }
+  body {
+    @apply bg-background font-sans text-foreground;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 }

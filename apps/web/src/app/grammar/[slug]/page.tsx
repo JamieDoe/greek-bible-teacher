@@ -5,6 +5,7 @@ import { cache } from "react";
 import { DeeperSection, StudyButton } from "@/components/grammar/concept-actions";
 import { Markdown } from "@/components/grammar/markdown";
 import { VerseExample } from "@/components/grammar/verse-example";
+import { Card } from "@/components/ui/card";
 import { PageShell } from "@/components/ui/states";
 import { ApiRequestError } from "@/lib/api-errors";
 import { serverGet } from "@/lib/api-server";
@@ -28,20 +29,23 @@ export default async function ConceptPage({ params }: PageProps<"/grammar/[slug]
 
   return (
     <PageShell>
-      <p className="text-sm text-muted">
-        <Link href="/grammar" className="hover:text-ink">
+      <p className="text-sm text-muted-foreground">
+        <Link href="/grammar" className="hover:text-foreground">
           Grammar
         </Link>{" "}
         · Lesson {concept.curriculumOrder}
       </p>
-      <h1 className="mt-1 font-serif text-3xl">{concept.title}</h1>
+      <h1 className="mt-2 font-heading text-4xl leading-tight">{concept.title}</h1>
+      <p className="mt-3 text-lg text-muted-foreground">{concept.summarySimple}</p>
 
-      <Markdown source={main} />
+      <Card className="mt-6 px-6">
+        <Markdown source={main} />
+      </Card>
       {deeper && <DeeperSection source={deeper} />}
 
       {concept.examples.length > 0 && (
         <section className="mt-10" aria-labelledby="examples-heading">
-          <h2 id="examples-heading" className="font-serif text-xl">
+          <h2 id="examples-heading" className="font-heading text-2xl">
             In the New Testament
           </h2>
           <div className="mt-4 space-y-5">
@@ -56,9 +60,12 @@ export default async function ConceptPage({ params }: PageProps<"/grammar/[slug]
         <StudyButton slug={concept.slug} />
       </div>
 
-      <nav className="mt-10 flex justify-between gap-4 border-t border-rule pt-4 text-sm">
+      <nav className="mt-10 flex justify-between gap-4 border-t border-border pt-4 text-sm">
         {concept.previous ? (
-          <Link href={`/grammar/${concept.previous.slug}`} className="text-muted hover:text-ink">
+          <Link
+            href={`/grammar/${concept.previous.slug}`}
+            className="text-muted-foreground hover:text-foreground"
+          >
             ← {concept.previous.title}
           </Link>
         ) : (
@@ -67,7 +74,7 @@ export default async function ConceptPage({ params }: PageProps<"/grammar/[slug]
         {concept.next && (
           <Link
             href={`/grammar/${concept.next.slug}`}
-            className="text-right text-muted hover:text-ink"
+            className="text-right text-muted-foreground hover:text-foreground"
           >
             {concept.next.title} →
           </Link>

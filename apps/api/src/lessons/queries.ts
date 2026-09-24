@@ -205,3 +205,37 @@ export async function recordLessonProgress(
     });
   return row!;
 }
+
+/** Every lesson in order, with the learner's status. */
+export async function listLessons(db: Db, userId: string) {
+  const rows = await db
+    .select({
+      id: lessons.id,
+      number: lessons.curriculumOrder,
+      title: lessons.title,
+      passageTitle: passages.title,
+      conceptTitle: grammarConcepts.title,
+      completedAt: userLessonProgress.completedAt,
+      startedAt: userLessonProgress.startedAt,
+    })
+    .from(lessons)
+    .innerJoin(passages, eq(passages.id, lessons.passageId))
+    .leftJoin(
+      lessonItems,
+      and(eq(lessonItems.lessonId, lessons.id), eq(lessonItems.kind, "grammar")),
+    )
+    .leftJoin(grammarConcepts, eq(grammarConcepts.id, lessonItems.conceptId))
+    .leftJoin(
+      userLessonProgress,
+      and(eq(userLessonProgress.lessonId, lessons.id), eq(userLessonProgress.userId, userId)),
+    )
+    .orderBy(asc(lessons.curriculumOrder));
+  return rows.map(({ completedAt, startedAt, ...r }) => ({
+    ...r,
+    status: completedAt
+      ? ("completed" as const)
+      : startedAt
+        ? ("in_progress" as const)
+        : ("not_started" as const),
+  }));
+}

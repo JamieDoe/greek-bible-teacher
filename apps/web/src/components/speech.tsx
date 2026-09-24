@@ -83,7 +83,7 @@ export function SpeakButton({ text, label }: { text: string; label: string }) {
       onClick={() => speak(text)}
       aria-label={`${label} (Modern Greek voice)`}
       title="Hear it (Modern Greek voice)"
-      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-ink hover:opacity-80"
+      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-foreground hover:opacity-80"
     >
       <SpeakerIcon />
     </button>
@@ -110,14 +110,17 @@ export function ListenToPassage({ text }: { text: string }) {
             speak(text, () => setPlaying(false));
           }
         }}
-        className="inline-flex h-11 items-center gap-2 rounded-xl bg-accent-soft px-4 hover:opacity-80"
+        className="inline-flex h-11 items-center gap-2 rounded-xl bg-accent px-4 hover:opacity-80"
       >
         <SpeakerIcon />
         {playing ? "Stop" : "Listen"}
       </button>
-      <span className="text-muted">
+      <span className="text-muted-foreground">
         Modern Greek voice ·{" "}
-        <Link href="/grammar/alphabet" className="underline underline-offset-2 hover:text-ink">
+        <Link
+          href="/grammar/alphabet"
+          className="underline underline-offset-2 hover:text-foreground"
+        >
           why it differs
         </Link>
       </span>

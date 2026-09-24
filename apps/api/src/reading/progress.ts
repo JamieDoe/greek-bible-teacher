@@ -120,12 +120,38 @@ export async function recordCompletion(
         timesRead: userReadingProgress.timesRead,
         completedAt: userReadingProgress.completedAt,
       });
+    const wordsInPassage = await passageTokenCount(tx, passageId);
     await tx.insert(readingEvents).values({
       userId,
       passageId,
       completedAt: now,
-      tokensRead: await passageTokenCount(tx, passageId),
+      tokensRead: wordsInPassage,
     });
-    return row!;
+    const [total] = await tx
+      .select({ n: sql<number>`coalesce(sum(${readingEvents.tokensRead}), 0)::int` })
+      .from(readingEvents)
+      .where(eq(readingEvents.userId, userId));
+    return { ...row!, wordsInPassage, totalWordsRead: total?.n ?? 0 };
   });
+}
+
+/** Lemmas of the passage the learner has in review (scheduled), for "known to you". */
+export async function knownLemmasInPassage(db: Db, userId: string, passageId: number) {
+  const rows = await db
+    .selectDistinct({ lemmaId: tokens.lemmaId })
+    .from(tokens)
+    .innerJoin(verses, eq(verses.id, tokens.verseId))
+    .innerJoin(passages, eq(passages.id, passageId))
+    .innerJoin(startVerse, eq(startVerse.id, passages.startVerseId))
+    .innerJoin(endVerse, eq(endVerse.id, passages.endVerseId))
+    .innerJoin(
+      userWordProgress,
+      and(
+        eq(userWordProgress.lemmaId, tokens.lemmaId),
+        eq(userWordProgress.userId, userId),
+        sql`${userWordProgress.nextReviewAt} is not null`,
+      ),
+    )
+    .where(sql`${verses.ordinal} between ${startVerse.ordinal} and ${endVerse.ordinal}`);
+  return rows.map((r) => r.lemmaId);
 }

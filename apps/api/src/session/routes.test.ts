@@ -57,6 +57,13 @@ describe("PATCH /me/preferences", () => {
     expect(again.user.disclosureLevel).toBe("advanced");
   });
 
+  it("updates the daily goal", async () => {
+    const cookie = cookieFrom(await start());
+    const res = await patch({ dailyMinutes: 15 }, cookie);
+    expect(sessionResponseSchema.parse(await res.json()).user.dailyMinutes).toBe(15);
+    expect((await patch({ dailyMinutes: 7 }, cookie)).status).toBe(400);
+  });
+
   it("requires a session", async () => {
     const res = await patch({ disclosureLevel: "advanced" });
     expect(res.status).toBe(401);

@@ -1,16 +1,24 @@
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
-import { BottomNav } from "@/components/bottom-nav";
+import { Geist, Geist_Mono, Literata } from "next/font/google";
+import { AppShell } from "@/components/app-shell";
+import { InlineScript } from "@/components/inline-script";
 import { OfflineBanner, ServiceWorkerRegistration } from "@/components/pwa";
+import { applyPreferences } from "@/lib/preferences";
 import "./globals.css";
 
-// Gentium 7 (SIL OFL 1.1), self-hosted and unmodified; see ./fonts/README.md.
-const gentium = localFont({
-  src: [
-    { path: "./fonts/Gentium-Regular.woff2", weight: "400", style: "normal" },
-    { path: "./fonts/Gentium-SemiBold.woff2", weight: "600", style: "normal" },
-  ],
-  variable: "--font-gentium",
+// Koinē type: Literata for Greek and headings (polytonic via greek-ext), Geist for the
+// interface, Geist Mono for labels. All SIL OFL 1.1; next/font self-hosts them at build.
+const literata = Literata({
+  subsets: ["latin", "greek", "greek-ext"],
+  style: ["normal", "italic"],
+  axes: ["opsz"],
+  variable: "--font-literata",
+  display: "swap",
+});
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans", display: "swap" });
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
   display: "swap",
 });
 
@@ -27,18 +35,24 @@ export const viewport: Viewport = {
   viewportFit: "cover",
   colorScheme: "light dark",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f2ea" },
-    { media: "(prefers-color-scheme: dark)", color: "#161412" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f2ec" },
+    { media: "(prefers-color-scheme: dark)", color: "#11100e" },
   ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${gentium.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col pb-[calc(3rem+env(safe-area-inset-bottom))]">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${literata.variable} ${geist.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <head>
+        <InlineScript html={`(${applyPreferences.toString()})()`} />
+      </head>
+      <body className="flex min-h-full flex-col">
         <OfflineBanner />
-        {children}
-        <BottomNav />
+        <AppShell>{children}</AppShell>
         <ServiceWorkerRegistration />
       </body>
     </html>

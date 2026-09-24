@@ -15,12 +15,12 @@ export async function createUser(db: Db): Promise<UserRow> {
   return row!;
 }
 
-export async function setDisclosureLevel(db: Db, id: string, level: DisclosureLevel) {
-  const [row] = await db
-    .update(users)
-    .set({ disclosureLevel: level })
-    .where(eq(users.id, id))
-    .returning();
+export async function updatePreferences(
+  db: Db,
+  id: string,
+  prefs: { disclosureLevel?: DisclosureLevel; dailyMinutes?: number },
+) {
+  const [row] = await db.update(users).set(prefs).where(eq(users.id, id)).returning();
   return row ?? null;
 }
 

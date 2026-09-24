@@ -28,7 +28,7 @@ export function OfflineBanner() {
   }, []);
   if (!offline) return null;
   return (
-    <p role="status" className="bg-accent-soft px-4 py-2 text-center text-sm">
+    <p role="status" className="bg-accent px-4 py-2 text-center text-sm">
       You’re offline. Passages you’ve read recently are still available.
     </p>
   );

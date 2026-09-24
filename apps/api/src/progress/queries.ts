@@ -1,13 +1,18 @@
 import { LEARNED_INTERVAL_DAYS, type ProgressResponse } from "@gbt/shared";
-import { and, count, eq, gte, isNotNull, lt, ne, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, isNotNull, lt, ne, sql } from "drizzle-orm";
 import type { Db } from "../db/client";
 import {
+  lemmas,
   readingEvents,
   reviewEvents,
   userGrammarProgress,
   userReadingProgress,
   userWordProgress,
 } from "../db/schema";
+import { practiceDays } from "./practice";
+
+/** The design's milestone: every word used this many times or more in the NT. */
+export const MILESTONE_FREQUENCY = 50;
 
 const n = async (q: Promise<{ n: number }[]>) => (await q)[0]?.n ?? 0;
 
@@ -103,8 +108,34 @@ export async function getProgress(
     from days left join reads on reads.d = days.d left join reviews on reviews.d = days.d
     order by days.d`);
 
+  const [milestone] = await db.execute<{ total: number; learned: number }>(sql`
+    select count(*)::int as total,
+      count(p.lemma_id) filter (where p.interval_days >= ${LEARNED_INTERVAL_DAYS})::int as learned
+    from ${lemmas} l
+    left join ${userWordProgress} p on p.lemma_id = l.id and p.user_id = ${userId}
+    where l.nt_frequency >= ${MILESTONE_FREQUENCY}`);
+  const recentlyLearned = await db
+    .select({ lemma: lemmas.lemma, gloss: lemmas.gloss })
+    .from(userWordProgress)
+    .innerJoin(lemmas, eq(lemmas.id, userWordProgress.lemmaId))
+    .where(
+      and(
+        eq(userWordProgress.userId, userId),
+        gte(userWordProgress.intervalDays, LEARNED_INTERVAL_DAYS),
+      ),
+    )
+    .orderBy(desc(userWordProgress.lastReviewedAt))
+    .limit(12);
+
   return {
     words: { learned, learning, learnedThresholdDays: LEARNED_INTERVAL_DAYS },
+    daysPractised: (await practiceDays(db, userId, tz)).length,
+    milestone: {
+      minFrequency: MILESTONE_FREQUENCY,
+      total: milestone?.total ?? 0,
+      learned: milestone?.learned ?? 0,
+    },
+    recentlyLearned,
     greekWordsRead: read?.n ?? 0,
     passagesCompleted,
     conceptsStudied,

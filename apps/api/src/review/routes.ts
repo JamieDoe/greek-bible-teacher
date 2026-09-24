@@ -1,4 +1,5 @@
 import {
+  type AddToReviewResponse,
   gradeRequestSchema,
   type GradeResponse,
   idParamSchema,
@@ -10,7 +11,7 @@ import type { AppEnv } from "../app";
 import { ApiHttpError } from "../http/errors";
 import { validBody, validParam } from "../http/validate";
 import { requireUser } from "../session/require-user";
-import { gradeWord } from "./grade";
+import { addToReview, gradeWord } from "./grade";
 import { buildReviewQueue } from "./queue";
 
 export const reviewRoutes = new Hono<AppEnv>()
@@ -28,6 +29,17 @@ export const reviewRoutes = new Hono<AppEnv>()
       lemmaIds: query.data.lemmaIds,
       mode: query.data.mode,
     });
+    return c.json(body);
+  })
+  .post("/review/:lemmaId/add", async (c) => {
+    const lemmaId = validParam(c, "lemmaId", idParamSchema);
+    const { db, now } = c.var.deps;
+    const r = await addToReview(db, { userId: c.var.userId, lemmaId, now: now() });
+    const body: AddToReviewResponse = {
+      lemmaId,
+      nextReviewAt: r.nextReviewAt.toISOString(),
+      added: r.added,
+    };
     return c.json(body);
   })
   .post("/review/:lemmaId", async (c) => {

@@ -24,7 +24,7 @@ function BlockView({ block }: { block: Block }) {
   switch (block.type) {
     case "heading":
       return block.level === 2 ? (
-        <h2 className="mt-8 font-serif text-xl">
+        <h2 className="mt-8 font-heading text-2xl">
           <Inline text={block.text} />
         </h2>
       ) : (

@@ -49,3 +49,25 @@ export async function gradeWord(
     return next;
   });
 }
+
+/**
+ * Puts a word into review now (from the reader's "Add to review"). A word already scheduled
+ * keeps its schedule; nothing is graded, so the scheduler still treats it as new.
+ */
+export async function addToReview(
+  db: Db,
+  { userId, lemmaId, now }: { userId: string; lemmaId: number; now: Date },
+): Promise<{ nextReviewAt: Date; added: boolean }> {
+  const [lemma] = await db.select({ id: lemmas.id }).from(lemmas).where(eq(lemmas.id, lemmaId));
+  if (!lemma) throw notFound("Word");
+  const existing = await findWordProgress(db, userId, lemmaId);
+  if (existing?.nextReviewAt) return { nextReviewAt: existing.nextReviewAt, added: false };
+  await db
+    .insert(userWordProgress)
+    .values({ userId, lemmaId, nextReviewAt: now, firstSeenAt: now })
+    .onConflictDoUpdate({
+      target: [userWordProgress.userId, userWordProgress.lemmaId],
+      set: { nextReviewAt: now },
+    });
+  return { nextReviewAt: now, added: true };
+}

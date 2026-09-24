@@ -1,6 +1,8 @@
 import { passagesResponseSchema } from "@gbt/shared";
+import { ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Card } from "@/components/ui/card";
 import { EmptyState, PageShell } from "@/components/ui/states";
 import { serverGet } from "@/lib/api-server";
 
@@ -10,22 +12,27 @@ export default async function ReadPage() {
   const { passages } = await serverGet("/passages", passagesResponseSchema);
   return (
     <PageShell title="Read">
+      <p className="-mt-2 mb-6 text-muted-foreground">
+        Passages chosen for learners, easiest first.
+      </p>
       {passages.length === 0 ? (
         <EmptyState>No passages are available yet.</EmptyState>
       ) : (
-        <ul className="divide-y divide-rule border-y border-rule">
-          {passages.map((p) => (
-            <li key={p.id}>
-              <Link
-                href={`/read/${p.id}`}
-                className="flex items-baseline justify-between py-4 hover:text-accent"
-              >
-                <span className="font-serif text-xl">{p.title}</span>
-                <span className="text-sm text-muted">Read →</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <Card className="gap-0 py-2">
+          <ul className="divide-y divide-border">
+            {passages.map((p) => (
+              <li key={p.id}>
+                <Link
+                  href={`/read/${p.id}`}
+                  className="flex items-center justify-between px-6 py-4 hover:bg-muted"
+                >
+                  <span className="font-heading text-xl">{p.title}</span>
+                  <ChevronRight className="size-5 text-muted-foreground" aria-hidden="true" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
       )}
     </PageShell>
   );

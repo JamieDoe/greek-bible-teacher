@@ -30,13 +30,13 @@ export function SavedPassages() {
 
   if (saved === null) return null;
   if (saved.length === 0) {
-    return <p className="text-muted">No passages are saved on this device yet.</p>;
+    return <p className="text-muted-foreground">No passages are saved on this device yet.</p>;
   }
   return (
-    <ul className="divide-y divide-rule border-y border-rule">
+    <ul className="divide-y divide-border border-y border-border">
       {saved.map((s) => (
         <li key={s.path}>
-          <a href={s.path} className="block py-3 font-serif text-lg hover:text-accent">
+          <a href={s.path} className="block py-3 font-heading text-lg hover:text-primary">
             {s.title}
           </a>
         </li>

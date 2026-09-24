@@ -9,8 +9,8 @@ import {
   completeOnboarding,
   createUser,
   findUser,
-  setDisclosureLevel,
   toSessionResponse,
+  updatePreferences,
 } from "./users";
 
 export const sessionRoutes = new Hono<AppEnv>()
@@ -35,7 +35,7 @@ export const sessionRoutes = new Hono<AppEnv>()
     const userId = readSessionUserId(c);
     if (!userId) throw new ApiHttpError(401, "no_session", "Start a session first");
     const body = await validBody(c, updatePreferencesRequestSchema);
-    const user = await setDisclosureLevel(c.var.deps.db, userId, body.disclosureLevel);
+    const user = await updatePreferences(c.var.deps.db, userId, body);
     if (!user) throw new ApiHttpError(401, "no_session", "Start a session first");
     return c.json(toSessionResponse(user));
   });

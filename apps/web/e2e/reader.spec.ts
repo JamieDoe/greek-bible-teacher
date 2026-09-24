@@ -1,12 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
+import { greekText, openJohn, sheet } from "./helpers";
 
-async function openJohn(page: Page) {
-  await page.goto("/read");
-  await page.getByRole("link", { name: /John 1:1–5/ }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "John 1:1–5" })).toBeVisible();
-}
-
-const sheet = (page: Page) => page.getByRole("dialog");
 const word = (page: Page, text: string) =>
   page.getByRole("button", { name: text, exact: true }).first();
 
@@ -15,37 +9,40 @@ test.describe("reader", () => {
     page,
   }) => {
     await openJohn(page);
-    const greek = page.locator('[lang="grc"]').first();
-    await expect(greek).toContainText("Ἐν ἀρχῇ ἦν ὁ λόγος, καὶ ὁ λόγος ἦν πρὸς τὸν θεόν");
+    await expect(greekText(page)).toContainText("Ἐν ἀρχῇ ἦν ὁ λόγος, καὶ ὁ λόγος ἦν πρὸς τὸν θεόν");
     await expect(page.getByText("Verse 5")).toBeAttached();
     await expect(page.getByRole("button", { name: "λόγος," })).toHaveCount(0);
     await expect(word(page, "λόγος")).toBeVisible();
   });
 
-  test("uses the self-hosted Greek font and composes combining diacritics", async ({ page }) => {
+  test("renders every Greek glyph, diacritics included, from the self-hosted font", async ({
+    page,
+  }) => {
     await openJohn(page);
     const result = await page.evaluate(async () => {
       await document.fonts.ready;
-      const el = document.querySelector('[lang="grc"]')!;
+      const el = document.querySelector('article [lang="grc"]')!;
       const family = getComputedStyle(el).fontFamily.split(",")[0]!.trim().replace(/['"]/g, "");
       const loaded = [...document.fonts].some(
         (f) => f.family.replace(/['"]/g, "") === family && f.status === "loaded",
       );
-      // A font that positions combining marks renders decomposed text at the same width as
-      // the precomposed form; one that doesn't advances past each mark.
+      // Measure the same text with two different fallbacks behind the font: equal widths mean
+      // no character fell back, i.e. the font covers every letter and mark. Checked for the
+      // passage itself and for loose combining marks (breathings, accents, iota subscript).
       const ctx = document.createElement("canvas").getContext("2d")!;
-      ctx.font = `48px "${family}"`;
-      const samples = ["ἀρχῇ", "ὃ", "αὐτῷ", "σκοτίᾳ", "ἦν"];
-      const deltas = samples.map((s) =>
-        Math.abs(
-          ctx.measureText(s.normalize("NFD")).width - ctx.measureText(s.normalize("NFC")).width,
-        ),
-      );
-      return { family, loaded, maxDelta: Math.max(...deltas) };
+      const width = (fallback: string, text: string) => {
+        ctx.font = `48px "${family}", ${fallback}`;
+        return ctx.measureText(text).width;
+      };
+      const passage = el.textContent ?? "";
+      const samples = [passage, "ἀρχῇ ᾧ ὢν Ἐν ῥῆμα Μωϋσῆς", "ἀρχῇ ᾧ ὢν Ἐν".normalize("NFD")];
+      const gaps = samples.map((t) => Math.abs(width("monospace", t) - width("serif", t)));
+      return { family, loaded, passageLength: passage.length, maxGap: Math.max(...gaps) };
     });
-    expect(result.family).toMatch(/gentium/i);
+    expect(result.family).toMatch(/literata/i);
     expect(result.loaded).toBe(true);
-    expect(result.maxDelta).toBeLessThan(0.5);
+    expect(result.passageLength).toBeGreaterThan(300);
+    expect(result.maxGap).toBe(0);
   });
 
   test("tap → panel → Esc returns focus to the word without moving the page", async ({ page }) => {
@@ -76,7 +73,7 @@ test.describe("reader", () => {
   test("swiping the panel down dismisses it", async ({ page }) => {
     await openJohn(page);
     await word(page, "ἀρχῇ").click();
-    const handle = sheet(page).locator(".cursor-grab");
+    const handle = sheet(page).locator('[data-slot="drawer-handle"]');
     // Measure after the slide-in animation, or the handle is still moving.
     await sheet(page).evaluate((el) =>
       Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished)),
@@ -95,23 +92,58 @@ test.describe("reader", () => {
   test("progressive disclosure is remembered for the user", async ({ page }) => {
     await openJohn(page);
     await word(page, "ἀρχῇ").click();
-    await sheet(page).getByText("Simple", { exact: true }).click();
-    await expect(sheet(page).getByText("Noun · Dative · Singular · Feminine")).toBeHidden();
+    const parsing = sheet(page).getByRole("list", { name: "Parsing" });
+    await sheet(page).getByRole("radio", { name: "Simple" }).click();
+    await expect(parsing).toBeHidden();
 
     const saved = page.waitForResponse(
       (r) => r.url().includes("/api/me/preferences") && r.request().method() === "PATCH",
     );
-    await sheet(page).getByText("More", { exact: true }).click();
+    await sheet(page).getByRole("radio", { name: "More" }).click();
     expect((await saved).ok()).toBe(true);
-    await expect(sheet(page).getByText("Noun · Dative · Singular · Feminine")).toBeVisible();
+    await expect(parsing.getByRole("listitem")).toHaveText([
+      "Noun",
+      "Dative",
+      "Singular",
+      "Feminine",
+    ]);
     await expect(sheet(page).getByText("Parse code")).toBeHidden();
 
     await page.reload();
     await word(page, "ἀρχῇ").click();
     await expect(sheet(page).getByRole("radio", { name: "More" })).toBeChecked();
 
-    await sheet(page).getByText("Full", { exact: true }).click();
+    await sheet(page).getByRole("radio", { name: "Full" }).click();
     await expect(sheet(page).getByText("N- ----DSF-")).toBeVisible();
     await expect(sheet(page).getByText(/In the NT: \d+ times/)).toBeVisible();
+  });
+
+  test("words not yet in review are marked as new; the sheet can add one", async ({ page }) => {
+    await openJohn(page);
+    await expect(word(page, "λόγος")).toHaveAttribute("data-new", "true");
+    await word(page, "λόγος").click();
+    const added = page.waitForResponse((r) => /\/api\/review\/\d+\/add$/.test(r.url()));
+    await sheet(page).getByRole("button", { name: "Add to review" }).click();
+    expect((await added).ok()).toBe(true);
+    await expect(sheet(page).getByRole("button", { name: "In review" })).toBeDisabled();
+    await sheet(page).getByRole("button", { name: "Back to text" }).click();
+    await expect(sheet(page)).toBeHidden();
+    await page.reload();
+    await expect(word(page, "λόγος")).not.toHaveAttribute("data-new", /.*/);
+    await expect(word(page, "θεόν")).toHaveAttribute("data-new", "true");
+  });
+
+  test("Greek text size is adjustable and remembered on the device", async ({ page }) => {
+    await openJohn(page);
+    const size = () => greekText(page).evaluate((el) => getComputedStyle(el).fontSize);
+    expect(await size()).toBe("21px");
+    await page.getByRole("button", { name: "Text size" }).click();
+    const slider = page.getByRole("slider", { name: "Greek text size" });
+    await slider.focus();
+    await page.keyboard.press("ArrowRight");
+    await expect.poll(size).toBe("24px");
+    await page.keyboard.press("Escape");
+    await page.reload();
+    await expect.poll(size).toBe("24px");
   });
 });

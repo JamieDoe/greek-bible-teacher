@@ -1,6 +1,7 @@
 # Status
 
-**Current phase:** 8 — PWA/mobile polish ✅ complete (2026-09-24). **MVP acceptance test passes.**
+**Current phase:** Koinē redesign ✅ complete (2026-09-24), after Phase 8. Phase 9 is next.
+**MVP acceptance test passes.**
 
 ## Done
 
@@ -94,14 +95,25 @@
 - Tests: shared 113, web 32, API 170, Playwright 30 (desktop, mobile, and a `pwa` project
   against a production build).
 
+- **Koinē redesign:** the supplied design on shadcn/ui registry components, themed as a custom
+  design system (DECISIONS 022).
+  - Type is Literata, Geist and Geist Mono; the accent is lapis; light and dark follow the design.
+  - Navigation is Home / Learn / Read / Progress (a sidebar on desktop), and there is a Settings
+    screen (daily goal, name, Greek size, theme).
+  - Welcome and a two-step onboarding. The name is kept on the device only.
+  - Today has the four-stage session card, week dots, continue reading and due words.
+  - Reader: the word sheet is a Drawer; words not yet known are marked; there is an Aa size
+    control, a passage-complete screen with checkbox review, and "Add to review" in the sheet.
+  - Review has new-word cards and an answer panel previewing the next interval.
+  - Progress has a 14-week heatmap.
+  - New API: `GET /lessons`, `GET /passages/:id/familiarity`, `POST /review/:lemmaId/add`,
+    and richer `/today`, `/progress` and review queue responses.
+- Tests: shared 113, web 30, API 182, Playwright 34. The acceptance flow (now via
+  welcome → onboarding) passes on desktop and mobile, and the `pwa` project passes against a
+  production build.
+
 ## Next
 
-- **Koinē redesign (before Phase 9):** apply the design in "Koinē — Greek NT learning PWA"
-  using shadcn/ui themed with Koinē tokens: Literata and Geist, lapis accent, Home / Learn /
-  Read / Progress nav, the four-stage session card (grouping the 7-step loop), flip cards, the
-  passage-complete screen, Settings, and desktop layouts. The name is kept on the device only.
-  Deferred until chosen: sense lines, declension and forms chips, placement check, reminders,
-  and Restored Koine pronunciation.
 - **Phase 9 (Deployment):** production Dockerfiles, Compose for a VPS, reverse-proxy notes,
   migrate-on-deploy, and a Postgres backup note. Set `API_INTERNAL_URL` at `next build` (Next
   bakes the rewrites in at build time).

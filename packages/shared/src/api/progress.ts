@@ -16,7 +16,7 @@ export const progressQuerySchema = z
   .object({
     /** IANA time zone for grouping activity by the learner's local day. */
     tz: z.string().max(64).refine(isTimeZone, "unknown time zone").default("UTC"),
-    days: z.coerce.number().int().min(7).max(90).default(28),
+    days: z.coerce.number().int().min(7).max(112).default(28),
   })
   .strict();
 export type ProgressQuery = z.infer<typeof progressQuerySchema>;
@@ -38,6 +38,16 @@ export const progressResponseSchema = z.object({
     correct: z.number().int(),
     last7Days: z.object({ total: z.number().int(), correct: z.number().int() }),
   }),
+  /** Days with any review or finished reading. */
+  daysPractised: z.number().int(),
+  /** Progress towards knowing every word used 50+ times in the NT. */
+  milestone: z.object({
+    minFrequency: z.number().int(),
+    total: z.number().int(),
+    learned: z.number().int(),
+  }),
+  /** Most recently learned words, newest first. */
+  recentlyLearned: z.array(z.object({ lemma: z.string(), gloss: z.string().nullable() })),
   /** One entry per local day, oldest first, zero-filled. */
   activity: z.array(
     z.object({

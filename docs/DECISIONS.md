@@ -217,6 +217,8 @@ disclosure level per user.
 
 ## 014 — Reader choices (Phase 3)
 
+_Typeface and lookup panel superseded by 022 (Literata; a vaul Drawer)._
+
 - **Typeface:** Gentium 7.000 (SIL OFL 1.1), self-hosted with `next/font/local`, using the
   unmodified Regular and SemiBold WOFF2 files (about 720 KB). The OFL's Reserved Font Name
   "Gentium" means subsetting would require renaming, so the files aren't subset. SBL Greek was not
@@ -376,6 +378,8 @@ open for More or Full.
 
 ## 019 — Progress metrics
 
+_The two column charts were replaced by a 14-week heatmap in 022._
+
 **Decision.** `GET /progress?tz=<IANA>&days=7–90` returns real counts only; there is no
 proficiency percentage.
 
@@ -400,6 +404,8 @@ proficiency percentage.
   stay at true pixel sizes on phones.
 
 ## 020 — PWA: manifest, icons and a hand-written service worker
+
+_Icons are now set in Literata, lapis on ground (022)._
 
 - **Manifest** via Next's `app/manifest.ts` convention: standalone display, paper
   background and theme colours, and 192/512 icons plus a 512 maskable icon. `app/icon.png` and
@@ -457,6 +463,70 @@ alphabet lesson explains the differences.
 Erasmian / Restored Koine setting can't be honoured by device voices; see the design notes.
 Playwright stubs the speech engine, since headless Chromium has no Greek voice.
 
+## 022 — Koinē redesign on shadcn/ui
+
+**Context.** The user supplied the design "Koinē — Greek NT learning PWA" (18 pages, with a
+design-system page) and asked for shadcn/ui, themed as a custom design system, with registry
+components used wherever one fits (checkboxes, cards, and so on).
+
+**Decision.** shadcn/ui (radix base, nova preset) is initialised in `apps/web`. The registry
+components live in `components/ui` and are edited in place to become the Koinē system, rather
+than wrapped.
+
+- **Tokens.** Koinē's colours map onto shadcn's variables in `globals.css`:
+  - ground → `background`; surface → `card`/`popover`; sunken → `muted`/`secondary`.
+  - line → `border`/`input`; ink → `foreground`; muted ink → `muted-foreground`.
+  - lapis → `primary`/`ring`; lapis soft → `accent`.
+  - Custom additions: `rubric` (new or wrong), `correct`, and their soft tints (via `color-mix`).
+  - Dark mode is its own palette from the design, not an inversion.
+- **Theme and text size** are set before paint. A small inline script reads `koine-theme` and
+  `koine-greek-size` from localStorage, adds `.dark`, and sets `--greek-size`. Both are device
+  preferences in Settings, and the reader has an "Aa" control.
+- **Type.** Literata (text and Greek: latin, greek and greek-ext subsets, with an optical-size
+  axis), Geist (UI) and Geist Mono (labels). All three are SIL OFL 1.1 and self-hosted by
+  `next/font/google` at build time; the licences were checked on Google Fonts and upstream.
+  Gentium is removed. The font test now checks that no Greek glyph falls back, rather than
+  comparing NFD and NFC widths, because Literata's precomposed glyphs are spaced on purpose.
+- **Components changed from the registry defaults:**
+  - Button: 56/48/44px sizes, an `ink` variant, and a rubric `destructive`.
+  - Card: 24px radius and a soft shadow; a ring instead in dark mode.
+  - Badge: `parsing` (mono chip) and `greek` variants.
+  - Toggle group: a `segmented` variant, used for disclosure level, daily time, ease and theme.
+  - Checkbox and radio are 24px.
+  - Drawer: the reader's word sheet, with swipe-down, Esc and tap-outside built in.
+  - Slider: the name moves to the focusable thumb, which has a 44px hit area.
+  - Also used: Progress, Input and Label.
+- **Screen changes.**
+  - Navigation is Home / Learn / Read / Progress (a sidebar on desktop); Learn gathers
+    lessons, review and grammar. Lesson, review, reader, onboarding and welcome are immersive
+    (no nav).
+  - The 7-step daily loop is unchanged, grouped into 4 stages (α′ review, β′ new words,
+    γ′ grammar, δ′ read) on Today and in the lesson header (`lib/stages.ts`, tested).
+  - In the reader, words not yet in review have a dotted rubric underline
+    (`GET /passages/:id/familiarity`).
+  - Passage complete lists the words looked up with checkboxes. Ticked words go into review
+    (`POST /review/:lemmaId/add`, which never reschedules a word already in review).
+  - The review answer panel previews the next interval with the same SM-2 scheduler, and
+    Hard/Good/Easy is one segmented control plus Continue.
+  - Progress shows a 14-week heatmap: one hue, an opacity ramp, and a table view.
+  - `GET /today` gains week dots, days practised, known words in the passage and due words.
+    It takes a validated IANA `tz`.
+- **Personal data.** The optional first name is stored only in localStorage and never sent
+  to the API (chosen by the user), in line with "no sensitive data until auth".
+
+**Deferred or not taken.**
+
+- Not taken from the design: transliteration, sense lines, declension and forms chips, the
+  placement check, reminders, and Restored Koine pronunciation (device voices can't do it; 021).
+- The grading step keeps Hard/Good/Easy (CLAUDE.md), compacted, instead of the design's single
+  button.
+- The `/review?lemmas=` route was removed: nothing links to it now that looked-up words go
+  into review from the completion screen.
+
+**Consequences.** UI code reads as standard shadcn, so new screens start from the registry. The
+Koinē look lives in the tokens plus about ten edited component files. Registry updates must be
+merged by hand into those files: check `git diff` after any `shadcn add --overwrite`.
+
 ## Dependencies
 
 One line each, for why the dependency exists.
@@ -474,3 +544,12 @@ One line each, for why the dependency exists.
 - `@playwright/test` (web, dev): end-to-end tests (specified). Chromium only.
 - `zod`, `@gbt/shared` in web: to validate API responses against the shared schemas.
 - `vitest` (web, dev): unit tests for pure web helpers (the Markdown subset parser).
+- `radix-ui` (web): accessible primitives behind the shadcn components (checkbox, radio group,
+  toggle group, slider, progress, label).
+- `vaul` (web): the bottom-sheet Drawer (swipe to dismiss) used for the word sheet.
+- `class-variance-authority`, `cn` (web): component variants and class merging for the shadcn
+  components (`cn` is shadcn's compiled drop-in for `clsx` + `tailwind-merge`, MIT).
+- `lucide-react` (web): the icon set shadcn components use.
+- `tw-animate-css` (web): the enter and exit animations shadcn components reference.
+- `shadcn` (web, dev): the CLI for adding registry components, and its `shadcn/tailwind.css`
+  base styles.

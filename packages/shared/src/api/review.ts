@@ -28,6 +28,30 @@ export const reviewItemSchema = z.object({
     partOfSpeech: z.enum(partsOfSpeech).nullable(),
     ntFrequency: z.number().int(),
   }),
+  /** The word's current schedule, so the client can preview the next interval (null: new). */
+  srs: z
+    .object({
+      difficulty: z.number(),
+      stability: z.number(),
+      intervalDays: z.number(),
+      nextReviewAt: z.iso.datetime(),
+      lastReviewedAt: z.iso.datetime(),
+    })
+    .nullable(),
+  /** A verse using the word, with the form marked (shown on new-word cards). */
+  example: z
+    .object({
+      displayRef: z.string(),
+      tokens: z.array(
+        z.object({
+          before: z.string(),
+          word: z.string(),
+          after: z.string(),
+          isTarget: z.boolean(),
+        }),
+      ),
+    })
+    .nullable(),
   exercise: z.object({
     type: z.enum(["gloss", "context"]),
     /** For "context": the verse the form comes from, with the target token marked. */
@@ -75,5 +99,17 @@ export type LookupRequest = z.infer<typeof lookupRequestSchema>;
 export const readingCompleteResponseSchema = z.object({
   timesRead: z.number().int(),
   completedAt: z.iso.datetime(),
+  /** Greek words in this passage. */
+  wordsInPassage: z.number().int(),
+  /** Greek words the learner has read in total, this read-through included. */
+  totalWordsRead: z.number().int(),
 });
 export type ReadingCompleteResponse = z.infer<typeof readingCompleteResponseSchema>;
+
+export const addToReviewResponseSchema = z.object({
+  lemmaId: z.number().int(),
+  /** When the word will next be asked (now if it was newly added). */
+  nextReviewAt: z.iso.datetime(),
+  added: z.boolean(),
+});
+export type AddToReviewResponse = z.infer<typeof addToReviewResponseSchema>;

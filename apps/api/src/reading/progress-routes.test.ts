@@ -1,4 +1,5 @@
 import {
+  passageFamiliarityResponseSchema,
   passagesResponseSchema,
   passageResponseSchema,
   readingCompleteResponseSchema,
@@ -101,18 +102,48 @@ describe("POST /reading/:passageId/complete", () => {
     const first = readingCompleteResponseSchema.parse(
       await (await post(`/reading/${passageId}/complete`)).json(),
     );
-    expect(first).toEqual({ timesRead: 1, completedAt: T0.toISOString() });
+    expect(first).toEqual({
+      timesRead: 1,
+      completedAt: T0.toISOString(),
+      wordsInPassage: 61,
+      totalWordsRead: 61,
+    });
 
     clock.now = hours(5);
     const second = readingCompleteResponseSchema.parse(
       await (await post(`/reading/${passageId}/complete`)).json(),
     );
-    expect(second).toEqual({ timesRead: 2, completedAt: T0.toISOString() });
+    expect(second).toEqual({
+      timesRead: 2,
+      completedAt: T0.toISOString(),
+      wordsInPassage: 61,
+      totalWordsRead: 122,
+    });
     const [row] = await db.select().from(userReadingProgress);
     expect(row?.lastReadAt).toEqual(hours(5));
   });
 
   it("404s for an unknown passage", async () => {
     expect((await post(`/reading/999999/complete`)).status).toBe(404);
+  });
+});
+
+describe("GET /passages/:id/familiarity", () => {
+  it("lists the passage's lemmas the learner has in review", async () => {
+    const get = async () =>
+      passageFamiliarityResponseSchema.parse(
+        await (
+          await app.request(`/passages/${passageId}/familiarity`, { headers: { Cookie: cookie } })
+        ).json(),
+      );
+    expect((await get()).knownLemmaIds).toEqual([]);
+    await post(`/review/${logosLemmaId}`, { grade: "good" });
+    expect((await get()).knownLemmaIds).toEqual([logosLemmaId]);
+  });
+
+  it("requires a session and a real passage", async () => {
+    expect((await app.request(`/passages/${passageId}/familiarity`)).status).toBe(401);
+    const res = await app.request("/passages/999999/familiarity", { headers: { Cookie: cookie } });
+    expect(res.status).toBe(404);
   });
 });

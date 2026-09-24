@@ -6,6 +6,7 @@ import { z } from "zod";
 import { apiPost } from "@/lib/api-client";
 import { ensureSession } from "@/lib/session";
 import { useSession } from "../use-session";
+import { Button } from "@/components/ui/button";
 import { Markdown } from "./markdown";
 
 const progressSchema = z.object({ status: z.enum(["introduced", "studied"]) });
@@ -17,9 +18,9 @@ export function DeeperSection({ source }: { source: string }) {
     <details
       key={ready ? level : "loading"}
       open={ready && level !== "beginner"}
-      className="mt-8 rounded-xl border border-rule px-4 py-3"
+      className="mt-6 rounded-3xl bg-muted px-6 py-4"
     >
-      <summary className="cursor-pointer font-serif text-lg">Going deeper: terminology</summary>
+      <summary className="cursor-pointer font-heading text-xl">Going deeper: terminology</summary>
       <Markdown source={source} />
     </details>
   );
@@ -55,22 +56,18 @@ export function StudyButton({ slug }: { slug: string }) {
 
   if (status === "studied") {
     return (
-      <p role="status" className="text-sm text-accent">
+      <p role="status" className="flex items-center gap-2 font-semibold text-correct">
         ✓ Studied
       </p>
     );
   }
   return (
     <div>
-      <button
-        type="button"
-        onClick={markStudied}
-        className="rounded-full bg-ink px-5 py-2 text-sm text-paper hover:opacity-90"
-      >
+      <Button size="lg" className="w-full sm:w-auto" onClick={() => void markStudied()}>
         Mark as studied
-      </button>
+      </Button>
       {error && (
-        <p role="alert" className="mt-2 text-sm text-muted">
+        <p role="alert" className="mt-2 text-sm text-muted-foreground">
           Couldn’t save. Please try again.
         </p>
       )}

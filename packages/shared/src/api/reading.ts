@@ -123,3 +123,9 @@ export const sourcesResponseSchema = z.object({
   ),
 });
 export type SourcesResponse = z.infer<typeof sourcesResponseSchema>;
+
+/** Lemmas in a passage the learner already has in review ("known to you"). */
+export const passageFamiliarityResponseSchema = z.object({
+  knownLemmaIds: z.array(z.number().int()),
+});
+export type PassageFamiliarityResponse = z.infer<typeof passageFamiliarityResponseSchema>;

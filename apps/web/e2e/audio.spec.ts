@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
+import { openJohn } from "./helpers";
 
 // Headless Chromium has no Greek voice, so each test stubs the Web Speech API: `voices`
 // decides what the device offers, and everything spoken is recorded on window.__spoken.
@@ -35,12 +36,6 @@ const spoken = (page: Page) =>
     () =>
       (window as unknown as { __spoken: { text: string; lang: string; rate: number }[] }).__spoken,
   );
-
-async function openJohn(page: Page) {
-  await page.goto("/read");
-  await page.getByRole("link", { name: /John 1:1–5/ }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "John 1:1–5" })).toBeVisible();
-}
 
 test("a tapped word can be heard, in monotonic spelling, with the Greek voice", async ({
   page,

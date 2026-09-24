@@ -6,7 +6,12 @@ import {
   lessonResponseSchema,
   type LessonStep,
 } from "@gbt/shared";
+import { Check, X } from "lucide-react";
 import Link from "next/link";
+import { SectionLabel, STAGE_MARKS } from "@/components/koine";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { stageOf, stageStatuses } from "@/lib/stages";
 import { useEffect, useRef, useState } from "react";
 import { ReviewSession } from "@/components/review/review-session";
 import { ErrorState, LoadingState, PageShell } from "@/components/ui/states";
@@ -107,59 +112,75 @@ export function LessonRunner({ lessonId }: { lessonId: number }) {
 
   if (done) {
     return (
-      <PageShell>
-        <h1 ref={heading} tabIndex={-1} className="font-serif text-3xl outline-none">
+      <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col items-center px-4 pt-16 pb-10 text-center sm:px-6">
+        <span className="flex size-24 items-center justify-center rounded-full ring-8 ring-accent">
+          <span className="flex size-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <Check className="size-8" aria-hidden="true" />
+          </span>
+        </span>
+        <SectionLabel className="mt-6 text-primary">Lesson {lesson.number} complete</SectionLabel>
+        <h1 ref={heading} tabIndex={-1} className="mt-2 font-heading text-4xl outline-none">
           Lesson complete
         </h1>
-        <p className="mt-2 text-muted">
+        <p className="mt-3 text-muted-foreground">
           You read {lesson.passage.title} twice and learned new words and grammar along the way.
         </p>
-        <Link
-          href="/"
-          className="mt-6 inline-block rounded-full bg-ink px-6 py-2.5 text-sm text-paper hover:opacity-90"
-        >
-          Back to Today
-        </Link>
-      </PageShell>
+        <Button asChild size="lg" className="mt-auto w-full">
+          <Link href="/">Back to Today</Link>
+        </Button>
+      </main>
     );
   }
 
   const current = lesson.steps[step]!;
   const onDone = () => void advance();
+  const stages = stageStatuses(
+    lesson.steps.map((s) => s.kind),
+    step,
+  );
+  const stageIndex = stages.findIndex((s) => s.key === stageOf(current.kind));
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-5 pt-8 sm:px-8">
-      <header className="mb-6">
-        <p className="text-sm text-muted">
-          <Link href="/" className="hover:text-ink">
-            Today
-          </Link>{" "}
-          · Lesson {lesson.number}
-        </p>
-        <h1 ref={heading} tabIndex={-1} className="mt-1 font-serif text-2xl outline-none">
-          {lesson.title}
-        </h1>
-        <ol className="mt-4 flex gap-1" aria-label="Lesson steps">
-          {lesson.steps.map((s, i) => (
-            <li
-              key={i}
-              aria-current={i === step ? "step" : undefined}
-              title={STEP_LABELS[s.kind]}
-              className={`h-1.5 flex-1 rounded-full ${i < step ? "bg-accent" : i === step ? "bg-ink" : "bg-rule"}`}
-            >
-              <span className="sr-only">
-                {STEP_LABELS[s.kind]}
-                {i < step ? " (done)" : ""}
-              </span>
-            </li>
-          ))}
-        </ol>
-        <p className="mt-2 text-sm text-muted" aria-live="polite">
-          Step {step + 1} of {lesson.steps.length}: {STEP_LABELS[current.kind]}
-        </p>
+    <div className="flex min-h-dvh flex-col">
+      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur">
+        <div className="mx-auto flex max-w-2xl items-center gap-4 px-3 pt-3 sm:px-6">
+          <Button asChild variant="ghost" size="icon" aria-label="Leave lesson">
+            <Link href="/">
+              <X aria-hidden="true" />
+            </Link>
+          </Button>
+          <ol className="flex flex-1 gap-1.5" aria-label="Lesson stages">
+            {stages.map((s) => (
+              <li key={s.key} className="flex-1">
+                <Progress
+                  value={s.progress * 100}
+                  aria-label={`${s.label}: ${s.state}`}
+                  className="h-1"
+                />
+              </li>
+            ))}
+          </ol>
+          <span className="w-10 text-right font-mono text-xs text-muted-foreground">
+            {step + 1}/{lesson.steps.length}
+          </span>
+        </div>
+        <div className="mx-auto max-w-2xl px-4 pt-4 pb-2 sm:px-6">
+          <p className="font-mono text-xs tracking-[0.08em] text-primary uppercase">
+            <span lang="grc" className="font-greek text-sm normal-case">
+              {STAGE_MARKS[stageIndex]}
+            </span>{" "}
+            · {STEP_LABELS[current.kind]}
+          </p>
+          <h1 ref={heading} tabIndex={-1} className="sr-only">
+            {lesson.title}: step {step + 1} of {lesson.steps.length}, {STEP_LABELS[current.kind]}
+          </h1>
+          <p className="sr-only" aria-live="polite">
+            Step {step + 1} of {lesson.steps.length}: {STEP_LABELS[current.kind]}
+          </p>
+        </div>
       </header>
 
-      <div className="pb-16">
+      <div className="mx-auto w-full max-w-2xl flex-1 px-4 pt-4 pb-16 sm:px-6">
         <StepView
           key={step}
           step={current}
@@ -168,7 +189,7 @@ export function LessonRunner({ lessonId }: { lessonId: number }) {
           onDone={onDone}
         />
         {saveError && (
-          <p role="alert" className="mt-4 text-sm text-muted">
+          <p role="alert" className="mt-4 text-sm text-rubric">
             Couldn’t save your progress. Check your connection and press Continue again.
           </p>
         )}
@@ -206,7 +227,6 @@ function StepView({
       return (
         <ReadingStep
           passageId={step.passageId}
-          heading="Read slowly; tap any word"
           onFinished={(ids) => {
             onLookedUp(ids);
             onDone();
@@ -220,12 +240,6 @@ function StepView({
       return <ReviewSession lemmaIds={ids.join(",")} context="lesson" onDone={onDone} />;
     }
     case "reread":
-      return (
-        <ReadingStep
-          passageId={step.passageId}
-          heading="Read it again"
-          onFinished={() => onDone()}
-        />
-      );
+      return <ReadingStep passageId={step.passageId} onFinished={() => onDone()} />;
   }
 }

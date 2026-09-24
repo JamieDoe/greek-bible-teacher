@@ -1,6 +1,7 @@
 import {
   apiErrorSchema,
   lessonProgressSchema,
+  lessonsListResponseSchema,
   lessonResponseSchema,
   reviewQueueResponseSchema,
   sessionResponseSchema,
@@ -180,5 +181,62 @@ describe("GET /review/queue?mode=due", () => {
   it("returns only due words, never new ones", async () => {
     const res = await send("GET", "/review/queue?mode=due");
     expect(reviewQueueResponseSchema.parse(await res.json()).items).toEqual([]);
+  });
+});
+
+describe("GET /lessons", () => {
+  it("lists every lesson in order with the learner's status", async () => {
+    const res = await send("GET", "/lessons");
+    const { lessons } = lessonsListResponseSchema.parse(await res.json());
+    expect(lessons).toHaveLength(lessonContent.length);
+    expect(lessons[0]).toMatchObject({
+      number: 1,
+      title: "In the beginning was the Word",
+      passageTitle: "John 1:1–5",
+      conceptTitle: "The article and case: who is what",
+      status: "not_started",
+    });
+    await send("POST", `/lessons/${lessons[0]!.id}/progress`, { step: 2 });
+    await send("POST", `/lessons/${lessons[1]!.id}/progress`, { step: 6, completed: true });
+    const after = lessonsListResponseSchema.parse(await (await send("GET", "/lessons")).json());
+    expect(after.lessons.slice(0, 3).map((l) => l.status)).toEqual([
+      "in_progress",
+      "completed",
+      "not_started",
+    ]);
+  });
+});
+
+describe("GET /today: practice, known words and due words", () => {
+  it("marks practised days in the learner's week and counts known passage words", async () => {
+    const first = (await today()).lesson!;
+    const l = await lesson(first.id);
+    const vocab = l.steps.find((s) => s.kind === "vocab");
+    if (vocab?.kind !== "vocab") throw new Error("no vocab step");
+    for (const id of vocab.lemmaIds) await send("POST", `/review/${id}`, { grade: "good" });
+
+    const t = todayResponseSchema.parse(
+      await (await send("GET", "/today?tz=Europe/London")).json(),
+    );
+    // T0 = Sunday 1 March 2026: the week runs Monday 23 Feb – Sunday 1 Mar.
+    expect(t.practice.week.map((d) => d.date)).toEqual([
+      "2026-02-23",
+      "2026-02-24",
+      "2026-02-25",
+      "2026-02-26",
+      "2026-02-27",
+      "2026-02-28",
+      "2026-03-01",
+    ]);
+    expect(t.practice.week.at(-1)).toEqual({ date: "2026-03-01", practised: true, today: true });
+    expect(t.practice.daysPractised).toBe(1);
+    // λόγος ×3, θεός ×3, ἀρχή ×2, καί ×6, εἰμί ×6 in John 1:1–5 are now in review.
+    expect(t.passageKnown).toMatchObject({ known: 20, total: 61 });
+    expect(t.passageKnown?.firstLine.startsWith("Ἐν ἀρχῇ ἦν ὁ λόγος")).toBe(true);
+    expect(t.dueWords).toEqual([]);
+  });
+
+  it("rejects an unknown time zone", async () => {
+    expect((await send("GET", "/today?tz=Nowhere/Land")).status).toBe(400);
   });
 });

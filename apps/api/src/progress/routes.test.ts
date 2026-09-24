@@ -94,6 +94,24 @@ describe("GET /progress", () => {
     expect((await progress()).words).toMatchObject({ learned: 1, learning: 1 });
   });
 
+  it("reports days practised, the 50+ milestone and recently learned words", async () => {
+    // θεός: 83 times in John (this test imports John only), so inside the 50+ milestone.
+    const theos = await lemmaId("θεός");
+    await post(`/review/${theos}`, { grade: "good" });
+    clock.now = at("2026-03-03T09:00:00Z");
+    await post(`/reading/${passageId}/complete`);
+    await db
+      .update(userWordProgress)
+      .set({ intervalDays: LEARNED_INTERVAL_DAYS })
+      .where(eq(userWordProgress.lemmaId, theos));
+    const p = await progress();
+    expect(p.daysPractised).toBe(2);
+    expect(p.milestone.minFrequency).toBe(50);
+    expect(p.milestone.total).toBeGreaterThan(0);
+    expect(p.milestone.learned).toBe(1);
+    expect(p.recentlyLearned).toEqual([{ lemma: "θεός", gloss: expect.any(String) }]);
+  });
+
   it.each(["?tz=Mars/Olympus", "?days=3", "?days=365", "?other=1"])("rejects %s", async (q) => {
     const res = await app.request(`/progress${q}`, { headers: { Cookie: cookie } });
     expect(res.status).toBe(400);

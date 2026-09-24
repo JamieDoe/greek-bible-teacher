@@ -1,92 +1,81 @@
-import { expect, type Page, test } from "@playwright/test";
 import { reviewQueueResponseSchema } from "@gbt/shared";
+import { expect, test } from "@playwright/test";
+import { answerCard, lookUp, openJohn, trackGlosses } from "./helpers";
 
 // Each test gets a fresh browser context, so a fresh anonymous learner.
 
-async function openJohn(page: Page) {
-  await page.goto("/read");
-  await page.getByRole("link", { name: /John 1:1–5/ }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "John 1:1–5" })).toBeVisible();
-}
-
-async function lookUp(page: Page, word: string) {
-  const recorded = page.waitForResponse(
-    (r) => r.url().includes("/lookup") && r.request().method() === "POST",
-  );
-  await page.getByRole("button", { name: word, exact: true }).first().click();
-  await expect(page.getByRole("dialog")).toBeVisible();
-  expect((await recorded).status()).toBe(204);
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).toBeHidden();
-}
-
-test("finish a passage, then review the words looked up; a miss comes back", async ({ page }) => {
+test("finishing a passage puts the ticked looked-up words into review", async ({ page }) => {
   await openJohn(page);
   await lookUp(page, "ἀρχῇ");
   await lookUp(page, "λόγος");
-  await lookUp(page, "λόγος"); // same word twice counts once for the review offer
+  await lookUp(page, "λόγος"); // the same word twice is listed once
 
   await page.getByRole("button", { name: "Finish passage" }).click();
-  await expect(page.getByRole("heading", { name: "Passage complete" })).toBeVisible();
-  await expect(page.getByText("You looked up 2 words.")).toBeVisible();
-
-  // Option order is shuffled per response (and dev StrictMode fetches twice), so answers are
-  // chosen by gloss text, which every response agrees on.
-  const queueResponse = page.waitForResponse((r) => r.url().includes("/api/review/queue"));
-  await page.getByRole("link", { name: "Review these 2" }).click();
-  const queue = reviewQueueResponseSchema.parse(await (await queueResponse).json());
-  expect(queue.items.map((i) => [i.lemma.lemma, i.kind])).toEqual([
-    ["ἀρχή", "lookedUp"],
-    ["λόγος", "lookedUp"],
-  ]);
-  const [arche, logos] = queue.items;
-  await expect(page.getByText("Words you looked up")).toBeVisible();
-  await expect(page.getByText("2 to go")).toBeVisible();
-
-  const options = page.locator("main ul button");
-  const answer = (gloss: string) => options.filter({ hasText: new RegExp(`^${gloss}$`) });
-  const notAnswer = (gloss: string) =>
-    options.filter({ hasNotText: new RegExp(`^${gloss}$`) }).first();
-
-  // 1st card (ἀρχή): answer correctly, grade Good.
-  await answer(arche!.lemma.gloss).click();
-  await expect(page.getByText("Correct. How easy was it?")).toBeVisible();
-  await page.getByRole("button", { name: "good" }).click();
-
-  // 2nd card (λόγος): answer wrongly → it is requeued.
-  await expect(page.getByText("1 to go")).toBeVisible();
-  await notAnswer(logos!.lemma.gloss).click();
-  await expect(page.getByText(/Not quite/)).toBeVisible();
-  await page.getByRole("button", { name: "Continue" }).click();
-
-  // It resurfaces in the same session.
-  await expect(page.getByText("You missed this earlier. Try again.")).toBeVisible();
-  await answer(logos!.lemma.gloss).click();
-  await page.getByRole("button", { name: "good" }).click();
-
-  await expect(page.getByRole("heading", { name: "Review done" })).toBeVisible();
-  await expect(page.getByText("2 words, 1 right first time.")).toBeVisible();
-});
-
-test("read again resets the passage for another read-through", async ({ page }) => {
-  await openJohn(page);
-  await lookUp(page, "θεόν");
-  await page.getByRole("button", { name: "Finish passage" }).click();
+  await expect(page.getByText("Passage complete")).toBeVisible();
+  await expect(page.getByTestId("passage-stats")).toContainText("Greek words read61");
+  await expect(page.getByTestId("passage-stats")).toContainText("read without help59");
   await expect(page.getByText("First read-through.")).toBeVisible();
 
-  await page.getByRole("button", { name: "Read again" }).click();
-  await expect(page.getByRole("button", { name: "Finish passage" })).toBeVisible();
+  const logos = page.getByRole("checkbox", { name: "Add λόγος to review" });
+  await expect(page.getByRole("checkbox", { name: "Add ἀρχή to review" })).toBeChecked();
+  await logos.click();
+  await expect(logos).not.toBeChecked();
 
-  await page.getByRole("button", { name: "Finish passage" }).click();
-  await expect(page.getByText("Read 2 times.")).toBeVisible();
-  await expect(page.getByText("You didn’t look anything up.")).toBeVisible();
+  const added: string[] = [];
+  page.on("request", (r) => r.url().includes("/add") && added.push(r.url()));
+  await page.getByRole("button", { name: "Done for today" }).click();
+  await expect(page).not.toHaveURL(/\/read\//);
+  expect(added).toHaveLength(1);
+
+  // Only the ticked word, ἀρχή, is now due for review.
+  const queueResponse = page.waitForResponse((r) => r.url().includes("/api/review/queue"));
+  await page.goto("/review");
+  const queue = reviewQueueResponseSchema.parse(await (await queueResponse).json());
+  expect(queue.dueCount).toBe(1);
+  expect(queue.items.filter((i) => i.kind === "due").map((i) => i.lemma.lemma)).toEqual(["ἀρχή"]);
 });
 
-test("a new learner's review introduces new words from the passage", async ({ page }) => {
+test("a missed word resurfaces later in the same session", async ({ page }) => {
+  const glosses = trackGlosses(page);
   await page.goto("/review");
+  await expect(page.getByText("0/5")).toBeVisible();
+
+  // Every card starts with its introduction for a new learner.
   await expect(page.getByText("New word")).toBeVisible();
-  await expect(page.getByText("5 to go")).toBeVisible();
-  await page.getByRole("button", { name: "Got it, test me" }).click();
-  await expect(page.getByRole("heading", { name: "What does it mean?" })).toBeVisible();
-  await expect(page.locator("main ul button")).toHaveCount(4);
+  const missed = await answerCard(page, glosses, { correct: false });
+  for (let i = 0; i < 3; i++) await answerCard(page, glosses, { ease: "Easy" });
+
+  const card = page.locator("section[data-lemma-id]");
+  await expect(card).toHaveAttribute("data-lemma-id", String(missed));
+  await expect(page.getByText("You missed this earlier. Try again.")).toBeVisible();
+  await answerCard(page, glosses);
+  await answerCard(page, glosses);
+
+  await expect(page.getByRole("heading", { name: "Review done" })).toBeVisible();
+  await expect(page.getByText("5 words, 4 right first time.")).toBeVisible();
+});
+
+test("the answer panel previews when the word comes back for each ease", async ({ page }) => {
+  const glosses = trackGlosses(page);
+  await page.goto("/review");
+  const card = page.locator("section[data-lemma-id]");
+  await card.getByRole("button", { name: "Got it", exact: true }).click();
+  await expect(page.getByText("What does this mean?")).toBeVisible();
+  await expect(card.locator("ul button")).toHaveCount(4);
+
+  const lemmaId = Number(await card.getAttribute("data-lemma-id"));
+  await expect.poll(() => glosses.has(lemmaId)).toBe(true);
+  await card
+    .locator("ul button")
+    .filter({ hasText: new RegExp(`^${glosses.get(lemmaId)}$`) })
+    .click();
+  // A first success: hard and good come back tomorrow, easy in 4 days (SM-2).
+  const status = page.locator("#feedback").getByRole("status");
+  await expect(status).toContainText("CorrectNext review tomorrow");
+  await page.getByRole("radio", { name: "Easy" }).click();
+  await expect(status).toContainText("Next review in 4 days");
+
+  const graded = page.waitForRequest((r) => r.url().endsWith(`/api/review/${lemmaId}`));
+  await page.getByRole("button", { name: "Continue" }).click();
+  expect((await graded).postDataJSON()).toMatchObject({ grade: "easy" });
 });

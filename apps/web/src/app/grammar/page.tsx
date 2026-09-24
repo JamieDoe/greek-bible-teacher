@@ -10,7 +10,9 @@ export default async function GrammarPage() {
   const { concepts } = await serverGet("/grammar", grammarListResponseSchema);
   return (
     <PageShell title="Grammar">
-      <p className="mb-6 text-muted">Short lessons, in the order you’ll need them for reading.</p>
+      <p className="mb-6 text-muted-foreground">
+        Short lessons, in the order you’ll need them for reading.
+      </p>
       {concepts.length === 0 ? (
         <EmptyState>No grammar lessons are available yet.</EmptyState>
       ) : (

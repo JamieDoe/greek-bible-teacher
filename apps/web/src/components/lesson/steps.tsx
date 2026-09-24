@@ -7,12 +7,15 @@ import {
   passageResponseSchema,
   type PassageResponse,
 } from "@gbt/shared";
+import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { Markdown } from "@/components/grammar/markdown";
 import { VerseExample } from "@/components/grammar/verse-example";
 import { Reader } from "@/components/reader/reader";
-import { ContinueButton } from "@/components/review/review-session";
+import { SectionLabel } from "@/components/koine";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ErrorState, LoadingState } from "@/components/ui/states";
 import { apiGet, apiPost } from "@/lib/api-client";
 import { splitGoingDeeper } from "@/lib/markdown";
@@ -46,11 +49,9 @@ function useLoad<T>(key: string, load: () => Promise<T>): [Load<T>, () => void] 
 
 export function ReadingStep({
   passageId,
-  heading,
   onFinished,
 }: {
   passageId: number;
-  heading: string;
   onFinished: (lookedUp: number[]) => void;
 }) {
   const [load, retry] = useLoad<PassageResponse["passage"]>(
@@ -61,7 +62,7 @@ export function ReadingStep({
   if (load.status === "error") {
     return <ErrorState message="We couldn’t load the passage." onRetry={retry} />;
   }
-  return <Reader passage={load.data} heading={heading} onFinished={onFinished} />;
+  return <Reader passage={load.data} embedded onFinished={onFinished} />;
 }
 
 const progressSchema = z.object({ status: z.string() });
@@ -94,24 +95,44 @@ export function GrammarStep({ slug, onDone }: { slug: string; onDone: () => void
     }
   }
 
+  const [example] = concept.examples;
   return (
     <section aria-labelledby="grammar-heading">
-      <p className="text-sm tracking-wide text-muted uppercase">Grammar</p>
-      <h2 id="grammar-heading" className="mt-1 font-serif text-2xl">
+      <h2 id="grammar-heading" className="font-heading text-4xl leading-tight">
         {concept.title}
       </h2>
-      <Markdown source={main} />
-      <div className="mt-8 space-y-5">
-        {concept.examples.slice(0, 3).map((ex) => (
-          <VerseExample key={ex.tokenId} example={ex} />
-        ))}
-      </div>
-      <ContinueButton
-        onClick={() => void studied()}
-        label={saving ? "Saving…" : "Got it, continue"}
-      />
+      <p className="mt-3 text-lg text-muted-foreground">{concept.summarySimple}</p>
+      <Card className="mt-6 px-6">
+        <Markdown source={main} />
+      </Card>
+      {example && (
+        <div className="mt-5 rounded-3xl bg-accent px-6 py-5">
+          <div className="flex items-baseline justify-between">
+            <SectionLabel className="text-primary">In the wild</SectionLabel>
+            <SectionLabel className="text-primary">{example.displayRef}</SectionLabel>
+          </div>
+          <p lang="grc" className="mt-2 font-greek text-2xl leading-relaxed">
+            {example.tokens.map((t, i) => (
+              <span key={i}>
+                {t.before}
+                {t.isTarget ? (
+                  <span className="text-primary underline decoration-2 underline-offset-4">
+                    {t.word}
+                  </span>
+                ) : (
+                  t.word
+                )}
+                {t.after}{" "}
+              </span>
+            ))}
+          </p>
+        </div>
+      )}
+      <Button size="lg" className="mt-8 w-full" onClick={() => void studied()} disabled={saving}>
+        {saving ? "Saving…" : "Got it, continue"} <ArrowRight aria-hidden="true" />
+      </Button>
       {error && (
-        <p role="alert" className="mt-2 text-sm text-muted">
+        <p role="alert" className="mt-2 text-sm text-rubric">
           Couldn’t save. Please try again.
         </p>
       )}
@@ -128,11 +149,10 @@ export function InvestigateStep({
 }) {
   return (
     <section aria-labelledby="investigate-heading">
-      <p className="text-sm tracking-wide text-muted uppercase">Look closer</p>
-      <h2 id="investigate-heading" className="mt-1 font-serif text-2xl">
+      <h2 id="investigate-heading" className="font-heading text-4xl">
         Spot the forms
       </h2>
-      <p className="mt-2 text-muted">
+      <p className="mt-2 text-muted-foreground">
         These words in the passage show today’s grammar: {step.conceptTitle.toLowerCase()}.
       </p>
       <div className="mt-6 space-y-8">
@@ -145,7 +165,7 @@ export function InvestigateStep({
                   <span lang="grc" className="font-greek text-base">
                     {n.word}
                   </span>
-                  <span className="text-muted">: </span>
+                  <span className="text-muted-foreground">: </span>
                   {n.note}
                 </li>
               ))}
@@ -153,7 +173,9 @@ export function InvestigateStep({
           </div>
         ))}
       </div>
-      <ContinueButton onClick={onDone} />
+      <Button size="lg" className="mt-8 w-full" onClick={onDone}>
+        Continue <ArrowRight aria-hidden="true" />
+      </Button>
     </section>
   );
 }

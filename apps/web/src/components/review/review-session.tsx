@@ -12,23 +12,28 @@ import { EmptyState, ErrorState, LoadingState, PageShell } from "@/components/ui
 import { apiGet, apiPost } from "@/lib/api-client";
 import { ensureSession } from "@/lib/session";
 import { ExerciseCard } from "./exercise-card";
+import { ArrowRight, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 
 /** A missed word comes back this many cards later in the same session. */
 const RESURFACE_AFTER = 3;
 
-interface Card {
+interface SessionCard {
   item: ReviewItem;
   /** Seen earlier in this session and missed. */
   retry: boolean;
+  /** "Show me again" on an introduction: introduce it once more. */
+  reintroduce?: boolean;
 }
 
 type Load =
   | { status: "loading" }
   | { status: "error" }
-  | { status: "ready"; cards: Card[]; dueCount: number };
+  | { status: "ready"; cards: SessionCard[]; dueCount: number };
 
 interface Props {
-  /** Review exactly these words (comma-separated ids), e.g. those looked up while reading. */
+  /** Review exactly these words (comma-separated ids): a lesson's new or looked-up words. */
   lemmaIds?: string;
   /** "due": only words due now (the lesson's first step). */
   mode?: "mixed" | "due";
@@ -79,8 +84,25 @@ export function ReviewSession({
     };
   }, [lemmaIds, mode, attempt]);
 
+  const showAgain = useCallback(
+    (card: SessionCard) => {
+      setLoad((l) => {
+        if (l.status !== "ready") return l;
+        const cards = [...l.cards];
+        cards.splice(Math.min(index + 1 + RESURFACE_AFTER, cards.length), 0, {
+          item: card.item,
+          retry: false,
+          reintroduce: true,
+        });
+        return { ...l, cards };
+      });
+      setIndex((i) => i + 1);
+    },
+    [index],
+  );
+
   const grade = useCallback(
-    async (card: Card, g: ReviewGrade, correct: boolean) => {
+    async (card: SessionCard, g: ReviewGrade, correct: boolean) => {
       setSaving(true);
       setSaveError(false);
       try {
@@ -156,27 +178,69 @@ export function ReviewSession({
     return <Summary answered={stats.answered} firstTry={stats.firstTry} onDone={onDone} />;
   }
 
-  const remaining = load.cards.length - index;
-  return (
-    <Shell>
-      <div className="mb-6 flex items-baseline justify-between text-sm text-muted">
-        <span>{lemmaIds ? "Words you looked up" : "Review"}</span>
-        <span aria-live="polite">{remaining} to go</span>
-      </div>
+  const done = index;
+  const total = load.cards.length;
+  const exercise = (
+    <>
       <ExerciseCard
         key={`${index}-${card.item.lemmaId}`}
         item={card.item}
         retry={card.retry}
-        introduce={introduceAll && !card.retry}
+        introduce={(introduceAll || card.reintroduce === true) && !card.retry}
         saving={saving}
         onGrade={(g, correct) => void grade(card, g, correct)}
+        onShowAgain={() => showAgain(card)}
       />
       {saveError && (
-        <p role="alert" className="mt-4 text-sm text-muted">
+        <p role="alert" className="mt-4 text-sm text-rubric">
           Couldn’t save that answer. Check your connection and choose again.
         </p>
       )}
-    </Shell>
+    </>
+  );
+
+  if (onDone) {
+    return (
+      <div>
+        <p className="mb-4 text-right font-mono text-xs text-muted-foreground" aria-live="polite">
+          {total - done} to go
+        </p>
+        {exercise}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-dvh flex-col">
+      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur">
+        <div className="mx-auto flex max-w-xl items-center gap-4 px-3 pt-3 sm:px-6">
+          <Button asChild variant="ghost" size="icon" aria-label="Leave review">
+            <Link href="/">
+              <X aria-hidden="true" />
+            </Link>
+          </Button>
+          <Progress
+            value={(100 * done) / total}
+            aria-label="Review progress"
+            className="h-1 flex-1"
+          />
+          <span
+            className="w-12 text-right font-mono text-xs text-muted-foreground"
+            aria-live="polite"
+          >
+            {done}/{total}
+          </span>
+        </div>
+        <p className="mx-auto max-w-xl px-4 pt-4 font-mono text-xs tracking-[0.08em] text-primary uppercase sm:px-6">
+          <span lang="grc" className="font-greek text-sm normal-case">
+            α′
+          </span>{" "}
+          · Review
+          <span className="sr-only">: {total - done} to go</span>
+        </p>
+      </header>
+      <main className="mx-auto w-full max-w-xl flex-1 px-4 pt-4 sm:px-6">{exercise}</main>
+    </div>
   );
 }
 
@@ -185,21 +249,11 @@ function EmbeddedShell({ children }: { title?: string; children: React.ReactNode
   return <div>{children}</div>;
 }
 
-export function ContinueButton({
-  onClick,
-  label = "Continue",
-}: {
-  onClick: () => void;
-  label?: string;
-}) {
+function ContinueButton({ onClick }: { onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="mt-6 rounded-full bg-ink px-6 py-2.5 text-sm text-paper hover:opacity-90"
-    >
-      {label}
-    </button>
+    <Button size="lg" className="mt-6 w-full" onClick={onClick}>
+      Continue <ArrowRight aria-hidden="true" />
+    </Button>
   );
 }
 
@@ -217,20 +271,18 @@ function Summary({
   const Shell = onDone ? EmbeddedShell : PageShell;
   return (
     <Shell>
-      <h1 ref={heading} tabIndex={-1} className="font-serif text-3xl outline-none">
+      <h1 ref={heading} tabIndex={-1} className="font-heading text-4xl outline-none">
         Review done
       </h1>
-      <p className="mt-2 text-muted">
+      <p className="mt-2 text-muted-foreground">
         {answered} {answered === 1 ? "word" : "words"}, {firstTry} right first time.
       </p>
       {onDone ? (
         <ContinueButton onClick={onDone} />
       ) : (
-        <div className="mt-6 flex gap-2 text-sm">
-          <Link href="/read" className="rounded-full bg-ink px-5 py-2 text-paper hover:opacity-90">
-            Keep reading
-          </Link>
-        </div>
+        <Button asChild size="lg" className="mt-6 w-full">
+          <Link href="/read">Keep reading</Link>
+        </Button>
       )}
     </Shell>
   );

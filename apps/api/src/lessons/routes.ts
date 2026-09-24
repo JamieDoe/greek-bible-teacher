@@ -1,12 +1,21 @@
-import { idParamSchema, lessonProgressRequestSchema, type LessonProgress } from "@gbt/shared";
+import {
+  idParamSchema,
+  lessonProgressRequestSchema,
+  type LessonProgress,
+  type LessonsListResponse,
+} from "@gbt/shared";
 import { Hono } from "hono";
 import type { AppEnv } from "../app";
 import { ApiHttpError, notFound } from "../http/errors";
 import { validBody, validParam } from "../http/validate";
 import { requireUser } from "../session/require-user";
-import { getLesson, recordLessonProgress } from "./queries";
+import { getLesson, listLessons, recordLessonProgress } from "./queries";
 
 export const lessonRoutes = new Hono<AppEnv>()
+  .get("/lessons", requireUser, async (c) => {
+    const body: LessonsListResponse = { lessons: await listLessons(c.var.deps.db, c.var.userId) };
+    return c.json(body);
+  })
   .use("/lessons/*", requireUser)
   .get("/lessons/:id", async (c) => {
     const lesson = await getLesson(c.var.deps.db, validParam(c, "id", idParamSchema), c.var.userId);

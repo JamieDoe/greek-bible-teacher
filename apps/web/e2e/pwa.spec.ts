@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
+import { greekText } from "./helpers";
 
 const cachedPages = (page: Page) =>
   page.evaluate(async () => {
@@ -50,7 +51,7 @@ test("a passage read online can be read again offline", async ({ page, context }
   await expect(
     page.getByText("You’re offline. Passages you’ve read recently are still available."),
   ).toBeVisible();
-  await expect(page.locator('[lang="grc"]').first()).toContainText("Ἐν ἀρχῇ ἦν ὁ λόγος");
+  await expect(greekText(page)).toContainText("Ἐν ἀρχῇ ἦν ὁ λόγος");
   await page.getByRole("button", { name: "λόγος", exact: true }).first().click();
   await expect(page.getByRole("dialog").getByTestId("gloss")).toContainText("word");
   await page.keyboard.press("Escape");

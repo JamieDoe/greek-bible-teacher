@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { experienceLevels } from "../learning/enums";
 
-export const DAILY_MINUTE_OPTIONS = [5, 10, 15, 20, 30] as const;
+import { DAILY_MINUTE_OPTIONS } from "./daily-minutes";
+
+export { DAILY_MINUTE_OPTIONS };
 
 export const onboardingRequestSchema = z
   .object({
@@ -96,6 +98,54 @@ export const todayResponseSchema = z.object({
     passagesCompleted: z.number().int(),
     conceptsStudied: z.number().int(),
     lessonsCompleted: z.number().int(),
+    /** Words learned (interval at least LEARNED_INTERVAL_DAYS). */
+    wordsLearned: z.number().int(),
+    greekWordsRead: z.number().int(),
   }),
+  /** Days with any review or finished reading, in the learner's time zone. */
+  practice: z.object({
+    daysPractised: z.number().int(),
+    /** Monday–Sunday of the current week. */
+    week: z.array(z.object({ date: z.iso.date(), practised: z.boolean(), today: z.boolean() })),
+  }),
+  /** How much of the current passage the learner already knows (words in review). */
+  passageKnown: z
+    .object({ known: z.number().int(), total: z.number().int(), firstLine: z.string() })
+    .nullable(),
+  /** A few words due for review now (desktop Today). */
+  dueWords: z.array(
+    z.object({ lemmaId: z.number().int(), lemma: z.string(), gloss: z.string().nullable() }),
+  ),
 });
+
+export const todayQuerySchema = z
+  .object({
+    tz: z
+      .string()
+      .max(64)
+      .refine((tz) => {
+        try {
+          new Intl.DateTimeFormat("en-US", { timeZone: tz });
+          return true;
+        } catch {
+          return false;
+        }
+      }, "unknown time zone")
+      .default("UTC"),
+  })
+  .strict();
+
+export const lessonsListResponseSchema = z.object({
+  lessons: z.array(
+    z.object({
+      id: z.number().int(),
+      number: z.number().int(),
+      title: z.string(),
+      passageTitle: z.string(),
+      conceptTitle: z.string().nullable(),
+      status: z.enum(["not_started", "in_progress", "completed"]),
+    }),
+  ),
+});
+export type LessonsListResponse = z.infer<typeof lessonsListResponseSchema>;
 export type TodayResponse = z.infer<typeof todayResponseSchema>;

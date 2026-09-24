@@ -13,6 +13,7 @@ import { and, asc, count, eq, gte, isNotNull, lte, ne, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { Db } from "../db/client";
 import { verseSnippet } from "../reading/verse-snippet";
+import { toSrsState } from "./progress";
 import {
   lemmas,
   passages,
@@ -175,6 +176,7 @@ async function buildItem(
       partOfSpeech: lemmas.partOfSpeech,
       ntFrequency: lemmas.ntFrequency,
       correctCount: userWordProgress.correctCount,
+      progress: userWordProgress,
     })
     .from(lemmas)
     .leftJoin(
@@ -213,9 +215,16 @@ async function buildItem(
     rng,
   );
 
+  const srs = toSrsState(lemma.progress);
   return {
     lemmaId,
     kind,
+    srs: srs && {
+      ...srs,
+      nextReviewAt: srs.nextReviewAt.toISOString(),
+      lastReviewedAt: srs.lastReviewedAt.toISOString(),
+    },
+    example: context,
     lemma: {
       lemma: lemma.lemma,
       gloss: lemma.gloss,
