@@ -172,10 +172,10 @@ export async function getTokenDetail(db: Db, id: number): Promise<TokenDetailRes
       .select({ n: count() })
       .from(tokens)
       .where(and(eq(tokens.lemmaId, row.lemma.id), eq(tokens.normalized, row.token.normalized))),
-    // A rule matches when its matcher is contained in the token's morphology (keys mirror
-    // MorphologyMatcher; null features are dropped so they can never match).
+    // A rule matches when its matcher is contained in the token's features (keys mirror
+    // TokenMatcher; null features are dropped so they can never match).
     db
-      .selectDistinctOn([grammarConcepts.curriculumOrder, grammarConcepts.id], {
+      .select({
         slug: grammarConcepts.slug,
         title: grammarConcepts.title,
         note: grammarConceptRules.note,
@@ -184,6 +184,7 @@ export async function getTokenDetail(db: Db, id: number): Promise<TokenDetailRes
       .innerJoin(grammarConcepts, eq(grammarConcepts.id, grammarConceptRules.conceptId))
       .where(
         sql`${grammarConceptRules.match} <@ jsonb_strip_nulls(jsonb_build_object(
+          'lemma', ${row.lemma.lemma}::text,
           'partOfSpeech', ${row.morphology.partOfSpeech}::text,
           'person', ${row.morphology.person}::text,
           'tense', ${row.morphology.tense}::text,
@@ -194,7 +195,14 @@ export async function getTokenDetail(db: Db, id: number): Promise<TokenDetailRes
           'gender', ${row.morphology.gender}::text,
           'degree', ${row.morphology.degree}::text))`,
       )
-      .orderBy(asc(grammarConcepts.curriculumOrder), asc(grammarConcepts.id)),
+      // Most specific first: rules naming the word itself, then rules with more features,
+      // then curriculum order.
+      .orderBy(
+        sql`${grammarConceptRules.match} ? 'lemma' desc`,
+        sql`(select count(*) from jsonb_object_keys(${grammarConceptRules.match})) desc`,
+        asc(grammarConcepts.curriculumOrder),
+        asc(grammarConceptRules.id),
+      ),
   ]);
 
   return {
@@ -202,6 +210,12 @@ export async function getTokenDetail(db: Db, id: number): Promise<TokenDetailRes
     lemma: { ...row.lemma, glossSource: row.glossSource },
     morphology: toMorphology(row.morphology),
     occurrences: { nearby, sameFormCount: sameForm?.n ?? 0 },
-    concepts,
+    concepts: firstPerConcept(concepts),
   };
+}
+
+/** Keeps each concept once, with its most specific matching rule's note. */
+function firstPerConcept<T extends { slug: string }>(rows: T[]): T[] {
+  const seen = new Set<string>();
+  return rows.filter((r) => !seen.has(r.slug) && seen.add(r.slug));
 }

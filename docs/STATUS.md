@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 4 — Vocabulary + review ✅ complete (2026-09-24)
+**Current phase:** 5 — Grammar ✅ complete (2026-09-24)
 
 ## Done
 
@@ -49,11 +49,23 @@
   paths). Playwright has 18: reader, finish → review looked-up words → a miss resurfaces, Read
   again, and a new learner's first review.
 
+- **Phase 5:** 26 curated grammar concepts, ordered for reading John 1:1–5 first (DECISIONS 017).
+  The slice concept is "The article and case: who is what". Each concept has real NT examples
+  resolved to tokens, plus "Why this form?" rules; every word of John 1:1–5 is covered.
+  `pnpm seed` loads passages and grammar. New endpoints: `GET /grammar`, `GET /grammar/:slug`,
+  `GET /grammar/progress` and `POST /grammar/:slug/progress`. New pages: `/grammar` (list with
+  studied marks) and `/grammar/:slug` (lesson, collapsible terminology, examples, Mark as
+  studied, previous/next). Reader notes link to their lesson.
+- Tests: shared 106, web 8 (Markdown subset), API 139 (content rules, seeding, note coverage and
+  ranking, grammar endpoints and progress), Playwright 20.
+
 ## Next
 
-- **Phase 5 (Grammar):** the slice concept "The article and case: who is what" with real
-  John 1:1 examples, then the curriculum (20–30 concepts) and `grammar_concept_rules` so the
-  reader's "Why this form?" notes appear. Also grammar progress and `GET /grammar/:slug`.
+- **Phase 6 (Daily session):** `GET /today`, `GET /lessons/:id`, lessons and lesson items, and
+  the daily stepper wiring review → new vocab → grammar → reading → review → re-read. Onboarding
+  (`POST /me/onboarding`). The MVP acceptance test must pass end to end.
+- **Blocked on you:** CLAUDE.md never defines the acceptance test. I need its steps before
+  Phase 6 is complete.
 
 ## Known issues / open questions
 
@@ -66,6 +78,8 @@
 - **530 lemmas (1.1% of tokens) have no gloss** (DECISIONS 011). The UI must handle this, and
   curated glosses can fill gaps.
 - **CLAUDE.md appears truncated at the top:** it has no product, stack or layout section, and the
-  Phase 6 "acceptance test" is never defined. The acceptance flow must be defined before Phase 6.
+  Phase 6 "acceptance test" is never defined.
+- The grammar content is first-draft teaching prose. It is worth a review by someone who teaches
+  Greek.
 - The local machine runs Node 25, which is past end of life. It works, but Node 24 LTS is the target.
 - ESLint 9 is EOL but still required by `eslint-config-next`'s plugins (DECISIONS 004).

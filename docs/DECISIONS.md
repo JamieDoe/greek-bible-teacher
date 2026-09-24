@@ -96,7 +96,7 @@ Reader (Phase 3). The full design pass happens in Phase 8.
   `passage_required_concepts`. They are FK-checked. Phase 5 content will be authored as verse refs
   and resolved to token ids when it is seeded. Ingestion must therefore upsert tokens on
   `(verse_id, position)` and keep their ids stable, not truncate and reload.
-- **`grammar_concept_rules.match`** is JSONB, typed and validated as a `MorphologyMatcher` (Zod,
+- **`grammar_concept_rules.match`** is JSONB, typed and validated as a `TokenMatcher` (Zod,
   shared). A CHECK constraint enforces a non-empty object. `note` holds the curated "Why this form?"
   text.
 - **`lesson_items`** has a CHECK so each kind points at exactly its own target (vocab → lemma,
@@ -288,6 +288,49 @@ and implements `sm2Scheduler`. The API imports it in exactly two places: grading
 **Consequences.** Phase 6's daily lesson reuses the queue and selector for its "review due" and
 "new vocabulary" steps.
 
+## 017 — Grammar curriculum: order, format and linking
+
+**Order (26 concepts).** Concepts are ordered by what the reading needs, starting with
+John 1:1–5, then the next passages:
+
+1. Alphabet, then breathings and accents.
+2. **The article and case: who is what.** This is the slice concept. It merges the suggested
+   "article", "case shows role" and "nominative & accusative", because John 1:1 teaches them
+   together (ὁ λόγος vs τὸν θεόν, and θεὸς ἦν ὁ λόγος).
+3. John 1:1–5's most frequent needs, in order: εἰμί (ἦν ×5); connectors (καί ×7); prepositions
+   (ἐν, πρός, διά, χωρίς); dative (ἀρχῇ, αὐτῷ, σκοτίᾳ); genitive (αὐτοῦ, ἀνθρώπων); gender and
+   number; personal pronouns and demonstratives (αὐτός, οὗτος); negation (οὐ, οὐδέ).
+4. Verbs in the order John 1:1–5 shows them: aorist (ἐγένετο, κατέλαβεν), present (φαίνει),
+   imperfect, perfect (γέγονεν), middle/passive (ἐγένετο), then relative pronouns (ὅ) and
+   adjectives (πάντα).
+5. Forms that the following passages need: future, infinitive, participles (two concepts),
+   subjunctive, imperative, word order.
+
+A test checks that every token in John 1:1–5 gets at least one curated note.
+
+**Format.** Each concept is a typed TS module in `apps/api/src/content/grammar/`. This is
+hand-written project content, not imported data. The body is Markdown with a fixed shape:
+simple explanation, then "Why it matters for reading", then "Going deeper" for terminology.
+Examples are written as verse ref plus word and resolved to token ids at seed time.
+`pnpm seed` fails loudly if a word isn't in the verse, a matcher is invalid, or the DB holds
+concepts the content has dropped. Re-seeding upserts by slug and replaces rules and examples,
+so ids stay stable.
+
+**Linking.** `TokenMatcher` (formerly `MorphologyMatcher`) gains an optional `lemma`, so
+concepts like εἰμί, the connectors and negation can match by word. A rule matches by JSONB
+containment against the token's lemma and morphology. "Why this form?" shows each matched
+concept once, ranked: rules naming the lemma first, then more features, then curriculum order.
+The reader shows the top two, each linked to its lesson. Notes are only ever curated rule text.
+
+**Rendering.** The web app renders a tiny Markdown subset itself (headings, paragraphs, lists,
+bold, italic; no HTML). It wraps Greek runs in `lang="grc"` automatically. Its parser is
+unit-tested (web now has Vitest for pure helpers). A Markdown library would add a dependency and
+still need a plugin for the Greek language tagging.
+
+**Progress.** Opening a lesson records `introduced`; "Mark as studied" records `studied` with
+its first date. Status never moves backwards. "Going deeper" is collapsed for Simple readers and
+open for More or Full.
+
 ## Dependencies
 
 One line each, for why the dependency exists.
@@ -304,3 +347,4 @@ One line each, for why the dependency exists.
 - `postgres`: Postgres driver for Drizzle. It needs no native build step and ships its own types.
 - `@playwright/test` (web, dev): end-to-end tests (specified). Chromium only.
 - `zod`, `@gbt/shared` in web: to validate API responses against the shared schemas.
+- `vitest` (web, dev): unit tests for pure web helpers (the Markdown subset parser).

@@ -1,4 +1,4 @@
-import type { MorphologyMatcher } from "@gbt/shared";
+import type { TokenMatcher } from "@gbt/shared";
 import { sql } from "drizzle-orm";
 import {
   check,
@@ -59,7 +59,7 @@ export const grammarConceptRules = pgTable(
     conceptId: integer("concept_id")
       .notNull()
       .references(() => grammarConcepts.id, { onDelete: "cascade" }),
-    match: jsonb("match").$type<MorphologyMatcher>().notNull(),
+    match: jsonb("match").$type<TokenMatcher>().notNull(),
     note: text("note"),
   },
   (t) => [

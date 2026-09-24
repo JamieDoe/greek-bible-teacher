@@ -7,6 +7,7 @@ import {
   tokenDetailResponseSchema,
   type TokenDetailResponse,
 } from "@gbt/shared";
+import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { apiGet } from "@/lib/api-client";
 
@@ -88,8 +89,11 @@ export function TokenSheet({ token, verseRef, level, onLevelChange, onClose }: P
   const m = token.morphology;
   const showExpanded = level !== "beginner";
   const showAdvanced = level === "advanced";
+  // The two most specific curated notes (the API orders them by rule specificity).
   const notes =
-    detail.status === "ready" ? detail.detail.concepts.filter((c) => c.note !== null) : [];
+    detail.status === "ready"
+      ? detail.detail.concepts.filter((c) => c.note !== null).slice(0, 2)
+      : [];
 
   return (
     <dialog
@@ -163,7 +167,13 @@ export function TokenSheet({ token, verseRef, level, onLevelChange, onClose }: P
             </h3>
             {notes.map((c) => (
               <p key={c.slug} className="mt-1 text-sm leading-relaxed">
-                {c.note}
+                {c.note}{" "}
+                <Link
+                  href={`/grammar/${c.slug}`}
+                  className="whitespace-nowrap text-accent underline underline-offset-2"
+                >
+                  {c.title}
+                </Link>
               </p>
             ))}
           </section>
@@ -225,7 +235,7 @@ function AdvancedDetail({
           .map(([k, v]) => (
             <div key={k} className="contents">
               <dt className="text-muted">{k}</dt>
-              <dd className="capitalize">{v}</dd>
+              <dd className="first-letter:uppercase">{v}</dd>
             </div>
           ))}
         <dt className="text-muted">Parse code</dt>

@@ -9,7 +9,8 @@
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit",
     "lint": "eslint .",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test": "vitest run"
   },
   "dependencies": {
     "@gbt/shared": "workspace:*",
@@ -27,6 +28,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4"
   }
 }

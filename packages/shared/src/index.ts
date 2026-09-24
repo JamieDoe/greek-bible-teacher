@@ -1,4 +1,5 @@
 export * from "./api/errors";
+export * from "./api/grammar";
 export * from "./api/health";
 export * from "./api/reading";
 export * from "./api/review";

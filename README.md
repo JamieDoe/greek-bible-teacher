@@ -26,7 +26,7 @@ pnpm install
 pnpm db:up              # Postgres 18 on 127.0.0.1:5432, waits until healthy
 pnpm db:migrate         # apply migrations
 pnpm ingest             # import the full NT + glosses from data/ (idempotent)
-pnpm seed               # curated passages (John 1:1–5 so far)
+pnpm seed               # curated passages + grammar curriculum
 pnpm dev                # web on :3000, API on :8787
 ```
 

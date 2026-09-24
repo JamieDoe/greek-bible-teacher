@@ -31,15 +31,22 @@ export function testApp() {
   return { app, db, clock, close: () => client.end() };
 }
 
-/** Resets text tables and imports John only (enough for the slice), then seeds passages. */
-export async function importJohn(db: Db) {
+/** Resets text tables, imports the given books, then seeds passages. */
+export async function importBooks(db: Db, abbrevs: string[]) {
   await db.execute(sql`
-    truncate data_sources, books, chapters, verses, tokens, lemmas, morphology, passages, users
+    truncate data_sources, books, chapters, verses, tokens, lemmas, morphology, passages, users,
+      grammar_concepts
     restart identity cascade`);
   const all = await loadSources();
-  await importNt(db, { ...all, books: all.books.filter((b) => b.book.abbrev === "JHN") });
+  await importNt(db, { ...all, books: all.books.filter((b) => abbrevs.includes(b.book.abbrev)) });
   await seedPassages(db, passageContent);
 }
+
+/** John only: enough for the reading slice. */
+export const importJohn = (db: Db) => importBooks(db, ["JHN"]);
+
+/** Every book the grammar examples cite. */
+export const GRAMMAR_BOOKS = ["MRK", "JHN", "1JN"];
 
 /** Pulls `name=value` out of a Set-Cookie header, for sending back as a Cookie header. */
 export function cookieFrom(res: Response): string {

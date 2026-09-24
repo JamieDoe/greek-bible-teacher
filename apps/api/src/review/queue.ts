@@ -6,16 +6,14 @@ import {
   type ReviewItem,
   type Rng,
   selectNewVocabulary,
-  splitSurface,
   stageMaxRank,
   type VocabularyCandidate,
 } from "@gbt/shared";
-import { and, asc, count, eq, gte, inArray, isNotNull, lte, ne, sql } from "drizzle-orm";
+import { and, asc, count, eq, gte, isNotNull, lte, ne, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { Db } from "../db/client";
+import { verseSnippet } from "../reading/verse-snippet";
 import {
-  chapters,
-  books,
   lemmas,
   passages,
   tokens,
@@ -285,26 +283,5 @@ async function contextFor(db: Db, lemmaId: number) {
         .limit(1);
   if (!anywhere) return null;
 
-  const verseTokens = await db
-    .select({
-      id: tokens.id,
-      surface: tokens.surface,
-      word: tokens.word,
-      displayRef: sql<string>`${books.name} || ' ' || ${chapters.number} || ':' || ${verses.number}`,
-    })
-    .from(tokens)
-    .innerJoin(verses, eq(verses.id, tokens.verseId))
-    .innerJoin(chapters, eq(chapters.id, verses.chapterId))
-    .innerJoin(books, eq(books.id, chapters.bookId))
-    .where(inArray(tokens.verseId, [anywhere.verseId]))
-    .orderBy(asc(tokens.position));
-
-  return {
-    displayRef: verseTokens[0]?.displayRef ?? "",
-    tokens: verseTokens.map((t) => ({
-      ...splitSurface(t.surface, t.word),
-      word: t.word,
-      isTarget: t.id === anywhere.tokenId,
-    })),
-  };
+  return verseSnippet(db, anywhere.verseId, anywhere.tokenId);
 }

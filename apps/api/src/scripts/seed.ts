@@ -1,5 +1,7 @@
+import { grammarContent } from "../content/grammar";
 import { passageContent } from "../content/passages";
 import { seedPassages } from "../content/seed";
+import { seedGrammar } from "../content/seed-grammar";
 import { createDb } from "../db/client";
 
 const url = process.env.DATABASE_URL;
@@ -10,8 +12,9 @@ if (!url) {
 
 const { db, client } = createDb(url, { max: 1 });
 try {
-  const n = await seedPassages(db, passageContent);
-  console.log(`[seed] ${n} passage(s) upserted`);
+  const passages = await seedPassages(db, passageContent);
+  const concepts = await seedGrammar(db, grammarContent);
+  console.log(`[seed] ${passages} passage(s) and ${concepts} grammar concept(s) upserted`);
 } catch (err) {
   console.error("[seed] failed:", err);
   process.exitCode = 1;

@@ -5,6 +5,7 @@ import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
 import type { Db } from "./db/client";
 import type { Env } from "./env";
+import { grammarRoutes } from "./grammar/routes";
 import { ApiHttpError } from "./http/errors";
 import { readingProgressRoutes } from "./reading/progress-routes";
 import { readingRoutes } from "./reading/routes";
@@ -52,6 +53,7 @@ export function createApp(deps: AppDeps) {
   app.route("/", readingRoutes);
   app.route("/", readingProgressRoutes);
   app.route("/", reviewRoutes);
+  app.route("/", grammarRoutes);
   app.route("/", sourcesRoutes);
 
   app.notFound((c) => {
