@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { apiPostNoContent } from "@/lib/api-client";
 import { ensureSession } from "@/lib/session";
+import { ListenToPassage } from "../speech";
 import { useSession } from "../use-session";
 import { FinishPassage } from "./finish-passage";
 import { TokenSheet } from "./token-sheet";
@@ -78,6 +79,11 @@ export function Reader({
         <header className="mb-8">
           <p className="text-sm tracking-wide text-muted uppercase">{heading}</p>
           <h1 className="mt-1 font-serif text-3xl">{passage.title}</h1>
+          <ListenToPassage
+            text={passage.verses
+              .flatMap((v) => v.tokens.map((t) => t.before + t.word + t.after))
+              .join(" ")}
+          />
         </header>
 
         <div

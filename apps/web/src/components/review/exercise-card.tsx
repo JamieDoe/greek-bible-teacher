@@ -2,6 +2,7 @@
 
 import { partOfSpeechLabel, type ReviewGrade, type ReviewItem } from "@gbt/shared";
 import { useEffect, useRef, useState } from "react";
+import { SpeakButton } from "../speech";
 
 type Phase = "intro" | "question" | "answered";
 
@@ -36,7 +37,10 @@ export function ExerciseCard({
   if (phase === "intro") {
     return (
       <section aria-labelledby="card-heading" data-lemma-id={item.lemmaId}>
-        <p className="text-xs tracking-wide text-accent uppercase">New word</p>
+        <div className="flex items-start justify-between gap-4">
+          <p className="text-xs tracking-wide text-accent uppercase">New word</p>
+          <SpeakButton text={lemma.lemma} label={`Hear ${lemma.lemma}`} />
+        </div>
         <h1
           id="card-heading"
           ref={heading}

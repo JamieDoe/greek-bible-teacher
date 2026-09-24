@@ -10,6 +10,7 @@ import {
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { apiGet } from "@/lib/api-client";
+import { SpeakButton } from "../speech";
 
 const LEVEL_LABELS: Record<DisclosureLevel, string> = {
   beginner: "Simple",
@@ -130,13 +131,16 @@ export function TokenSheet({ token, verseRef, level, onLevelChange, onClose }: P
             </h2>
             <p className="mt-0.5 text-xs text-muted">{verseRef}</p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="-mr-2 rounded-full px-3 py-1 text-sm text-muted hover:bg-accent-soft hover:text-ink"
-          >
-            Close
-          </button>
+          <div className="flex items-center gap-2">
+            <SpeakButton text={token.word} label={`Hear ${token.word}`} />
+            <button
+              type="button"
+              onClick={onClose}
+              className="-mr-2 rounded-full px-3 py-1 text-sm text-muted hover:bg-accent-soft hover:text-ink"
+            >
+              Close
+            </button>
+          </div>
         </div>
 
         {/* Beginner: the gloss, large */}

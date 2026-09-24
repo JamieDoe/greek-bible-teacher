@@ -434,6 +434,29 @@ proficiency percentage.
   themes. `color-scheme: light dark` is declared. The theme follows the system setting; there is
   no manual toggle in the MVP.
 
+## 021 — Pronunciation audio: the device's Greek voice, labelled as Modern Greek
+
+**Context.** The user asked for audio so learners can hear words. The options were the
+device's voice (Web Speech API), recorded human audio, or a cloud TTS service. Device and cloud
+voices speak Modern Greek, while lessons teach Erasmian.
+
+**Decision (chosen by the user).** Use the browser's Web Speech API with the device's Greek
+voice. Lessons stay Erasmian, and the audio is labelled "Modern Greek voice" everywhere. The
+alphabet lesson explains the differences.
+
+- `lib/speech.ts` is pure and unit-tested. It picks the best Greek voice (el-GR first, then
+  on-device, then default). It converts polytonic text to the monotonic spelling Greek voices
+  expect: breathings, iota subscripts, length marks and apparatus sigla are dropped; grave and
+  circumflex become the stress accent; diaeresis and punctuation are kept.
+- Speaker buttons (44×44) sit on the reader's word sheet and on new-word cards. The reader
+  header has Listen/Stop for the whole passage. Speech runs at rate 0.8. All audio controls hide
+  themselves when the device has no Greek voice. There are no new dependencies, no data
+  licensing, and it works offline where the voice is on the device.
+
+**Consequences.** Pronunciation quality and availability vary by device. The design's
+Erasmian / Restored Koine setting can't be honoured by device voices; see the design notes.
+Playwright stubs the speech engine, since headless Chromium has no Greek voice.
+
 ## Dependencies
 
 One line each, for why the dependency exists.

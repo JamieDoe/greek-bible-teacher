@@ -87,11 +87,21 @@
   - Recently read passages work offline, including the lookup panel. There is an offline page
     listing saved passages and an offline banner.
   - Larger tap targets for Greek words, safe-area viewport, and measured contrast in both themes.
-- Tests: shared 113, web 17, API 170, Playwright 24 (desktop, mobile, and a `pwa` project
+- **Audio (requested after Phase 8):** hear a word from the reader sheet or a new-word card,
+  and the whole passage from the reader (Listen/Stop). It uses the device's Greek voice through
+  the Web Speech API and is labelled "Modern Greek voice", since lessons stay Erasmian
+  (DECISIONS 021). Controls hide when the device has no Greek voice.
+- Tests: shared 113, web 32, API 170, Playwright 30 (desktop, mobile, and a `pwa` project
   against a production build).
 
 ## Next
 
+- **Koinē redesign (before Phase 9):** apply the design in "Koinē — Greek NT learning PWA"
+  using shadcn/ui themed with Koinē tokens: Literata and Geist, lapis accent, Home / Learn /
+  Read / Progress nav, the four-stage session card (grouping the 7-step loop), flip cards, the
+  passage-complete screen, Settings, and desktop layouts. The name is kept on the device only.
+  Deferred until chosen: sense lines, declension and forms chips, placement check, reminders,
+  and Restored Koine pronunciation.
 - **Phase 9 (Deployment):** production Dockerfiles, Compose for a VPS, reverse-proxy notes,
   migrate-on-deploy, and a Postgres backup note. Set `API_INTERNAL_URL` at `next build` (Next
   bakes the rewrites in at build time).

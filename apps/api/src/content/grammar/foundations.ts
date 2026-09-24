@@ -25,6 +25,8 @@ You don’t need perfect pronunciation to read, but saying words aloud makes the
 This app follows the **Erasmian** pronunciation used in most teaching, which gives each letter a distinct sound. Modern Greek pronunciation (for example η, ι and υ all as “ee”) and reconstructed Koine systems are also used. Choose one and keep to it.
 
 Pairs of vowels (diphthongs) make one sound: αι “ai”, ει “ei”, οι “oi”, ου “oo”, αυ “ow”, ευ “eu”.
+
+**About the audio.** The speaker buttons use your device’s Greek voice, which speaks **Modern Greek**. You’ll hear differences from what this lesson teaches: η, ι, υ, ει and οι all sound like “ee”, β sounds like “v”, and αι like “e”. The consonant sounds and the stressed syllable are the same, so the audio is still a good guide to rhythm and stress.
 `,
   examples: [
     { ref: "JHN 1:1", word: "λόγος" },
