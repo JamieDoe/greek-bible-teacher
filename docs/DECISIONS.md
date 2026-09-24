@@ -237,6 +237,57 @@ disclosure level per user.
   up) and "Read again". Both depend on lookup recording and the review queue. The bottom nav also
   waits until a second top-level screen (Review) exists, so it has no dead links.
 
+## 015 — Spaced repetition: SM-2 behind a `Scheduler` interface
+
+**Decision.** `@gbt/shared/srs` defines `Scheduler { review(prev, grade, now); nudgeForLookup(state, now) }`
+and implements `sm2Scheduler`. The API imports it in exactly two places: grading and lookups.
+
+- **Grades:** again (lapse: interval 0, due in 10 min, ease −0.2); first success hard/good →
+  1 day, easy → 4 days; then good → 6 days, then interval × ease; hard → × 1.2; easy →
+  good × 1.3. Intervals never shrink on success and are capped at 365 days. Ease is kept
+  between 1.3 and 3.0 and starts at 2.5.
+- **Column meanings:** these stay fixed so FSRS can reuse the rows. `difficulty` is 0–1 (the
+  SM-2 ease mapped so higher is harder). `stability` is days (for SM-2, the interval).
+  `interval_days` and `next_review_at` are as named. Ease is rounded to 2 dp when decoded, so
+  float4 storage never drifts; a test covers this.
+- **Lookup signal:** a lookup only moves `next_review_at` earlier: it halves the time left,
+  with a floor of an hour from now. A word already due is untouched. Interval, difficulty and
+  counts are unchanged, so a lookup is weaker than a lapse by construction. Unscheduled words
+  just count lookups, which feed the "struggling" tier of vocabulary selection.
+- **Counts:** "again" adds to `incorrect_count`, every other grade to `correct_count`. Every
+  grade is appended to `review_events` in the same transaction.
+
+**Consequences.** All scheduler tests use fixed dates. The API takes an injected clock and RNG
+(`AppDeps.now`, `AppDeps.rng`), so route tests are deterministic too.
+
+## 016 — Review session and vocabulary selection
+
+- **Queue (`GET /review/queue`):** due words, oldest first, then new words to fill the session.
+  The session holds at most 20 items and at most 5 new words. `?lemmaIds=` reviews exactly the
+  given words; this is offered after finishing a passage for the words looked up. The reader
+  tracks those words client-side for the current read-through, so no extra log table is needed.
+- **New words:** `selectNewVocabulary` (shared, pure, never random) ranks candidates in tiers:
+  1. words in the current passage (the first curated passage not yet completed);
+  2. the top 100 lemmas by NT frequency;
+  3. struggling words: looked up twice or more, or missed at least as often as recalled;
+  4. stage-appropriate words: frequency rank ≤ max(200, 100 + 2 × known).
+
+  Within a tier the order is NT frequency, then id. Scheduled or unglossed words are never new.
+  "Known" means an interval of at least one day.
+
+- **Exercises:** recognition only, as four-option multiple choice. A word is asked on its own
+  (Greek → gloss) until it is recalled once. After that it alternates with the form in its
+  verse, which comes from the first curated passage containing it, or else its first NT
+  occurrence. Distractors are the same part of speech and nearest in frequency (log scale), with
+  duplicate glosses removed and a seeded or random pick from the nearest 12. Lemmas whose part of
+  speech has too few members, such as the article, top up from any part of speech.
+- **Grading:** a correct answer offers Hard, Good or Easy. A wrong answer shows the answer and
+  grades "again", and the word comes back three cards later in the same session. Each attempt is
+  posted, so a relearned word restarts at one day.
+
+**Consequences.** Phase 6's daily lesson reuses the queue and selector for its "review due" and
+"new vocabulary" steps.
+
 ## Dependencies
 
 One line each, for why the dependency exists.

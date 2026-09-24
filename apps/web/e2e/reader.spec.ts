@@ -77,6 +77,10 @@ test.describe("reader", () => {
     await openJohn(page);
     await word(page, "ἀρχῇ").click();
     const handle = sheet(page).locator(".cursor-grab");
+    // Measure after the slide-in animation, or the handle is still moving.
+    await sheet(page).evaluate((el) =>
+      Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished)),
+    );
     const box = (await handle.boundingBox())!;
     const x = box.x + box.width / 2;
     const y = box.y + box.height / 2;

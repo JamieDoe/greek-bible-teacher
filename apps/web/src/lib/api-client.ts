@@ -28,3 +28,13 @@ export const apiPost = <T extends z.ZodType>(path: string, schema: T, body?: unk
 
 export const apiPatch = <T extends z.ZodType>(path: string, schema: T, body: unknown) =>
   request("PATCH", path, schema, body);
+
+/** POST for endpoints that answer 204 No Content. */
+export async function apiPostNoContent(path: string, body?: unknown): Promise<void> {
+  const res = await fetch(`/api${path}`, {
+    method: "POST",
+    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!res.ok) throw await toApiRequestError(res);
+}

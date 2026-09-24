@@ -1,4 +1,4 @@
-import { apiErrorSchema, healthResponseSchema } from "@gbt/shared";
+import { apiErrorSchema, healthResponseSchema, seededRng } from "@gbt/shared";
 import { afterAll, describe, expect, inject, it } from "vitest";
 import { createApp } from "./app";
 import { createDb } from "./db/client";
@@ -8,7 +8,8 @@ const WEB_ORIGIN = "http://localhost:3000";
 const env = parseEnv({ NODE_ENV: "test", WEB_ORIGIN, DATABASE_URL: inject("testDatabaseUrl") });
 const { db, client } = createDb(env.DATABASE_URL, { max: 1 });
 afterAll(() => client.end());
-const app = createApp({ env, db, pingDb: async () => {} });
+const base = { env, db, now: () => new Date(), rng: seededRng(1) };
+const app = createApp({ ...base, pingDb: async () => {} });
 
 describe("GET /health", () => {
   it("returns ok when the database answers", async () => {
@@ -20,8 +21,7 @@ describe("GET /health", () => {
 
   it("returns 503 degraded when the database is unreachable", async () => {
     const down = createApp({
-      env,
-      db,
+      ...base,
       pingDb: () => Promise.reject(new Error("connection refused")),
     });
     const res = await down.request("/health");

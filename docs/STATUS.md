@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 3 — Reader + token lookup ✅ complete (2026-09-24)
+**Current phase:** 4 — Vocabulary + review ✅ complete (2026-09-24)
 
 ## Done
 
@@ -34,12 +34,26 @@
   slice endpoint against the test DB), and Playwright has 12 (6 on desktop and 6 on mobile: font
   and diacritics, tap → panel → Esc/outside/swipe, and remembered disclosure).
 
+- **Phase 4:** the SM-2 scheduler sits behind a `Scheduler` interface in shared, with the lookup
+  nudge. Vocabulary selection (tiered, never random) and distractor and exercise logic are also
+  pure functions in shared. New API endpoints: `GET /review/queue` (due words, then new words, or
+  `?lemmaIds=`), `POST /review/:lemmaId`, `POST /reading/:id/lookup` (a weak signal) and
+  `POST /reading/:id/complete`. The Review screen introduces new words, asks multiple-choice
+  questions (the word alone or in its verse), grades Hard/Good/Easy, and brings missed words back
+  in the same session. The Reader records lookups and has Finish passage (which offers a review
+  of the words looked up) and Read again. The bottom nav has Today, Read and Review; Progress
+  joins in Phase 7.
+- Tests: shared has 106 (scheduler sequences on fixed dates, float4 round-trip, lookup nudge,
+  vocabulary tiers, distractors, exercise choice). The API has 98 (queue composition, grading,
+  in-session resurfacing, context exercises, lookups and nudges, completion, validation and 401
+  paths). Playwright has 18: reader, finish → review looked-up words → a miss resurfaces, Read
+  again, and a new learner's first review.
+
 ## Next
 
-- **Phase 4 (Vocabulary + review):** SM-2-style scheduler in shared behind one interface,
-  `POST /reading/:id/lookup` as a weak signal, `GET /review/queue`, `POST /review/:lemmaId`,
-  the review UI (Greek → gloss, form in context → gloss, missed items resurface), Finish passage
-  and Read again, and the bottom nav.
+- **Phase 5 (Grammar):** the slice concept "The article and case: who is what" with real
+  John 1:1 examples, then the curriculum (20–30 concepts) and `grammar_concept_rules` so the
+  reader's "Why this form?" notes appear. Also grammar progress and `GET /grammar/:slug`.
 
 ## Known issues / open questions
 

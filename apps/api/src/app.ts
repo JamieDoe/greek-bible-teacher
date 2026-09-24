@@ -1,4 +1,4 @@
-import type { ApiError } from "@gbt/shared";
+import type { ApiError, Rng } from "@gbt/shared";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
@@ -6,7 +6,9 @@ import { logger } from "hono/logger";
 import type { Db } from "./db/client";
 import type { Env } from "./env";
 import { ApiHttpError } from "./http/errors";
+import { readingProgressRoutes } from "./reading/progress-routes";
 import { readingRoutes } from "./reading/routes";
+import { reviewRoutes } from "./review/routes";
 import { healthRoutes } from "./routes/health";
 import { sessionRoutes } from "./session/routes";
 import { sourcesRoutes } from "./sources/routes";
@@ -16,11 +18,14 @@ export interface AppDeps {
   db: Db;
   /** Resolves when the database answers a trivial query. */
   pingDb: () => Promise<void>;
+  /** Injected so tests can fix the date and the shuffles. */
+  now: () => Date;
+  rng: Rng;
 }
 
 /** Hono generics for route modules: dependencies are available as `c.var.deps`. */
 export interface AppEnv {
-  Variables: { deps: AppDeps };
+  Variables: { deps: AppDeps; userId: string };
 }
 
 export function createApp(deps: AppDeps) {
@@ -45,6 +50,8 @@ export function createApp(deps: AppDeps) {
   app.route("/health", healthRoutes(deps.pingDb));
   app.route("/", sessionRoutes);
   app.route("/", readingRoutes);
+  app.route("/", readingProgressRoutes);
+  app.route("/", reviewRoutes);
   app.route("/", sourcesRoutes);
 
   app.notFound((c) => {

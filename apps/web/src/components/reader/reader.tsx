@@ -3,7 +3,10 @@
 import type { PassageResponse, ReaderToken } from "@gbt/shared";
 import Link from "next/link";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { apiPostNoContent } from "@/lib/api-client";
+import { ensureSession } from "@/lib/session";
 import { useSession } from "../use-session";
+import { FinishPassage } from "./finish-passage";
 import { TokenSheet } from "./token-sheet";
 
 type Passage = PassageResponse["passage"];
@@ -12,6 +15,26 @@ export function Reader({ passage }: { passage: Passage }) {
   const { level, changeLevel } = useSession();
   const [selected, setSelected] = useState<{ token: ReaderToken; ref: string } | null>(null);
   const buttons = useRef(new Map<number, HTMLButtonElement>());
+  // Words looked up during this read-through, in order, for the review offered at the end.
+  const [lookedUp, setLookedUp] = useState<number[]>([]);
+  const [readKey, setReadKey] = useState(0);
+  const top = useRef<HTMLElement>(null);
+
+  function open(token: ReaderToken, ref: string) {
+    setSelected({ token, ref });
+    setLookedUp((ids) => (ids.includes(token.lemma.id) ? ids : [...ids, token.lemma.id]));
+    // A lookup is a weak review signal; failing to record it must not disturb reading.
+    ensureSession()
+      .then(() => apiPostNoContent(`/reading/${passage.id}/lookup`, { tokenId: token.id }))
+      .catch((err: unknown) => console.error("[reader] could not record lookup", err));
+  }
+
+  function readAgain() {
+    setLookedUp([]);
+    setReadKey((k) => k + 1);
+    top.current?.scrollIntoView({ block: "start" });
+    top.current?.focus({ preventScroll: true });
+  }
 
   const returnFocusTo = useRef<number | null>(null);
 
@@ -30,7 +53,11 @@ export function Reader({ passage }: { passage: Passage }) {
 
   return (
     <>
-      <article className="mx-auto w-full max-w-2xl px-5 pt-10 pb-16 sm:px-8">
+      <article
+        ref={top}
+        tabIndex={-1}
+        className="mx-auto w-full max-w-2xl px-5 pt-10 pb-16 outline-none sm:px-8"
+      >
         <header className="mb-8">
           <p className="text-sm tracking-wide text-muted uppercase">Reading</p>
           <h1 className="mt-1 font-serif text-3xl">{passage.title}</h1>
@@ -68,7 +95,7 @@ export function Reader({ passage }: { passage: Passage }) {
                       }}
                       aria-haspopup="dialog"
                       aria-expanded={selected?.token.id === token.id}
-                      onClick={() => setSelected({ token, ref: verse.displayRef })}
+                      onClick={() => open(token, verse.displayRef)}
                       className="cursor-pointer rounded-[3px] px-[0.06em] leading-[1.25] transition-colors hover:bg-accent-soft aria-expanded:bg-accent-soft aria-expanded:text-accent"
                     >
                       {token.word}
@@ -80,6 +107,13 @@ export function Reader({ passage }: { passage: Passage }) {
             </span>
           ))}
         </div>
+
+        <FinishPassage
+          key={readKey}
+          passageId={passage.id}
+          lookedUpLemmaIds={lookedUp}
+          onReadAgain={readAgain}
+        />
 
         <footer className="mt-14 border-t border-rule pt-4 text-xs leading-relaxed text-muted">
           Greek text: SBL Greek New Testament (CC BY 4.0). Morphology and lemmas: MorphGNT (CC BY-SA

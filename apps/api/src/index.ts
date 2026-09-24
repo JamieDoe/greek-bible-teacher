@@ -12,6 +12,8 @@ const app = createApp({
   pingDb: async () => {
     await db.execute(sql`select 1`);
   },
+  now: () => new Date(),
+  rng: Math.random,
 });
 
 const server = serve({ fetch: app.fetch, port: env.API_PORT }, (info) => {

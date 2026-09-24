@@ -2,7 +2,8 @@
 
 import { type DisclosureLevel, sessionResponseSchema } from "@gbt/shared";
 import { useCallback, useEffect, useState } from "react";
-import { apiPatch, apiPost } from "@/lib/api-client";
+import { apiPatch } from "@/lib/api-client";
+import { ensureSession } from "@/lib/session";
 
 /**
  * Starts (or resumes) the anonymous session and exposes the learner's remembered disclosure
@@ -14,7 +15,7 @@ export function useSession() {
 
   useEffect(() => {
     let cancelled = false;
-    apiPost("/session/anonymous", sessionResponseSchema)
+    ensureSession()
       .then(({ user }) => {
         if (!cancelled) setLevel(user.disclosureLevel);
       })

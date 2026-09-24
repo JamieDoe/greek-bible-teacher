@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { BottomNav } from "@/components/bottom-nav";
 import "./globals.css";
 
 // Gentium 7 (SIL OFL 1.1), self-hosted and unmodified; see ./fonts/README.md.
@@ -27,7 +28,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${gentium.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col pb-[calc(3rem+env(safe-area-inset-bottom))]">
+        {children}
+        <BottomNav />
+      </body>
     </html>
   );
 }

@@ -134,6 +134,9 @@ const PERSON_LABEL: Record<Person, string> = {
   third: "3rd person",
 };
 
+/** Display name for a part of speech, e.g. "Personal pronoun". */
+export const partOfSpeechLabel = (pos: PartOfSpeech): string => POS_LABEL[pos];
+
 const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /**

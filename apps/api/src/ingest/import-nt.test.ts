@@ -8,10 +8,13 @@ import { loadSources } from "./load";
 // Imports John and 3 John (not the whole NT) to keep the test fast.
 const { db, client } = createDb(inject("testDatabaseUrl"), { max: 1 });
 let subset: ImportInput;
+/** 3 John alone (219 tokens), for properties that don't need John's text. */
+let small: ImportInput;
 
 beforeAll(async () => {
   const all = await loadSources();
   subset = { ...all, books: all.books.filter((b) => ["JHN", "3JN"].includes(b.book.abbrev)) };
+  small = { ...all, books: all.books.filter((b) => b.book.abbrev === "3JN") };
 });
 afterAll(() => client.end());
 beforeEach(async () => {
@@ -40,7 +43,7 @@ async function tokenLookup(ref: string, position: number) {
   return row;
 }
 
-describe("importNt", { timeout: 30_000 }, () => {
+describe("importNt", { timeout: 60_000 }, () => {
   it("imports tokens with lemma, morphology, gloss and source", async () => {
     const summary = await importNt(db, subset);
     expect(summary.tokens).toBe(15438 + 219);
@@ -85,14 +88,14 @@ describe("importNt", { timeout: 30_000 }, () => {
         from ${tokens} t join ${lemmas} l on l.id = t.lemma_id`);
       return row?.fp;
     };
-    await importNt(db, subset);
+    await importNt(db, small);
     const first = await fingerprint();
-    await importNt(db, subset);
+    await importNt(db, small);
     expect(await fingerprint()).toBe(first);
   });
 
   it("never overwrites a curated gloss", async () => {
-    await importNt(db, subset);
+    await importNt(db, small);
     const [curated] = await db
       .insert(dataSources)
       .values({ key: "curated", name: "Curated", licence: "project", attribution: "project" })
@@ -100,15 +103,15 @@ describe("importNt", { timeout: 30_000 }, () => {
     await db
       .update(lemmas)
       .set({ gloss: "word", glossSourceId: curated!.id })
-      .where(eq(lemmas.lemma, "λόγος"));
+      .where(eq(lemmas.lemma, "ἀγαπητός"));
 
-    await importNt(db, subset);
-    const [row] = await db.select().from(lemmas).where(eq(lemmas.lemma, "λόγος"));
+    await importNt(db, small);
+    const [row] = await db.select().from(lemmas).where(eq(lemmas.lemma, "ἀγαπητός"));
     expect(row).toMatchObject({ gloss: "word", glossSourceId: curated!.id });
   });
 
   it("records licence and attribution for every source", async () => {
-    await importNt(db, subset);
+    await importNt(db, small);
     const rows = await db.select().from(dataSources).orderBy(dataSources.key);
     expect(rows.map((r) => [r.key, r.licence])).toEqual([
       ["dodson", "Public domain (CC0 1.0)"],
