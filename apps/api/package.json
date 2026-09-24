@@ -11,7 +11,9 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:check": "drizzle-kit check",
-    "db:migrate": "tsx --env-file-if-exists=../../.env src/scripts/migrate.ts"
+    "db:migrate": "tsx --env-file-if-exists=../../.env src/scripts/migrate.ts",
+    "data:fetch": "tsx src/scripts/fetch-data.ts",
+    "ingest": "tsx --env-file-if-exists=../../.env src/scripts/ingest.ts"
   },
   "dependencies": {
     "@gbt/shared": "workspace:*",

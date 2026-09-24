@@ -134,6 +134,64 @@ database through an injected `pingDb` and returns 503 `degraded` when it fails.
 **Consequences.** `pnpm test` needs Postgres running (`pnpm db:up`). Every run also proves the
 migrations apply to an empty database.
 
+## 010 — Text and morphology source: MorphGNT SBLGNT, licences as verified
+
+**Context.** CLAUDE.md said SBLGNT is reported as CC BY and asked for verification.
+
+**Decision.** Import MorphGNT `sblgnt` pinned at commit `aaed91e` (tag 6.12 plus later
+corrections). Licences, per `data/README.md`:
+
+- **SBLGNT text:** CC BY 4.0. sblgnt.com/license serves the full CC BY 4.0 text, although the
+  MorphGNT README still calls it the "SBLGNT EULA".
+- **MorphGNT parsing and lemmas:** CC BY-SA 3.0.
+
+Both are stored in `data_sources` (`sblgnt`, `morphgnt-sblgnt`). Tokens point to
+`morphgnt-sblgnt`, the dataset actually imported.
+
+**Consequences.** The app must show both attributions (the About/Sources screen and the reader
+footer arrive with the Reader, Phase 3). The morphology the app serves is adapted CC BY-SA
+material. That data must stay under CC BY-SA and stay attributed, and no terms that restrict it
+may be added. This does not affect the licence of the app's own code. It is our reading, not legal
+advice.
+
+## 011 — Gloss source: Dodson (public domain)
+
+**Context.** CLAUDE.md required an openly licensed, lemma-keyed English gloss source.
+
+**Decision.** Use Dodson's Greek-English Lexicon, biblicalhumanities edition, commit `74f7035`.
+Dodson released it into the public domain, and the repo is CC0 1.0. The TEI XML has Unicode
+headwords. It is matched to MorphGNT lemmas (NFC) by an exact match, then two spelling-only
+fallbacks: bracketed optional letters (`οὕτω(ς)`) and diaeresis-insensitive matching when it is
+unambiguous. Headwords that appear twice are genuine homographs (βάτος, μήν, ἄπειμι), and their
+senses are joined. Coverage is 4,931 of 5,461 lemmas, or **98.9% of NT tokens**.
+
+**Alternatives.** STEPBible TBESG (CC BY 4.0) is keyed by extended Strong's numbers, so it would
+need a Strong's mapping MorphGNT doesn't provide. Abbott-Smith's TEI is public domain but gives
+full entries, not glosses.
+
+**Consequences.** 530 lemmas (1.1% of tokens) have no gloss. They are mostly lemma-form
+differences such as `Μωϋσῆς`/`Μωσῆς`, `Ἰερουσαλήμ`/`Ἱερουσαλήμ`, `τεσσεράκοντα`/`τεσσαράκοντα`,
+`Καφαρναούμ`/`Καπερναούμ`, and middle-only verbs such as `προσκαλέομαι`. They are not guessed.
+The UI must handle a missing gloss. Hand-curated glosses (`source='curated'`) can fill gaps and
+are never overwritten by re-imports.
+
+## 012 — Ingestion design
+
+**Decision.** `pnpm ingest` runs `loadSources()`, which verifies checksums and parses every file
+strictly, failing with `file:line` on any malformed line or unknown code. `importNt()` then writes
+everything in **one transaction**. Every write is an upsert on a natural key (source key, book
+abbrev, chapter, verse ref, (pos, parse), lemma, (verse, position)), so re-runs are no-ops and
+keep row ids stable. Grammar examples can therefore reference token ids (see 007). Lemma
+`nt_frequency` and `part_of_speech` (the most common POS of the lemma's tokens) are computed in
+SQL from the imported tokens. After import, per-book token counts in the database must equal the
+parsed counts, and frequencies must sum to the token total, or the transaction rolls back. All
+Greek fields are NFC-normalised. The pinned files are already NFC, so surface text is stored
+byte-for-byte as published.
+
+**Consequences.** Re-running on the same pin was verified identical: the table fingerprints and
+max ids are unchanged. If a future pin removes tokens or verses, the leftover rows make the count
+validation fail loudly instead of lingering silently. The full NT imports in about 10–20s.
+
 ## Dependencies
 
 One line each, for why the dependency exists.
