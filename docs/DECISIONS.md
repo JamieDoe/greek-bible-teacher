@@ -192,6 +192,51 @@ byte-for-byte as published.
 max ids are unchanged. If a future pin removes tokens or verses, the leftover rows make the count
 validation fail loudly instead of lingering silently. The full NT imports in about 10–20s.
 
+## 013 — Web ↔ API: same-origin via a Next rewrite; anonymous session cookie
+
+**Context.** The web app may only reach data over HTTP. The anonymous user id must live in an
+httpOnly cookie and not in JS state.
+
+**Decision.** The browser calls `/api/*` on the web origin, and a Next rewrite proxies to
+`API_INTERNAL_URL`. That makes the cookie first-party, so it needs no cross-site cookie setup.
+Server Components fetch public data (passages, sources) directly from `API_INTERNAL_URL`.
+`POST /session/anonymous` creates the `users` row or returns the existing one. It sets
+`gbt_uid` (httpOnly, SameSite=Lax, Secure in production, 400 days). The id is never included in
+response bodies. The cookie value is the random v4 uuid, unsigned. It carries no sensitive data
+and is unguessable, and signing can be added when auth arrives. API CORS stays explicit (only
+`WEB_ORIGIN`) for direct calls. Input validation uses Zod through small helpers
+(`http/validate.ts`). `@hono/zod-validator` would add a dependency for about 20 lines of code.
+
+**Consequences.** Next resolves rewrites at build time, so Phase 9 must set `API_INTERNAL_URL`
+at `next build`. `PATCH /me/preferences` was added because the reader must remember the
+disclosure level per user.
+
+## 014 — Reader choices (Phase 3)
+
+- **Typeface:** Gentium 7.000 (SIL OFL 1.1), self-hosted with `next/font/local`, using the
+  unmodified Regular and SemiBold WOFF2 files (about 720 KB). The OFL's Reserved Font Name
+  "Gentium" means subsetting would require renaming, so the files aren't subset. SBL Greek was not
+  chosen because Gentium's licence is clear and it has full polytonic coverage. A Playwright test
+  checks that the font loads and that decomposed (NFD) and precomposed text render at the same
+  width, which shows combining marks are positioned rather than advanced.
+- **Punctuation vs. tap targets:** the API splits each token's surface into
+  `before` / `word` / `after` (`splitSurface`, shared). Only the word is a button, and the
+  punctuation and verse number sit in the same no-wrap span so they never break away from it.
+  **SBLGNT apparatus sigla (⸀ ⸁ ⸂ ⸃ ⸄ ⸅) are hidden in the reader**, because without the
+  apparatus they mean nothing to learners. The raw `surface` is unchanged in the DB and the token
+  detail. A test on the full NT confirms nothing else is dropped.
+- **Lookup panel:** a native modal `<dialog>` as a bottom sheet. It handles focus, Esc and the
+  inert background. Tapping the backdrop or swiping the handle down more than 80px also closes it.
+  Focus returns to the word with `preventScroll` after the dialog closes, and page scroll is
+  locked while it is open, so the reading position doesn't move. Beginner and Expanded render
+  immediately from the passage payload. Advanced detail (frequency, same-form count, extended
+  gloss, nearby occurrences: same book first, then nearest) and the "Why this form?" notes come
+  from `GET /tokens/:id`. Notes appear only when curated `grammar_concept_rules` match (JSONB
+  containment against the token's morphology). None exist until Phase 5.
+- **Deferred to Phase 4:** "Finish passage" (reading progress plus a review of the words looked
+  up) and "Read again". Both depend on lookup recording and the review queue. The bottom nav also
+  waits until a second top-level screen (Review) exists, so it has no dead links.
+
 ## Dependencies
 
 One line each, for why the dependency exists.
@@ -206,3 +251,5 @@ One line each, for why the dependency exists.
 - `@types/node` (^22): Node types matching the minimum supported runtime.
 - `drizzle-orm`, `drizzle-kit`: ORM and migration generator (specified).
 - `postgres`: Postgres driver for Drizzle. It needs no native build step and ships its own types.
+- `@playwright/test` (web, dev): end-to-end tests (specified). Chromium only.
+- `zod`, `@gbt/shared` in web: to validate API responses against the shared schemas.

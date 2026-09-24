@@ -1,4 +1,4 @@
-import { decodeMorphology } from "@gbt/shared";
+import { decodeMorphology, splitSurface } from "@gbt/shared";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { ImportInput } from "./import-nt";
 import { loadSources } from "./load";
@@ -100,6 +100,15 @@ describe("pinned Dodson lexicon", () => {
     expect(input.lexicon.size).toBe(5407);
     for (const lemma of ["λόγος", "θεός", "ἀρχή", "καί", "εἰμί"]) {
       expect(input.lexicon.get(lemma)?.brief, lemma).toBeTruthy();
+    }
+  });
+});
+
+describe("reader punctuation split on the real text", () => {
+  it("rebuilds every surface from before + word + after, minus apparatus sigla only", () => {
+    for (const t of input.books.flatMap((b) => b.tokens)) {
+      const { before, after } = splitSurface(t.surface, t.word);
+      expect(before + t.word + after).toBe(t.surface.replace(/[⸀⸁⸂⸃⸄⸅]\d?/g, ""));
     }
   });
 });

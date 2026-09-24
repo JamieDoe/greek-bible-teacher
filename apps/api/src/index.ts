@@ -6,7 +6,9 @@ import { parseEnv } from "./env";
 
 const env = parseEnv(process.env);
 const { db, client } = createDb(env.DATABASE_URL);
-const app = createApp(env, {
+const app = createApp({
+  env,
+  db,
   pingDb: async () => {
     await db.execute(sql`select 1`);
   },

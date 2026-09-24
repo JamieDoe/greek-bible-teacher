@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 2 — Data ingestion ✅ complete (2026-09-24)
+**Current phase:** 3 — Reader + token lookup ✅ complete (2026-09-24)
 
 ## Done
 
@@ -21,18 +21,34 @@
   CORS, schema constraints, line and XML parsing, the real pinned data (per-book counts, every
   analysis decodes, NFC, John 1:1 exact), and the DB import (lookups, frequency, ordinals,
   idempotency, curated glosses kept, sources).
+- **Phase 3:** the Reader at `/read/:id` shows John 1:1–5 from the DB, set in self-hosted Gentium.
+  Every word is a button, and punctuation is displayed but not tappable. The bottom-sheet lookup
+  panel has Simple, More and Full levels, and the level is remembered per user. It closes on Esc,
+  a tap outside or a swipe down, and focus returns to the word with the scroll position unchanged.
+  Other screens: `/read` (passage list) and `/about` (sources and licences, linked from the
+  reader footer). Every data view has loading, error and empty or not-found states. There is a
+  light paper theme and a dark theme. New API endpoints: `POST /session/anonymous` (httpOnly
+  cookie), `PATCH /me/preferences`, `GET /passages`, `GET /passages/:id`, `GET /tokens/:id` and
+  `GET /sources`. `pnpm seed` upserts curated passages.
+- Tests: shared has 70, the API has 73 (including validation failures and happy paths for every
+  slice endpoint against the test DB), and Playwright has 12 (6 on desktop and 6 on mobile: font
+  and diacritics, tap → panel → Esc/outside/swipe, and remembered disclosure).
 
 ## Next
 
-- **Phase 3 (Reader + token lookup):** John 1:1–5 rendered from the DB, a tap panel with
-  progressive disclosure, `GET /passages/:id` and `GET /tokens/:id`, the self-hosted Greek font,
-  and the attribution footer and About/Sources screen.
+- **Phase 4 (Vocabulary + review):** SM-2-style scheduler in shared behind one interface,
+  `POST /reading/:id/lookup` as a weak signal, `GET /review/queue`, `POST /review/:lemmaId`,
+  the review UI (Greek → gloss, form in context → gloss, missed items resurface), Finish passage
+  and Read again, and the bottom nav.
 
 ## Known issues / open questions
 
-- **Attribution is not yet shown in the app.** It is stored in `data_sources` and the About/Sources
-  screen and reader footer come with Phase 3. The MorphGNT morphology is CC BY-SA 3.0, with
-  share-alike obligations for that data (DECISIONS 010).
+- **Dodson glosses verbs in the first person** ("I shine, appear, seem" for φαίνει). That is
+  the lexicon's convention. Curated glosses for the slice words may read better in Phase 4/5.
+- **Next streams not-found pages with HTTP 200** plus `noindex` under `loading.tsx`. This is
+  documented Next behaviour.
+- The MorphGNT morphology is CC BY-SA 3.0, with share-alike obligations for that data
+  (DECISIONS 010). Attribution is shown on `/about` and in the reader footer.
 - **530 lemmas (1.1% of tokens) have no gloss** (DECISIONS 011). The UI must handle this, and
   curated glosses can fill gaps.
 - **CLAUDE.md appears truncated at the top:** it has no product, stack or layout section, and the

@@ -19,7 +19,9 @@
     "db:generate": "pnpm --filter @gbt/api db:generate",
     "db:migrate": "pnpm --filter @gbt/api db:migrate",
     "data:fetch": "pnpm --filter @gbt/api data:fetch",
-    "ingest": "pnpm --filter @gbt/api ingest"
+    "ingest": "pnpm --filter @gbt/api ingest",
+    "seed": "pnpm --filter @gbt/api seed",
+    "test:e2e": "pnpm --filter @gbt/web test:e2e"
   },
   "devDependencies": {
     "@eslint/js": "^9",

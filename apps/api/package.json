@@ -13,7 +13,8 @@
     "db:check": "drizzle-kit check",
     "db:migrate": "tsx --env-file-if-exists=../../.env src/scripts/migrate.ts",
     "data:fetch": "tsx src/scripts/fetch-data.ts",
-    "ingest": "tsx --env-file-if-exists=../../.env src/scripts/ingest.ts"
+    "ingest": "tsx --env-file-if-exists=../../.env src/scripts/ingest.ts",
+    "seed": "tsx --env-file-if-exists=../../.env src/scripts/seed.ts"
   },
   "dependencies": {
     "@gbt/shared": "workspace:*",
