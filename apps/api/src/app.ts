@@ -7,12 +7,14 @@ import type { Db } from "./db/client";
 import type { Env } from "./env";
 import { grammarRoutes } from "./grammar/routes";
 import { ApiHttpError } from "./http/errors";
+import { lessonRoutes } from "./lessons/routes";
 import { readingProgressRoutes } from "./reading/progress-routes";
 import { readingRoutes } from "./reading/routes";
 import { reviewRoutes } from "./review/routes";
 import { healthRoutes } from "./routes/health";
 import { sessionRoutes } from "./session/routes";
 import { sourcesRoutes } from "./sources/routes";
+import { todayRoutes } from "./today/routes";
 
 export interface AppDeps {
   env: Env;
@@ -54,6 +56,8 @@ export function createApp(deps: AppDeps) {
   app.route("/", readingProgressRoutes);
   app.route("/", reviewRoutes);
   app.route("/", grammarRoutes);
+  app.route("/", lessonRoutes);
+  app.route("/", todayRoutes);
   app.route("/", sourcesRoutes);
 
   app.notFound((c) => {

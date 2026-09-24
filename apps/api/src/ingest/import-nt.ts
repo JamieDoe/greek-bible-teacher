@@ -223,19 +223,25 @@ export async function importNt(db: Db, input: ImportInput): Promise<ImportSummar
         });
     }
 
-    // Frequencies and each lemma's most common part of speech, computed from imported tokens
+    // Fresh statistics for the rows just loaded (ANALYZE sees this transaction's rows); without
+    // them the planner can pick nested loops that turn the queries below from ~1s into minutes.
+    await tx.execute(sql`analyze ${tokens}, ${lemmas}, ${morphology}, ${verses}, ${chapters}`);
+
+    // Frequencies and each lemma's most common part of speech, computed from imported tokens.
+    // Aggregating tokens per lemma first keeps this a single pass over tokens.
     await tx.execute(sql`
       update ${lemmas} l set
         nt_frequency = coalesce(f.n, 0),
         part_of_speech = f.pos
-      from (
-        select l2.id, count(t.id)::int as n, mode() within group (order by m.part_of_speech) as pos
-        from ${lemmas} l2
-        left join ${tokens} t on t.lemma_id = l2.id
-        left join ${morphology} m on m.id = t.morphology_id
-        group by l2.id
-      ) f
-      where f.id = l.id`);
+      from ${lemmas} l2
+      left join (
+        select t.lemma_id, count(*)::int as n,
+          mode() within group (order by m.part_of_speech) as pos
+        from ${tokens} t
+        join ${morphology} m on m.id = t.morphology_id
+        group by t.lemma_id
+      ) f on f.lemma_id = l2.id
+      where l2.id = l.id`);
 
     // Glosses from Dodson, never replacing curated ones
     const lookup = createGlossLookup(input.lexicon);

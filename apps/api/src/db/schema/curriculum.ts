@@ -108,7 +108,10 @@ export const lessons = pgTable(
     id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
     curriculumOrder: integer("curriculum_order").notNull().unique(),
     title: text("title").notNull(),
-    passageId: integer("passage_id").references(() => passages.id),
+    /** One lesson per passage (its stable key for re-seeding). */
+    passageId: integer("passage_id")
+      .references(() => passages.id)
+      .unique(),
   },
   (t) => [check("lessons_order_positive", sql`${t.curriculumOrder} > 0`)],
 );

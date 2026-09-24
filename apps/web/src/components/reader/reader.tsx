@@ -11,7 +11,16 @@ import { TokenSheet } from "./token-sheet";
 
 type Passage = PassageResponse["passage"];
 
-export function Reader({ passage }: { passage: Passage }) {
+export function Reader({
+  passage,
+  heading = "Reading",
+  onFinished,
+}: {
+  passage: Passage;
+  heading?: string;
+  /** Inside a lesson: called after the passage is finished, with the words looked up. */
+  onFinished?: (lookedUpLemmaIds: number[]) => void;
+}) {
   const { level, changeLevel } = useSession();
   const [selected, setSelected] = useState<{ token: ReaderToken; ref: string } | null>(null);
   const buttons = useRef(new Map<number, HTMLButtonElement>());
@@ -59,7 +68,7 @@ export function Reader({ passage }: { passage: Passage }) {
         className="mx-auto w-full max-w-2xl px-5 pt-10 pb-16 outline-none sm:px-8"
       >
         <header className="mb-8">
-          <p className="text-sm tracking-wide text-muted uppercase">Reading</p>
+          <p className="text-sm tracking-wide text-muted uppercase">{heading}</p>
           <h1 className="mt-1 font-serif text-3xl">{passage.title}</h1>
         </header>
 
@@ -113,6 +122,7 @@ export function Reader({ passage }: { passage: Passage }) {
           passageId={passage.id}
           lookedUpLemmaIds={lookedUp}
           onReadAgain={readAgain}
+          onContinue={onFinished ? () => onFinished(lookedUp) : undefined}
         />
 
         <footer className="mt-14 border-t border-rule pt-4 text-xs leading-relaxed text-muted">

@@ -12,15 +12,20 @@ type Phase = "intro" | "question" | "answered";
 export function ExerciseCard({
   item,
   retry,
+  introduce = false,
   saving,
   onGrade,
 }: {
   item: ReviewItem;
   retry: boolean;
+  /** Show the introduction card first even for words that aren't new. */
+  introduce?: boolean;
   saving: boolean;
   onGrade: (grade: ReviewGrade, correct: boolean) => void;
 }) {
-  const [phase, setPhase] = useState<Phase>(item.kind === "new" && !retry ? "intro" : "question");
+  const [phase, setPhase] = useState<Phase>(
+    (item.kind === "new" || introduce) && !retry ? "intro" : "question",
+  );
   const [chosen, setChosen] = useState<number | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const { exercise, lemma } = item;
@@ -30,7 +35,7 @@ export function ExerciseCard({
 
   if (phase === "intro") {
     return (
-      <section aria-labelledby="card-heading">
+      <section aria-labelledby="card-heading" data-lemma-id={item.lemmaId}>
         <p className="text-xs tracking-wide text-accent uppercase">New word</p>
         <h1
           id="card-heading"
@@ -41,7 +46,9 @@ export function ExerciseCard({
         >
           {lemma.lemma}
         </h1>
-        <p className="mt-4 font-serif text-2xl">{lemma.gloss}</p>
+        <p className="mt-4 font-serif text-2xl" data-testid="intro-gloss">
+          {lemma.gloss}
+        </p>
         <p className="mt-2 text-sm text-muted">
           {lemma.partOfSpeech ? `${partOfSpeechLabel(lemma.partOfSpeech)} · ` : ""}
           {lemma.ntFrequency.toLocaleString("en")} times in the NT
@@ -58,7 +65,7 @@ export function ExerciseCard({
   }
 
   return (
-    <section aria-labelledby="card-heading">
+    <section aria-labelledby="card-heading" data-lemma-id={item.lemmaId}>
       {exercise.type === "context" && exercise.context ? (
         <>
           <p className="text-xs text-muted">{exercise.context.displayRef}</p>

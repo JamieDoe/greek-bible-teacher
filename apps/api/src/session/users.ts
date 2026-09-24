@@ -1,5 +1,5 @@
-import type { DisclosureLevel, SessionResponse } from "@gbt/shared";
-import { eq } from "drizzle-orm";
+import type { DisclosureLevel, OnboardingRequest, SessionResponse } from "@gbt/shared";
+import { eq, sql } from "drizzle-orm";
 import type { Db } from "../db/client";
 import { users } from "../db/schema";
 
@@ -19,6 +19,25 @@ export async function setDisclosureLevel(db: Db, id: string, level: DisclosureLe
   const [row] = await db
     .update(users)
     .set({ disclosureLevel: level })
+    .where(eq(users.id, id))
+    .returning();
+  return row ?? null;
+}
+
+/** Saves onboarding answers; the first onboarding date is kept if they are changed later. */
+export async function completeOnboarding(
+  db: Db,
+  id: string,
+  answers: OnboardingRequest,
+  now: Date,
+) {
+  const [row] = await db
+    .update(users)
+    .set({
+      experienceLevel: answers.experienceLevel,
+      dailyMinutes: answers.dailyMinutes,
+      onboardedAt: sql`coalesce(${users.onboardedAt}, ${now.toISOString()}::timestamptz)`,
+    })
     .where(eq(users.id, id))
     .returning();
   return row ?? null;

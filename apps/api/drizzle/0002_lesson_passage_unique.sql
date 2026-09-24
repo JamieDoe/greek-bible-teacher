@@ -1,0 +1,1 @@
+ALTER TABLE "lessons" ADD CONSTRAINT "lessons_passage_id_unique" UNIQUE("passage_id");

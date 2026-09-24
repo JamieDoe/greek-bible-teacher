@@ -8,6 +8,7 @@ import {
 import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { importJohn, testApp } from "../../test/fixtures";
+import { passageContent } from "../content/passages";
 import { grammarConceptRules, grammarConcepts } from "../db/schema";
 
 const { app, db, close } = testApp();
@@ -21,12 +22,20 @@ async function john11() {
 }
 
 describe("GET /passages", () => {
-  it("lists the seeded slice passage", async () => {
+  it("lists the curated passages in curriculum order, starting with the slice", async () => {
     const res = await app.request("/passages");
     expect(res.status).toBe(200);
-    expect(passagesResponseSchema.parse(await res.json()).passages).toEqual([
-      { id: expect.any(Number), title: "John 1:1–5", startRef: "JHN 1:1", endRef: "JHN 1:5" },
-    ]);
+    const { passages } = passagesResponseSchema.parse(await res.json());
+    expect(passages[0]).toEqual({
+      id: expect.any(Number),
+      title: "John 1:1–5",
+      startRef: "JHN 1:1",
+      endRef: "JHN 1:5",
+    });
+    // John-only import: every John passage of the corpus, in order.
+    expect(passages.map((p) => p.title)).toEqual(
+      passageContent.filter((p) => p.startRef.startsWith("JHN")).map((p) => p.title),
+    );
   });
 });
 

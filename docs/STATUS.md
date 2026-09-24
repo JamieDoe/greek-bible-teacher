@@ -1,6 +1,6 @@
 # Status
 
-**Current phase:** 5 — Grammar ✅ complete (2026-09-24)
+**Current phase:** 6 — Daily session ✅ complete (2026-09-24). **MVP acceptance test passes.**
 
 ## Done
 
@@ -59,13 +59,23 @@
 - Tests: shared 106, web 8 (Markdown subset), API 139 (content rules, seeding, note coverage and
   ranking, grammar endpoints and progress), Playwright 20.
 
+- **Phase 6:**
+  - Onboarding (`POST /me/onboarding`, `/onboarding`) and Today (`GET /today`, `/`).
+  - The lesson stepper (`GET /lessons/:id`, `POST /lessons/:id/progress`, `/lesson/:id`),
+    running review due → new words → grammar → read → look closer → recall → re-read. It is
+    resumable.
+  - A curated corpus of 10 passages with stored difficulty scores and required concepts, and 10
+    lessons.
+  - Curated glosses for the five slice words.
+  - Migrations 0001 (`user_lesson_progress`) and 0002 (unique lesson per passage).
+- Tests: shared 113, web 8, API 160, Playwright 22. The acceptance flow (docs/ACCEPTANCE.md) runs
+  end to end on desktop and mobile.
+
 ## Next
 
-- **Phase 6 (Daily session):** `GET /today`, `GET /lessons/:id`, lessons and lesson items, and
-  the daily stepper wiring review → new vocab → grammar → reading → review → re-read. Onboarding
-  (`POST /me/onboarding`). The MVP acceptance test must pass end to end.
-- **Blocked on you:** CLAUDE.md never defines the acceptance test. I need its steps before
-  Phase 6 is complete.
+- **Phase 7 (Progress):** the metrics screen. It shows words learned (a stable interval of at
+  least N days), Greek words read, passages completed, concepts studied, review accuracy and
+  reading activity over time. The Progress tab joins the bottom nav.
 
 ## Known issues / open questions
 
@@ -77,8 +87,8 @@
   (DECISIONS 010). Attribution is shown on `/about` and in the reader footer.
 - **530 lemmas (1.1% of tokens) have no gloss** (DECISIONS 011). The UI must handle this, and
   curated glosses can fill gaps.
-- **CLAUDE.md appears truncated at the top:** it has no product, stack or layout section, and the
-  Phase 6 "acceptance test" is never defined.
+- **CLAUDE.md appears truncated at the top:** it has no product, stack or layout section. The
+  acceptance test was defined with you (docs/ACCEPTANCE.md).
 - The grammar content is first-draft teaching prose. It is worth a review by someone who teaches
   Greek.
 - The local machine runs Node 25, which is past end of life. It works, but Node 24 LTS is the target.

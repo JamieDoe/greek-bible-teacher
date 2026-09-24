@@ -11,7 +11,7 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { grammarConcepts, passages } from "./curriculum";
+import { grammarConcepts, lessons, passages } from "./curriculum";
 import {
   disclosureLevelEnum,
   experienceLevelEnum,
@@ -130,4 +130,26 @@ export const reviewEvents = pgTable(
     context: reviewContextEnum("context").notNull(),
   },
   (t) => [index("review_events_user_reviewed_idx").on(t.userId, t.reviewedAt)],
+);
+
+/**
+ * Where a learner is in a lesson (the daily session stepper), so it can be resumed, and when
+ * they finished it. Not in the original data-model sketch; see DECISIONS 018.
+ */
+export const userLessonProgress = pgTable(
+  "user_lesson_progress",
+  {
+    userId: userId(),
+    lessonId: integer("lesson_id")
+      .notNull()
+      .references(() => lessons.id),
+    /** Index of the step the learner is on (0-based). */
+    currentStep: smallint("current_step").notNull().default(0),
+    startedAt: timestamptz("started_at").notNull().defaultNow(),
+    completedAt: timestamptz("completed_at"),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.lessonId] }),
+    check("user_lesson_progress_step_nonneg", sql`${t.currentStep} >= 0`),
+  ],
 );

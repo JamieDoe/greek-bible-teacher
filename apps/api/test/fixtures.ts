@@ -19,7 +19,11 @@ export const T0 = new Date("2026-03-01T09:00:00Z");
  */
 export function testApp() {
   const env = parseEnv({ NODE_ENV: "test", WEB_ORIGIN, DATABASE_URL: inject("testDatabaseUrl") });
-  const { db, client } = createDb(env.DATABASE_URL, { max: 2 });
+  const { db, client } = createDb(env.DATABASE_URL, {
+    max: 2,
+    statementTimeoutMs: 30_000,
+    quiet: true,
+  });
   const clock = { now: T0 };
   const app = createApp({
     env,
@@ -39,8 +43,15 @@ export async function importBooks(db: Db, abbrevs: string[]) {
     restart identity cascade`);
   const all = await loadSources();
   await importNt(db, { ...all, books: all.books.filter((b) => abbrevs.includes(b.book.abbrev)) });
-  await seedPassages(db, passageContent);
+  // Only passages whose books were imported.
+  await seedPassages(
+    db,
+    passageContent.filter((p) => abbrevs.includes(p.startRef.split(" ")[0]!)),
+  );
 }
+
+/** Every book the curated corpus uses (for lessons and difficulty). */
+export const CORPUS_BOOKS = ["MRK", "JHN", "1JN"];
 
 /** John only: enough for the reading slice. */
 export const importJohn = (db: Db) => importBooks(db, ["JHN"]);

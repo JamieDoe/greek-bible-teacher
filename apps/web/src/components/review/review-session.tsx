@@ -27,7 +27,26 @@ type Load =
   | { status: "error" }
   | { status: "ready"; cards: Card[]; dueCount: number };
 
-export function ReviewSession({ lemmaIds }: { lemmaIds?: string }) {
+interface Props {
+  /** Review exactly these words (comma-separated ids), e.g. those looked up while reading. */
+  lemmaIds?: string;
+  /** "due": only words due now (the lesson's first step). */
+  mode?: "mixed" | "due";
+  /** Introduce every word before asking it (the lesson's vocabulary step). */
+  introduceAll?: boolean;
+  /** Recorded with each grade. */
+  context?: "review" | "lesson";
+  /** Inside a lesson: called instead of showing the stand-alone summary links. */
+  onDone?: () => void;
+}
+
+export function ReviewSession({
+  lemmaIds,
+  mode = "mixed",
+  introduceAll = false,
+  context = "review",
+  onDone,
+}: Props) {
   const [load, setLoad] = useState<Load>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [index, setIndex] = useState(0);
@@ -37,7 +56,10 @@ export function ReviewSession({ lemmaIds }: { lemmaIds?: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    const query = lemmaIds ? `?lemmaIds=${lemmaIds}` : "";
+    const params = new URLSearchParams();
+    if (lemmaIds) params.set("lemmaIds", lemmaIds);
+    if (mode === "due") params.set("mode", "due");
+    const query = params.size > 0 ? `?${params}` : "";
     ensureSession()
       .then(() => apiGet(`/review/queue${query}`, reviewQueueResponseSchema))
       .then((q) => {
@@ -55,14 +77,14 @@ export function ReviewSession({ lemmaIds }: { lemmaIds?: string }) {
     return () => {
       cancelled = true;
     };
-  }, [lemmaIds, attempt]);
+  }, [lemmaIds, mode, attempt]);
 
   const grade = useCallback(
     async (card: Card, g: ReviewGrade, correct: boolean) => {
       setSaving(true);
       setSaveError(false);
       try {
-        await apiPost(`/review/${card.item.lemmaId}`, gradeResponseSchema, { grade: g });
+        await apiPost(`/review/${card.item.lemmaId}`, gradeResponseSchema, { grade: g, context });
       } catch (err) {
         console.error("[review] could not save grade", err);
         setSaveError(true);
@@ -85,19 +107,21 @@ export function ReviewSession({ lemmaIds }: { lemmaIds?: string }) {
       });
       setIndex((i) => i + 1);
     },
-    [index],
+    [index, context],
   );
+
+  const Shell = onDone ? EmbeddedShell : PageShell;
 
   if (load.status === "loading") {
     return (
-      <PageShell title="Review">
+      <Shell title="Review">
         <LoadingState label="Preparing your review…" />
-      </PageShell>
+      </Shell>
     );
   }
   if (load.status === "error") {
     return (
-      <PageShell title="Review">
+      <Shell title="Review">
         <ErrorState
           message="We couldn’t load your review. Check your connection and try again."
           onRetry={() => {
@@ -105,11 +129,16 @@ export function ReviewSession({ lemmaIds }: { lemmaIds?: string }) {
             setAttempt((a) => a + 1);
           }}
         />
-      </PageShell>
+      </Shell>
     );
   }
   if (load.cards.length === 0) {
-    return (
+    return onDone ? (
+      <Shell>
+        <EmptyState>Nothing is due for review yet.</EmptyState>
+        <ContinueButton onClick={onDone} />
+      </Shell>
+    ) : (
       <PageShell title="Review">
         <EmptyState>
           Nothing to review right now.{" "}
@@ -124,12 +153,12 @@ export function ReviewSession({ lemmaIds }: { lemmaIds?: string }) {
 
   const card = load.cards[index];
   if (!card) {
-    return <Summary answered={stats.answered} firstTry={stats.firstTry} />;
+    return <Summary answered={stats.answered} firstTry={stats.firstTry} onDone={onDone} />;
   }
 
   const remaining = load.cards.length - index;
   return (
-    <PageShell>
+    <Shell>
       <div className="mb-6 flex items-baseline justify-between text-sm text-muted">
         <span>{lemmaIds ? "Words you looked up" : "Review"}</span>
         <span aria-live="polite">{remaining} to go</span>
@@ -138,6 +167,7 @@ export function ReviewSession({ lemmaIds }: { lemmaIds?: string }) {
         key={`${index}-${card.item.lemmaId}`}
         item={card.item}
         retry={card.retry}
+        introduce={introduceAll && !card.retry}
         saving={saving}
         onGrade={(g, correct) => void grade(card, g, correct)}
       />
@@ -146,26 +176,62 @@ export function ReviewSession({ lemmaIds }: { lemmaIds?: string }) {
           Couldn’t save that answer. Check your connection and choose again.
         </p>
       )}
-    </PageShell>
+    </Shell>
   );
 }
 
-function Summary({ answered, firstTry }: { answered: number; firstTry: number }) {
+/** Inside a lesson the stepper supplies the page chrome. */
+function EmbeddedShell({ children }: { title?: string; children: React.ReactNode }) {
+  return <div>{children}</div>;
+}
+
+export function ContinueButton({
+  onClick,
+  label = "Continue",
+}: {
+  onClick: () => void;
+  label?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="mt-6 rounded-full bg-ink px-6 py-2.5 text-sm text-paper hover:opacity-90"
+    >
+      {label}
+    </button>
+  );
+}
+
+function Summary({
+  answered,
+  firstTry,
+  onDone,
+}: {
+  answered: number;
+  firstTry: number;
+  onDone?: () => void;
+}) {
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => heading.current?.focus(), []);
+  const Shell = onDone ? EmbeddedShell : PageShell;
   return (
-    <PageShell>
+    <Shell>
       <h1 ref={heading} tabIndex={-1} className="font-serif text-3xl outline-none">
         Review done
       </h1>
       <p className="mt-2 text-muted">
         {answered} {answered === 1 ? "word" : "words"}, {firstTry} right first time.
       </p>
-      <div className="mt-6 flex gap-2 text-sm">
-        <Link href="/read" className="rounded-full bg-ink px-5 py-2 text-paper hover:opacity-90">
-          Keep reading
-        </Link>
-      </div>
-    </PageShell>
+      {onDone ? (
+        <ContinueButton onClick={onDone} />
+      ) : (
+        <div className="mt-6 flex gap-2 text-sm">
+          <Link href="/read" className="rounded-full bg-ink px-5 py-2 text-paper hover:opacity-90">
+            Keep reading
+          </Link>
+        </div>
+      )}
+    </Shell>
   );
 }

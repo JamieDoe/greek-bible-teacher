@@ -26,6 +26,7 @@ export const reviewRoutes = new Hono<AppEnv>()
       now: now(),
       rng,
       lemmaIds: query.data.lemmaIds,
+      mode: query.data.mode,
     });
     return c.json(body);
   })

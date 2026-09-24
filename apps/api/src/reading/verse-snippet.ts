@@ -8,12 +8,13 @@ export interface VerseSnippet {
   tokens: { before: string; word: string; after: string; isTarget: boolean }[];
 }
 
-/** One verse, word by word with display punctuation, marking the target token. */
+/** One verse, word by word with display punctuation, marking the target token(s). */
 export async function verseSnippet(
   db: Db,
   verseId: number,
-  targetTokenId: number,
+  targets: number | ReadonlySet<number>,
 ): Promise<VerseSnippet> {
+  const isTarget = (id: number) => (typeof targets === "number" ? id === targets : targets.has(id));
   const rows = await db
     .select({
       id: tokens.id,
@@ -32,7 +33,7 @@ export async function verseSnippet(
     tokens: rows.map((t) => ({
       ...splitSurface(t.surface, t.word),
       word: t.word,
-      isTarget: t.id === targetTokenId,
+      isTarget: isTarget(t.id),
     })),
   };
 }

@@ -36,7 +36,13 @@ type QueueKind = ReviewItem["kind"];
 /** Builds the session: due words first, then new words chosen by `selectNewVocabulary`. */
 export async function buildReviewQueue(
   db: Db,
-  { userId, now, rng, lemmaIds }: { userId: string; now: Date; rng: Rng; lemmaIds?: number[] },
+  {
+    userId,
+    now,
+    rng,
+    lemmaIds,
+    mode = "mixed",
+  }: { userId: string; now: Date; rng: Rng; lemmaIds?: number[]; mode?: "mixed" | "due" },
 ): Promise<{ items: ReviewItem[]; dueCount: number }> {
   const [due] = await db
     .select({ n: count() })
@@ -54,7 +60,7 @@ export async function buildReviewQueue(
       .where(and(eq(userWordProgress.userId, userId), lte(userWordProgress.nextReviewAt, now)))
       .orderBy(asc(userWordProgress.nextReviewAt), asc(userWordProgress.lemmaId))
       .limit(QUEUE_LIMIT);
-    const newLimit = Math.min(NEW_PER_SESSION, QUEUE_LIMIT - dueRows.length);
+    const newLimit = mode === "due" ? 0 : Math.min(NEW_PER_SESSION, QUEUE_LIMIT - dueRows.length);
     const newIds = newLimit > 0 ? await chooseNewWords(db, userId, newLimit) : [];
     plan = [
       ...dueRows.map((r) => ({ lemmaId: r.lemmaId, kind: "due" as const })),

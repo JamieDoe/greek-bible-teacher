@@ -11,6 +11,8 @@ export const reviewQueueQuerySchema = z
       .transform((s) => [...new Set(s.split(",").map(Number))])
       .pipe(z.array(z.number().int().positive()).max(50))
       .optional(),
+    /** "due": only words due now, no new ones (the lesson's first step). */
+    mode: z.enum(["mixed", "due"]).default("mixed"),
   })
   .strict();
 export type ReviewQueueQuery = z.infer<typeof reviewQueueQuerySchema>;

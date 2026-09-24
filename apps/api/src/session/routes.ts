@@ -1,10 +1,17 @@
-import { updatePreferencesRequestSchema } from "@gbt/shared";
+import { onboardingRequestSchema, updatePreferencesRequestSchema } from "@gbt/shared";
 import { Hono } from "hono";
 import type { AppEnv } from "../app";
 import { ApiHttpError } from "../http/errors";
 import { validBody } from "../http/validate";
 import { readSessionUserId, writeSessionCookie } from "./cookie";
-import { createUser, findUser, setDisclosureLevel, toSessionResponse } from "./users";
+import { requireUser } from "./require-user";
+import {
+  completeOnboarding,
+  createUser,
+  findUser,
+  setDisclosureLevel,
+  toSessionResponse,
+} from "./users";
 
 export const sessionRoutes = new Hono<AppEnv>()
   /** Returns the current anonymous user, creating one (and its cookie) on first visit. */
@@ -17,6 +24,12 @@ export const sessionRoutes = new Hono<AppEnv>()
     const user = await createUser(db);
     writeSessionCookie(c, env, user.id);
     return c.json(toSessionResponse(user), 201);
+  })
+  .post("/me/onboarding", requireUser, async (c) => {
+    const answers = await validBody(c, onboardingRequestSchema);
+    const { db, now } = c.var.deps;
+    const user = await completeOnboarding(db, c.var.userId, answers, now());
+    return c.json(toSessionResponse(user!));
   })
   .patch("/me/preferences", async (c) => {
     const userId = readSessionUserId(c);

@@ -189,7 +189,11 @@ Greek fields are NFC-normalised. The pinned files are already NFC, so surface te
 byte-for-byte as published.
 
 **Consequences.** Re-running on the same pin was verified identical: the table fingerprints and
-max ids are unchanged. If a future pin removes tokens or verses, the leftover rows make the count
+max ids are unchanged. The import runs `ANALYZE` on the freshly loaded tables inside its
+transaction, and aggregates tokens per lemma before updating frequencies. Without this, the
+planner had no statistics on a freshly truncated database and chose a nested-loop plan that ran
+for over 10 minutes. That was the cause of an earlier flaky test. Test DB connections now set a
+30s `statement_timeout`, so a bad plan fails fast instead of hanging the suite. If a future pin removes tokens or verses, the leftover rows make the count
 validation fail loudly instead of lingering silently. The full NT imports in about 10–20s.
 
 ## 013 — Web ↔ API: same-origin via a Next rewrite; anonymous session cookie
@@ -330,6 +334,45 @@ still need a plugin for the Greek language tagging.
 **Progress.** Opening a lesson records `introduced`; "Mark as studied" records `studied` with
 its first date. Status never moves backwards. "Going deeper" is collapsed for Simple readers and
 open for More or Full.
+
+## 018 — Daily session: corpus, lessons, steps and Today
+
+- **Corpus (10 passages).** John 1:1–5, then nine passages chosen from 20 scored candidates.
+  Scoring used `passageDifficulty` (shared, pure): average log-frequency rank 35%, share of
+  tokens outside the top 300 lemmas 35%, verse length 15%, and grammar concepts not yet covered
+  15%. The order is roughly easiest first, with judgement: the prologue (John 1:6–9, 1:10–13)
+  stays together while its vocabulary is fresh, and Johannine and Markan passages alternate.
+  Stored scores are computed at seed time and include the concepts each passage needs beyond its
+  lesson's point in the curriculum.
+- **Lessons.** There is one lesson per passage, keyed by passage (a unique constraint, migration
+  0002), and each teaches one concept in curriculum order. Lesson 1 uses the specified slice
+  vocabulary. Later lessons take the passage's five most frequent glossed lemmas not taught in
+  earlier lessons, skipping the article (grammar covers it). This is deterministic, never random.
+  The five slice words get **curated glosses** (source `curated`), because Dodson lists senses
+  like "ruler" before "beginning". Dodson's fuller entry stays as the extended gloss.
+- **Steps.** `lesson_items` stores review, vocab ×5, grammar, reading, review and reading. The
+  API derives the daily loop from them:
+  1. review due (due words only, `mode=due`);
+  2. new vocabulary (every word introduced first);
+  3. grammar;
+  4. guided reading;
+  5. look closer (passage tokens matching the lesson concept's rules, with notes);
+  6. recall (the new words plus the words looked up during reading);
+  7. re-read.
+
+  Grades in lessons are logged with `context = lesson`. The reading steps reuse the Reader, and
+  finishing records reading progress.
+
+- **`user_lesson_progress`** (migration 0001, beyond the original sketch) stores the current step,
+  so a lesson resumes after a reload, and the completion date. Completion is never undone. The
+  words looked up are kept client-side only. After a reload mid-lesson, recall covers the
+  lesson's vocabulary alone.
+- **Today (`GET /today`)** shows the first incomplete lesson, the most recent completion (for "done
+  today"), the due count, the lesson's concept and passage, and counts: words in review, passages
+  completed, concepts studied and lessons done. Learners who aren't onboarded are redirected to
+  `/onboarding`. That page asks for experience and daily minutes (5–30), and stores nothing
+  personal. Daily minutes are shown on Today but don't yet change the lesson.
+- **Acceptance test:** defined in `docs/ACCEPTANCE.md` and automated in Playwright.
 
 ## Dependencies
 

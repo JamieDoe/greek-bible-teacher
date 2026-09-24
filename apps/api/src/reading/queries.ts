@@ -9,6 +9,7 @@ import {
 import { and, asc, between, count, eq, ne, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { Db } from "../db/client";
+import { ruleMatchesToken, ruleSpecificity } from "../grammar/matching";
 import {
   books,
   chapters,
@@ -172,34 +173,20 @@ export async function getTokenDetail(db: Db, id: number): Promise<TokenDetailRes
       .select({ n: count() })
       .from(tokens)
       .where(and(eq(tokens.lemmaId, row.lemma.id), eq(tokens.normalized, row.token.normalized))),
-    // A rule matches when its matcher is contained in the token's features (keys mirror
-    // TokenMatcher; null features are dropped so they can never match).
     db
       .select({
         slug: grammarConcepts.slug,
         title: grammarConcepts.title,
         note: grammarConceptRules.note,
       })
-      .from(grammarConceptRules)
+      .from(tokens)
+      .innerJoin(lemmas, eq(lemmas.id, tokens.lemmaId))
+      .innerJoin(morphology, eq(morphology.id, tokens.morphologyId))
+      .innerJoin(grammarConceptRules, ruleMatchesToken)
       .innerJoin(grammarConcepts, eq(grammarConcepts.id, grammarConceptRules.conceptId))
-      .where(
-        sql`${grammarConceptRules.match} <@ jsonb_strip_nulls(jsonb_build_object(
-          'lemma', ${row.lemma.lemma}::text,
-          'partOfSpeech', ${row.morphology.partOfSpeech}::text,
-          'person', ${row.morphology.person}::text,
-          'tense', ${row.morphology.tense}::text,
-          'voice', ${row.morphology.voice}::text,
-          'mood', ${row.morphology.mood}::text,
-          'case', ${row.morphology.case}::text,
-          'number', ${row.morphology.number}::text,
-          'gender', ${row.morphology.gender}::text,
-          'degree', ${row.morphology.degree}::text))`,
-      )
-      // Most specific first: rules naming the word itself, then rules with more features,
-      // then curriculum order.
+      .where(eq(tokens.id, id))
       .orderBy(
-        sql`${grammarConceptRules.match} ? 'lemma' desc`,
-        sql`(select count(*) from jsonb_object_keys(${grammarConceptRules.match})) desc`,
+        ...ruleSpecificity,
         asc(grammarConcepts.curriculumOrder),
         asc(grammarConceptRules.id),
       ),

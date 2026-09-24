@@ -6,7 +6,11 @@ import { type ImportInput, importNt } from "./import-nt";
 import { loadSources } from "./load";
 
 // Imports John and 3 John (not the whole NT) to keep the test fast.
-const { db, client } = createDb(inject("testDatabaseUrl"), { max: 1 });
+const { db, client } = createDb(inject("testDatabaseUrl"), {
+  max: 1,
+  statementTimeoutMs: 30_000,
+  quiet: true,
+});
 let subset: ImportInput;
 /** 3 John alone (219 tokens), for properties that don't need John's text. */
 let small: ImportInput;

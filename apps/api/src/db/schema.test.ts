@@ -17,7 +17,11 @@ import {
   verses,
 } from "./schema";
 
-const { db, client } = createDb(inject("testDatabaseUrl"), { max: 1 });
+const { db, client } = createDb(inject("testDatabaseUrl"), {
+  max: 1,
+  statementTimeoutMs: 30_000,
+  quiet: true,
+});
 afterAll(() => client.end());
 
 beforeEach(async () => {

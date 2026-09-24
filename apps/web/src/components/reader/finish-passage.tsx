@@ -20,10 +20,13 @@ export function FinishPassage({
   passageId,
   lookedUpLemmaIds,
   onReadAgain,
+  onContinue,
 }: {
   passageId: number;
   lookedUpLemmaIds: number[];
   onReadAgain: () => void;
+  /** Inside a lesson: replaces the review / read-again offers with "Continue". */
+  onContinue?: () => void;
 }) {
   const [state, setState] = useState<State>({ status: "idle" });
 
@@ -76,26 +79,36 @@ export function FinishPassage({
           ? "You didn’t look anything up."
           : `You looked up ${n} ${n === 1 ? "word" : "words"}.`}
       </p>
-      <div className="mt-4 flex flex-wrap gap-2 text-sm">
-        {n > 0 && (
-          <Link
-            href={`/review?lemmas=${lookedUpLemmaIds.join(",")}`}
-            className="rounded-full bg-ink px-5 py-2 text-paper hover:opacity-90"
-          >
-            Review {n === 1 ? "it" : `these ${n}`}
-          </Link>
-        )}
+      {onContinue ? (
         <button
           type="button"
-          onClick={() => {
-            setState({ status: "idle" });
-            onReadAgain();
-          }}
-          className="rounded-full border border-rule px-5 py-2 hover:bg-accent-soft"
+          onClick={onContinue}
+          className="mt-4 rounded-full bg-ink px-6 py-2.5 text-sm text-paper hover:opacity-90"
         >
-          Read again
+          Continue
         </button>
-      </div>
+      ) : (
+        <div className="mt-4 flex flex-wrap gap-2 text-sm">
+          {n > 0 && (
+            <Link
+              href={`/review?lemmas=${lookedUpLemmaIds.join(",")}`}
+              className="rounded-full bg-ink px-5 py-2 text-paper hover:opacity-90"
+            >
+              Review {n === 1 ? "it" : `these ${n}`}
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setState({ status: "idle" });
+              onReadAgain();
+            }}
+            className="rounded-full border border-rule px-5 py-2 hover:bg-accent-soft"
+          >
+            Read again
+          </button>
+        </div>
+      )}
     </section>
   );
 }
