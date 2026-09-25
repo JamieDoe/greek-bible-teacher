@@ -1,3 +1,4 @@
+import { AUDIO_VOICE } from "../audio/elevenlabs";
 import type { dataSources } from "../db/schema";
 
 type SourceRow = typeof dataSources.$inferInsert;
@@ -40,6 +41,17 @@ export function sourceRows(commits: { morphgnt: string; dodson: string }): Sourc
         "compiled from Abbott-Smith, Berry, Souter and Strong. Digital edition by Ulrik " +
         "Sandborg-Petersen and biblicalhumanities.org.",
       url: "https://github.com/biblicalhumanities/Dodson-Greek-Lexicon",
+    },
+    {
+      // Not imported data: the pronunciation recordings in apps/web/public/audio (DECISIONS 028).
+      key: "elevenlabs-audio",
+      name: "Pronunciation audio: ElevenLabs text-to-speech",
+      version: `Voice "${AUDIO_VOICE.voiceName}" (ElevenLabs Voice Library), model ${AUDIO_VOICE.model}`,
+      licence: "Generated audio, used under the ElevenLabs Terms of Service",
+      attribution:
+        `Greek pronunciation audio generated with ElevenLabs text-to-speech (elevenlabs.io), ` +
+        `voice "${AUDIO_VOICE.voiceName}" from the ElevenLabs Voice Library. Modern Greek pronunciation.`,
+      url: "https://elevenlabs.io",
     },
   ];
 }

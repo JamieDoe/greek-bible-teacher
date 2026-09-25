@@ -5,9 +5,13 @@ const SHELL = `shell-${VERSION}`; // offline page and icons, cached on install
 const STATIC = `static-${VERSION}`; // hashed build assets and fonts (immutable)
 const PAGES = `pages-${VERSION}`; // HTML of recently visited pages (e.g. /read/1)
 const DATA = `data-${VERSION}`; // public reading data: passages, token lookups, grammar
-const CACHES = [SHELL, STATIC, PAGES, DATA];
+const AUDIO = `audio-${VERSION}`; // pronunciation recordings played so far (DECISIONS 028)
+const CACHES = [SHELL, STATIC, PAGES, DATA, AUDIO];
 const MAX_PAGES = 20;
 const MAX_DATA = 300;
+const MAX_AUDIO = 500;
+// Recording file names are content hashes, so a cached clip is never stale.
+const AUDIO_CLIP = /^\/audio\/[0-9a-f]{16}\.mp3$/;
 
 // Only public, non-user-specific API data is ever cached.
 const CACHEABLE_API = [
@@ -15,6 +19,7 @@ const CACHEABLE_API = [
   /^\/api\/tokens\/\d+$/,
   /^\/api\/grammar(\/[a-z0-9-]+)?$/,
   /^\/api\/sources$/,
+  /^\/audio\/manifest\.json$/,
 ];
 
 /**
@@ -113,6 +118,18 @@ self.addEventListener("fetch", (event) => {
   }
   if (url.pathname.startsWith("/_next/static/")) {
     event.respondWith(cacheFirst(request));
+    return;
+  }
+  if (AUDIO_CLIP.test(url.pathname)) {
+    event.respondWith(
+      (async () => {
+        const cached = await caches.match(request, { cacheName: AUDIO });
+        if (cached) return cached;
+        const response = await fetch(request);
+        if (response.ok) await remember(AUDIO, request, response.clone(), MAX_AUDIO);
+        return response;
+      })(),
+    );
     return;
   }
   if (CACHEABLE_API.some((re) => re.test(url.pathname))) {

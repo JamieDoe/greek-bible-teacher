@@ -119,6 +119,7 @@ describe("importNt", { timeout: 60_000 }, () => {
     const rows = await db.select().from(dataSources).orderBy(dataSources.key);
     expect(rows.map((r) => [r.key, r.licence])).toEqual([
       ["dodson", "Public domain (CC0 1.0)"],
+      ["elevenlabs-audio", "Generated audio, used under the ElevenLabs Terms of Service"],
       ["morphgnt-sblgnt", "CC BY-SA 3.0"],
       ["sblgnt", "CC BY 4.0"],
     ]);

@@ -740,6 +740,68 @@ fixes the loss without collecting anything.
 - Dependencies: the `alert-dialog` registry component (restyled), with no new package, since
   `radix-ui` already includes it.
 
+## 028 — Pronunciation audio: pre-generated ElevenLabs recordings
+
+**Context.** The device voice from 021 sounded robotic, and the user asked for accurate, clear
+pronunciation. Modern Greek is acceptable (the user's choice; no voice service speaks Erasmian).
+The text is fixed, so audio can be generated once instead of synthesised live.
+
+**Decision.**
+
+- **Provider.** ElevenLabs text-to-speech, chosen over Google or Azure neural voices for
+  naturalness. It is used only by a local script, never at run time, so no API key is deployed.
+- **Choice by listening.** A bake-off covered 3 native Greek library voices (Kyriakos, Eleni,
+  Theos), 3 models (Multilingual v2, v3, Flash v2.5) and two spellings. The user chose
+  **Kyriakos, `eleven_v3`, monotonic spelling with one-syllable accents kept** (καί, ήν).
+  - Strict modern spelling (και, ην) was tried and sounded worse, so `speakableText` keeps
+    monosyllable accents.
+  - Its one other rule stays: a word keeps only its first accent (ὄνομά μου → όνομα μου). 613
+    distinct NT words carried an enclitic's second accent.
+  - The conversion moved to `packages/shared`, because the generator and the web app both use it.
+- **What is recorded:** for the curated passages, every verse, plus every word form (the word
+  sheet) and dictionary form (the new-word cards). That is 387 clips and 5,583 characters, about
+  US$0.56 at the v3 list price.
+  - Words are keyed by `spokenWordKey`, the spoken spelling in lower case, so repeated and
+    capitalised forms share a clip. Verses are keyed by reference.
+- **Generator:** `pnpm audio:generate`.
+  - It is a dry run by default, reporting the clip count, characters and cost. `--yes` spends,
+    under a `--max-chars` budget.
+  - It skips existing clips and makes three requests at a time, retrying 429 and 5xx responses.
+    It stops at once on 401, 402 or 403.
+  - It writes each clip to a temporary file and renames it, and saves the manifest even if
+    interrupted. It flags word clips over 2 seconds for a listen, since there's no ffmpeg to
+    trim silence.
+  - Clip file names are hashes of the text and every voice setting, so changing the voice,
+    model, seed or text makes new files and never serves stale audio. `--prune` removes files
+    no longer referenced.
+- **Files.** mp3 at 44.1 kHz and 128 kbps, the quality judged in the bake-off, in
+  `apps/web/public/audio/` with `manifest.json`. They take 18 MB, committed to git.
+  - v3 pads single words with about 2 seconds of silence _after_ the word. Measured: speech
+    starts within 0.15s, so taps don't lag. Verses have almost none.
+  - Trimming would shrink the folder to about 7 MB, but needs ffmpeg or a hand-written MP3
+    frame trimmer, so it's left for now.
+  - Object storage can come later if the audio grows much.
+- **Playback.**
+  - Recordings first, then the device voice (021) for anything unrecorded or on error. Listen
+    plays verse by verse and stops at once.
+  - Clips are fetched whole and played from memory, not streamed. The service worker can then
+    serve them offline: media elements make range requests that a cached file can't answer,
+    Safari especially.
+  - The service worker keeps played clips cache-first (content-hashed names, capped at 500) and
+    fetches the manifest network-first.
+- **Attribution.** ElevenLabs is a fourth `data_sources` row, so it is listed on About. Its
+  licence is stated cautiously ("used under the ElevenLabs Terms of Service"), because whether
+  the account's pay-as-you-go credits include commercial rights is still for the owner to
+  confirm.
+
+**Consequences.**
+
+- The recordings are fixed, so learners always hear the same thing; regenerating costs credits.
+- The voice belongs to its library creator, who could withdraw it later. The files we have stay
+  ours to use; only future regeneration would need a new voice.
+- New passages need `pnpm audio:generate -- --yes`, and only the new clips are generated.
+- Before the app is public, confirm the ElevenLabs plan covers commercial use.
+
 ## Dependencies
 
 One line each, for why the dependency exists.

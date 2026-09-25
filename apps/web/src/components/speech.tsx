@@ -1,8 +1,10 @@
 "use client";
 
+import { type AudioManifest, speakableText } from "@gbt/shared";
 import Link from "next/link";
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { findGreekVoice, speakableText } from "@/lib/speech";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { loadAudioManifest, playClip, stopClip, verseClipUrl, wordClipUrl } from "@/lib/audio";
+import { findGreekVoice } from "@/lib/speech";
 
 // The Greek voice's name is the store snapshot: a stable string, where voice objects may be
 // recreated by the browser on every getVoices() call.
@@ -69,18 +71,51 @@ function SpeakerIcon() {
   );
 }
 
+/** The recordings manifest once loaded; null until then or when there is none. */
+function useAudioManifest(): AudioManifest | null {
+  const [manifest, setManifest] = useState<AudioManifest | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void loadAudioManifest().then((m) => !cancelled && setManifest(m));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return manifest;
+}
+
 /**
- * A 44×44 speaker button that says `text` with the device's Greek voice. Renders nothing when
- * the device has no Greek voice. Audio is Modern Greek, so the label says so.
+ * A 44×44 speaker button that says `text`: the recorded voice when there is a recording,
+ * otherwise the device's Greek voice. Renders nothing when neither exists. Both are Modern
+ * Greek, so the label says so.
  */
 export function SpeakButton({ text, label }: { text: string; label: string }) {
-  const { available, speak, stop } = useGreekVoice();
-  useEffect(() => stop, [stop]);
-  if (!available) return null;
+  const manifest = useAudioManifest();
+  const device = useGreekVoice();
+  const { stop } = device;
+  useEffect(
+    () => () => {
+      stopClip();
+      stop();
+    },
+    [stop],
+  );
+  const url = wordClipUrl(manifest, text);
+  if (!url && !device.available) return null;
+
+  function say() {
+    device.stop();
+    if (!url) return device.speak(text);
+    playClip(url).catch((err: unknown) => {
+      console.error("[audio] recording failed; using the device voice", err);
+      if (device.available) device.speak(text);
+    });
+  }
+
   return (
     <button
       type="button"
-      onClick={() => speak(text)}
+      onClick={say}
       aria-label={`${label} (Modern Greek voice)`}
       title="Hear it (Modern Greek voice)"
       className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-foreground hover:opacity-80"
@@ -90,26 +125,51 @@ export function SpeakButton({ text, label }: { text: string; label: string }) {
   );
 }
 
-/** Plays or stops the whole passage, with a visible note that the voice is Modern Greek. */
-export function ListenToPassage({ text }: { text: string }) {
-  const { available, speak, stop } = useGreekVoice();
+/**
+ * Plays or stops the whole passage, verse by verse (a recording where there is one, otherwise
+ * the device voice), with a visible note that the voice is Modern Greek.
+ */
+export function ListenToPassage({ verses }: { verses: readonly { ref: string; text: string }[] }) {
+  const manifest = useAudioManifest();
+  const device = useGreekVoice();
+  const { stop: stopDevice } = device;
   const [playing, setPlaying] = useState(false);
+  // Each play gets an id; stopping (or a newer play) makes older loops end quietly.
+  const run = useRef(0);
+  const stop = useCallback(() => {
+    run.current++;
+    stopClip();
+    stopDevice();
+    setPlaying(false);
+  }, [stopDevice]);
   useEffect(() => stop, [stop]);
-  if (!available) return null;
+
+  const recorded = verses.some((v) => verseClipUrl(manifest, v.ref));
+  if (!recorded && !device.available) return null;
+
+  async function play() {
+    const id = ++run.current;
+    setPlaying(true);
+    for (const verse of verses) {
+      if (run.current !== id) return;
+      const url = verseClipUrl(manifest, verse.ref);
+      try {
+        if (url) await playClip(url);
+        else if (device.available)
+          await new Promise<void>((done) => device.speak(verse.text, done));
+      } catch (err) {
+        console.error(`[audio] could not play ${verse.ref}`, err);
+      }
+    }
+    if (run.current === id) setPlaying(false);
+  }
+
   return (
     <div className="mt-3 flex items-center gap-3 text-sm">
       <button
         type="button"
         aria-pressed={playing}
-        onClick={() => {
-          if (playing) {
-            stop();
-            setPlaying(false);
-          } else {
-            setPlaying(true);
-            speak(text, () => setPlaying(false));
-          }
-        }}
+        onClick={() => (playing ? stop() : void play())}
         className="inline-flex h-11 items-center gap-2 rounded-xl bg-accent px-4 hover:opacity-80"
       >
         <SpeakerIcon />

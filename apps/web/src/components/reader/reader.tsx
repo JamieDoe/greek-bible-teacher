@@ -202,9 +202,10 @@ export function Reader({
           </p>
         )}
         <ListenToPassage
-          text={passage.verses
-            .flatMap((v) => v.tokens.map((t) => t.before + t.word + t.after))
-            .join(" ")}
+          verses={passage.verses.map((v) => ({
+            ref: v.ref,
+            text: v.tokens.map((t) => t.before + t.word + t.after).join(" "),
+          }))}
         />
 
         <div lang="grc" className="mt-6 font-greek text-greek leading-[1.7]">

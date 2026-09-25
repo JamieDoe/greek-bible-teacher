@@ -62,3 +62,32 @@ test("a passage read online can be read again offline", async ({ page, context }
   await expect(page.getByRole("link", { name: "John 1:1–5" })).toBeVisible();
   await context.setOffline(false);
 });
+
+test("a recording heard online plays again offline", async ({ page, context }) => {
+  // Play silently: resolve at once and report the end shortly after.
+  await page.addInitScript(() => {
+    HTMLMediaElement.prototype.play = function () {
+      setTimeout(() => this.dispatchEvent(new Event("ended")), 100);
+      return Promise.resolve();
+    };
+  });
+  await page.goto("/read");
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload(); // now controlled by the service worker
+  await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+
+  await page.getByRole("link", { name: /John 1:1–5/ }).click();
+  await page.getByRole("button", { name: "λόγος", exact: true }).first().click();
+  const hear = page.getByRole("button", { name: "Hear λόγος (Modern Greek voice)" });
+  const online = page.waitForResponse((r) => /\/audio\/[0-9a-f]{16}\.mp3$/.test(r.url()));
+  await hear.click();
+  expect((await online).ok()).toBe(true);
+
+  await context.setOffline(true);
+  const offline = page.waitForResponse((r) => /\/audio\/[0-9a-f]{16}\.mp3$/.test(r.url()));
+  await hear.click();
+  const response = await offline;
+  expect(response.ok()).toBe(true);
+  expect(response.fromServiceWorker()).toBe(true);
+  await context.setOffline(false);
+});

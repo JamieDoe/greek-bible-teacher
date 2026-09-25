@@ -1,4 +1,5 @@
 export * from "./api/errors";
+export * from "./audio/manifest";
 export * from "./api/grammar";
 export * from "./api/health";
 export * from "./api/lessons";
@@ -11,6 +12,7 @@ export * from "./learning/enums";
 export * from "./morphology/categories";
 export * from "./morphology/decode";
 export * from "./morphology/matcher";
+export * from "./reading/speakable";
 export * from "./reading/surface";
 export * from "./srs/scheduler";
 export * from "./vocabulary/exercises";

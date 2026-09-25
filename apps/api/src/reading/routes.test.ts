@@ -148,6 +148,7 @@ describe("GET /sources", () => {
       "CC BY 4.0",
       "CC BY-SA 3.0",
       "Public domain (CC0 1.0)",
+      "Generated audio, used under the ElevenLabs Terms of Service",
     ]);
   });
 });
