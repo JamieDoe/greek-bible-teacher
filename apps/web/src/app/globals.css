@@ -1,0 +1,118 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Koinē design system v0.1 (docs/DECISIONS 022). Koinē's colours are mapped onto shadcn's
+   variable names so every shadcn component inherits them:
+     ground → background · surface → card/popover · sunken → muted/secondary
+     line → border/input · ink → foreground · muted → muted-foreground
+     lapis → primary (and ring) · lapis soft → accent · rubric (new words) · correct
+   Theme: `.dark` on <html>, set before first paint from the System/Light/Dark setting. */
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #f5f2ec;
+  --foreground: #1a1916;
+  --card: #ffffff;
+  --card-foreground: #1a1916;
+  --popover: #ffffff;
+  --popover-foreground: #1a1916;
+  --primary: #2b3fbf;
+  --primary-foreground: #ffffff;
+  --secondary: #ece8e0;
+  --secondary-foreground: #1a1916;
+  --muted: #ece8e0;
+  --muted-foreground: #6b655b;
+  --accent: #e7eafb;
+  --accent-foreground: #2b3fbf;
+  --destructive: #b3402a;
+  --border: #e0dbd1;
+  --input: #e0dbd1;
+  --ring: #2b3fbf;
+  --rubric: #b3402a;
+  --correct: #2b6f4e;
+  --backdrop: rgb(26 25 22 / 0.32);
+  --radius: 1rem;
+  --greek-size: 1.3125rem; /* 21pt default; the reader's Aa setting overrides it */
+  color-scheme: light;
+}
+
+.dark {
+  --background: #11100e;
+  --foreground: #eeeae2;
+  --card: #1b1a17;
+  --card-foreground: #eeeae2;
+  --popover: #1b1a17;
+  --popover-foreground: #eeeae2;
+  --primary: #9aa6ff;
+  --primary-foreground: #11100e;
+  --secondary: #252320;
+  --secondary-foreground: #eeeae2;
+  --muted: #252320;
+  --muted-foreground: #9e978b;
+  --accent: #242a52;
+  --accent-foreground: #9aa6ff;
+  --destructive: #ee8d71;
+  --border: #312e29;
+  --input: #312e29;
+  --ring: #9aa6ff;
+  --rubric: #ee8d71;
+  --correct: #7fcba2;
+  --backdrop: rgb(0 0 0 / 0.55);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-greek: var(--font-literata), Georgia, serif;
+  --font-serif: var(--font-literata), Georgia, serif;
+  --font-heading: var(--font-literata), Georgia, serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-rubric: var(--rubric);
+  --color-rubric-soft: color-mix(in oklab, var(--rubric) 12%, var(--card));
+  --color-correct: var(--correct);
+  --color-correct-soft: color-mix(in oklab, var(--correct) 12%, var(--card));
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.25);
+  --radius-2xl: calc(var(--radius) * 1.5);
+  --radius-3xl: calc(var(--radius) * 1.75);
+  --radius-4xl: calc(var(--radius) * 2);
+  --text-greek: var(--greek-size);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    scrollbar-gutter: stable;
+  }
+  body {
+    @apply bg-background font-sans text-foreground;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}

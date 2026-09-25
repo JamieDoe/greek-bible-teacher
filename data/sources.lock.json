@@ -1,0 +1,185 @@
+{
+  "_comment": "Pinned upstream files. `pnpm data:fetch` downloads and verifies them; ingestion refuses files whose sha256 differs.",
+  "sources": {
+    "morphgnt-sblgnt": {
+      "repo": "https://github.com/morphgnt/sblgnt",
+      "commit": "aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d"
+    },
+    "dodson": {
+      "repo": "https://github.com/biblicalhumanities/Dodson-Greek-Lexicon",
+      "commit": "74f70358d4acfaf2f980bf2feb58ab7115cbbcbc"
+    }
+  },
+  "files": [
+    {
+      "path": "morphgnt-sblgnt/61-Mt-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/61-Mt-morphgnt.txt",
+      "sha256": "95b360228bedd1c2d06655469111d3f028a4ce1d46939d440ed549feee8b73ec"
+    },
+    {
+      "path": "morphgnt-sblgnt/62-Mk-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/62-Mk-morphgnt.txt",
+      "sha256": "4a2d2365cfe3e8d6c20b7c130c2c46363fa4459c3a6004992eba0a18231b183e"
+    },
+    {
+      "path": "morphgnt-sblgnt/63-Lk-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/63-Lk-morphgnt.txt",
+      "sha256": "a6f10ccf27a905f21ecbec96c3c01f220c39dd37aae118022113a52dfeb7528e"
+    },
+    {
+      "path": "morphgnt-sblgnt/64-Jn-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/64-Jn-morphgnt.txt",
+      "sha256": "1b1de3e48e3f3d212ba19c76e5b2f1749833f888f5b52513099ec13cc01b619c"
+    },
+    {
+      "path": "morphgnt-sblgnt/65-Ac-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/65-Ac-morphgnt.txt",
+      "sha256": "04349afeba263d667698b37d39465d746530434b455fb6ac2941ec5c59fb85ca"
+    },
+    {
+      "path": "morphgnt-sblgnt/66-Ro-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/66-Ro-morphgnt.txt",
+      "sha256": "364b3b57c70e731920c7fa8a61f09ecd53eed858f7f3590596066484d0638cc6"
+    },
+    {
+      "path": "morphgnt-sblgnt/67-1Co-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/67-1Co-morphgnt.txt",
+      "sha256": "5233a5b099e2499baed34ec2d6f53ae44545d532a7e2fb12acafcf39ff6fdbf3"
+    },
+    {
+      "path": "morphgnt-sblgnt/68-2Co-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/68-2Co-morphgnt.txt",
+      "sha256": "1742d5076780a5338a858f2d83e615c87b2412cbefa56a4b8e14aa2c0ce326c4"
+    },
+    {
+      "path": "morphgnt-sblgnt/69-Ga-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/69-Ga-morphgnt.txt",
+      "sha256": "ec249897464e8e8992e4869645471d6f3372e7373ba3a5d429516946d8cffada"
+    },
+    {
+      "path": "morphgnt-sblgnt/70-Eph-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/70-Eph-morphgnt.txt",
+      "sha256": "9f6444d3aff9791817c2ad84d8ff5b1c229d18a4e9ab07e5066ceb0068dee397"
+    },
+    {
+      "path": "morphgnt-sblgnt/71-Php-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/71-Php-morphgnt.txt",
+      "sha256": "6e6133fba46c164c16264c4d9563b30d5634effba5792419f8ed5d5ec08961a4"
+    },
+    {
+      "path": "morphgnt-sblgnt/72-Col-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/72-Col-morphgnt.txt",
+      "sha256": "21e18b4310ce953cd786f8466824f24795cb46ef149dc501a330d55a05f7346a"
+    },
+    {
+      "path": "morphgnt-sblgnt/73-1Th-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/73-1Th-morphgnt.txt",
+      "sha256": "e322ec075748e81897dc0a2b87a821ee78e200f6ba833bbba07607e55a3c68d5"
+    },
+    {
+      "path": "morphgnt-sblgnt/74-2Th-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/74-2Th-morphgnt.txt",
+      "sha256": "309ba3338e0ccf2219bea7ee49f1e63bbefc1edcceedc5527c79395fd6b0bc19"
+    },
+    {
+      "path": "morphgnt-sblgnt/75-1Ti-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/75-1Ti-morphgnt.txt",
+      "sha256": "b4a6a446d163b8b651ba11119bbc211b4e14cb12871b48df175adb88d4f9db97"
+    },
+    {
+      "path": "morphgnt-sblgnt/76-2Ti-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/76-2Ti-morphgnt.txt",
+      "sha256": "8af532322a0693ecb8d34b75c544c3b6a57e76e266be750d62d42bc07385376e"
+    },
+    {
+      "path": "morphgnt-sblgnt/77-Tit-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/77-Tit-morphgnt.txt",
+      "sha256": "16e9204306d616795f53f8627ff6ea05a80f572d7a21ed23ac7df99c6e00324d"
+    },
+    {
+      "path": "morphgnt-sblgnt/78-Phm-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/78-Phm-morphgnt.txt",
+      "sha256": "e302779406b5405e8ff82a0dc2ded5ab49951f0d6245fe86894100bd83c51e33"
+    },
+    {
+      "path": "morphgnt-sblgnt/79-Heb-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/79-Heb-morphgnt.txt",
+      "sha256": "de7d5c7efe4cdb5e9023c8571c322c3b1a5a817de1d97c3275aef5e154b2756b"
+    },
+    {
+      "path": "morphgnt-sblgnt/80-Jas-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/80-Jas-morphgnt.txt",
+      "sha256": "205d4cdbb4c89aabd51ebf599fcfa622001af6e64dcd4e5ad487298ee4b7a204"
+    },
+    {
+      "path": "morphgnt-sblgnt/81-1Pe-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/81-1Pe-morphgnt.txt",
+      "sha256": "7eeeecddae91a5d103576f629e4fa536fa2217381f4a83eaa904b63d81ffc0b8"
+    },
+    {
+      "path": "morphgnt-sblgnt/82-2Pe-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/82-2Pe-morphgnt.txt",
+      "sha256": "41c1bb93726bf66e46653bb369850f2e319869375f31746d120276dff73a310a"
+    },
+    {
+      "path": "morphgnt-sblgnt/83-1Jn-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/83-1Jn-morphgnt.txt",
+      "sha256": "99fb0d33100f9df25697e9b9ecaa04c599a277b5f2f65f8ed28e97902fed4df9"
+    },
+    {
+      "path": "morphgnt-sblgnt/84-2Jn-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/84-2Jn-morphgnt.txt",
+      "sha256": "bb90002d6b9bbbc43977a59c85ad04de873750b5e24187da064a319c2acd7fec"
+    },
+    {
+      "path": "morphgnt-sblgnt/85-3Jn-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/85-3Jn-morphgnt.txt",
+      "sha256": "a75df82d9007bb673e7d27bcb86681e011befc24cbaef1c658965803d7ae490a"
+    },
+    {
+      "path": "morphgnt-sblgnt/86-Jud-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/86-Jud-morphgnt.txt",
+      "sha256": "93c64857b492812544f1c5903bb63b5ec63ee5f32f69dd4c02d9d9c84b84624d"
+    },
+    {
+      "path": "morphgnt-sblgnt/87-Re-morphgnt.txt",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/87-Re-morphgnt.txt",
+      "sha256": "5386b17ab6e3a8a68478cb0f4644009f6ad5322f379327629407ffd46a0e6dd3"
+    },
+    {
+      "path": "morphgnt-sblgnt/README.md",
+      "url": "https://raw.githubusercontent.com/morphgnt/sblgnt/aaed91e57c8e4a8dc9a2383e129ca5e75fe6393d/README.md",
+      "sha256": "043bb6c0d654e85fa8a8db19e177ee035623e23b7ff1556e5431ad95184d5830"
+    },
+    {
+      "path": "dodson/dodson.xml",
+      "url": "https://raw.githubusercontent.com/biblicalhumanities/Dodson-Greek-Lexicon/74f70358d4acfaf2f980bf2feb58ab7115cbbcbc/dodson.xml",
+      "sha256": "39c6cb8053ef0adeffac7bbec1d1bc4f96c69424f8e6668f19b4244d3f234639"
+    },
+    {
+      "path": "dodson/LICENSE",
+      "url": "https://raw.githubusercontent.com/biblicalhumanities/Dodson-Greek-Lexicon/74f70358d4acfaf2f980bf2feb58ab7115cbbcbc/LICENSE",
+      "sha256": "5537d4d10b76b81b6e8dfd8b644480a4b1efa332fbb0cdb61126c5be781ef7b4"
+    },
+    {
+      "path": "dodson/README.md",
+      "url": "https://raw.githubusercontent.com/biblicalhumanities/Dodson-Greek-Lexicon/74f70358d4acfaf2f980bf2feb58ab7115cbbcbc/README.md",
+      "sha256": "eada5184215fba69ddd420438e55690fb4ca0c14fdaa1f04a3f6c555b045e839"
+    },
+    {
+      "path": "dodson/README-ulrikp.txt",
+      "url": "https://raw.githubusercontent.com/biblicalhumanities/Dodson-Greek-Lexicon/74f70358d4acfaf2f980bf2feb58ab7115cbbcbc/README-ulrikp.txt",
+      "sha256": "2eea57fcefa555081d2834cdef44af5a1d000d90eb9ba0d58f4e1fe99c305d2c"
+    },
+    {
+      "path": "licences/CC-BY-4.0.txt",
+      "url": "https://creativecommons.org/licenses/by/4.0/legalcode.txt",
+      "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411"
+    },
+    {
+      "path": "licences/CC-BY-SA-3.0.txt",
+      "url": "https://creativecommons.org/licenses/by-sa/3.0/legalcode.txt",
+      "sha256": "3f941b3b89cf7b8370ceb83cc76d2120d471b58735d8ca60238a751a48d7f72f"
+    }
+  ]
+}

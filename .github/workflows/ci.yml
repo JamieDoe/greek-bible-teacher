@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # The service container below; API tests create and drop greek_test next to it.
+  DATABASE_URL: postgres://greek:ci-only@localhost:5432/greek
+
+jobs:
+  check:
+    name: Typecheck, lint, format, unit and API tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: greek
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: greek
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U greek -d greek"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      # pnpm from packageManager, Node 24 LTS, cached store, `pnpm install --frozen-lockfile`.
+      - uses: pnpm/setup@v3
+        with:
+          runtime: node@24
+          cache: true
+          require-lockfile: true
+      - run: pnpm check
+
+  e2e:
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: greek
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: greek
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U greek -d greek"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@v3
+        with:
+          runtime: node@24
+          cache: true
+          require-lockfile: true
+      # Migrate, import the full NT and seed the curated content, as a deploy does.
+      - run: pnpm release
+      - run: pnpm --filter @gbt/web exec playwright install --with-deps chromium
+      # Playwright starts the API, the web dev server and a production build (pwa project).
+      - run: pnpm test:e2e
+        env:
+          CI: "true"
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-traces
+          path: apps/web/test-results/
+          retention-days: 7
+
+  docker:
+    name: Production images build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -f apps/api/Dockerfile -t gbt-api:ci .
+      - run: docker build -f apps/web/Dockerfile -t gbt-web:ci .

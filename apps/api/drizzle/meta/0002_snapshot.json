@@ -1,0 +1,2093 @@
+{
+  "id": "ec03e6bc-2b09-4c3a-a20f-4b8f4e6e3b8a",
+  "prevId": "584207b2-fb5d-47bb-8e58-376c4af4cf4b",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.grammar_concept_examples": {
+      "name": "grammar_concept_examples",
+      "schema": "",
+      "columns": {
+        "concept_id": {
+          "name": "concept_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_id": {
+          "name": "token_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "grammar_concept_examples_concept_id_grammar_concepts_id_fk": {
+          "name": "grammar_concept_examples_concept_id_grammar_concepts_id_fk",
+          "tableFrom": "grammar_concept_examples",
+          "tableTo": "grammar_concepts",
+          "columnsFrom": [
+            "concept_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "grammar_concept_examples_token_id_tokens_id_fk": {
+          "name": "grammar_concept_examples_token_id_tokens_id_fk",
+          "tableFrom": "grammar_concept_examples",
+          "tableTo": "tokens",
+          "columnsFrom": [
+            "token_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "grammar_concept_examples_concept_id_token_id_pk": {
+          "name": "grammar_concept_examples_concept_id_token_id_pk",
+          "columns": [
+            "concept_id",
+            "token_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "grammar_concept_examples_position_unique": {
+          "name": "grammar_concept_examples_position_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "concept_id",
+            "position"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.grammar_concept_rules": {
+      "name": "grammar_concept_rules",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "grammar_concept_rules_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "concept_id": {
+          "name": "concept_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match": {
+          "name": "match",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "grammar_concept_rules_concept_id_grammar_concepts_id_fk": {
+          "name": "grammar_concept_rules_concept_id_grammar_concepts_id_fk",
+          "tableFrom": "grammar_concept_rules",
+          "tableTo": "grammar_concepts",
+          "columnsFrom": [
+            "concept_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "grammar_concept_rules_match_nonempty_object": {
+          "name": "grammar_concept_rules_match_nonempty_object",
+          "value": "jsonb_typeof(\"grammar_concept_rules\".\"match\") = 'object' and \"grammar_concept_rules\".\"match\" <> '{}'::jsonb"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.grammar_concepts": {
+      "name": "grammar_concepts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "grammar_concepts_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "curriculum_order": {
+          "name": "curriculum_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary_simple": {
+          "name": "summary_simple",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "terminology_level": {
+          "name": "terminology_level",
+          "type": "disclosure_level",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'expanded'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "grammar_concepts_slug_unique": {
+          "name": "grammar_concepts_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        },
+        "grammar_concepts_curriculum_order_unique": {
+          "name": "grammar_concepts_curriculum_order_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "curriculum_order"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "grammar_concepts_order_positive": {
+          "name": "grammar_concepts_order_positive",
+          "value": "\"grammar_concepts\".\"curriculum_order\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.lesson_items": {
+      "name": "lesson_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "lesson_items_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "lesson_id": {
+          "name": "lesson_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "lesson_item_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lemma_id": {
+          "name": "lemma_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "concept_id": {
+          "name": "concept_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "passage_id": {
+          "name": "passage_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "lesson_items_lesson_id_lessons_id_fk": {
+          "name": "lesson_items_lesson_id_lessons_id_fk",
+          "tableFrom": "lesson_items",
+          "tableTo": "lessons",
+          "columnsFrom": [
+            "lesson_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "lesson_items_lemma_id_lemmas_id_fk": {
+          "name": "lesson_items_lemma_id_lemmas_id_fk",
+          "tableFrom": "lesson_items",
+          "tableTo": "lemmas",
+          "columnsFrom": [
+            "lemma_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "lesson_items_concept_id_grammar_concepts_id_fk": {
+          "name": "lesson_items_concept_id_grammar_concepts_id_fk",
+          "tableFrom": "lesson_items",
+          "tableTo": "grammar_concepts",
+          "columnsFrom": [
+            "concept_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "lesson_items_passage_id_passages_id_fk": {
+          "name": "lesson_items_passage_id_passages_id_fk",
+          "tableFrom": "lesson_items",
+          "tableTo": "passages",
+          "columnsFrom": [
+            "passage_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "lesson_items_position_unique": {
+          "name": "lesson_items_position_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "lesson_id",
+            "position"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "lesson_items_target_matches_kind": {
+          "name": "lesson_items_target_matches_kind",
+          "value": "case \"lesson_items\".\"kind\"\n        when 'vocab' then \"lesson_items\".\"lemma_id\" is not null and \"lesson_items\".\"concept_id\" is null and \"lesson_items\".\"passage_id\" is null\n        when 'grammar' then \"lesson_items\".\"concept_id\" is not null and \"lesson_items\".\"lemma_id\" is null and \"lesson_items\".\"passage_id\" is null\n        when 'reading' then \"lesson_items\".\"passage_id\" is not null and \"lesson_items\".\"lemma_id\" is null and \"lesson_items\".\"concept_id\" is null\n        when 'review' then \"lesson_items\".\"lemma_id\" is null and \"lesson_items\".\"concept_id\" is null and \"lesson_items\".\"passage_id\" is null\n      end"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.lessons": {
+      "name": "lessons",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "lessons_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "curriculum_order": {
+          "name": "curriculum_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "passage_id": {
+          "name": "passage_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "lessons_passage_id_passages_id_fk": {
+          "name": "lessons_passage_id_passages_id_fk",
+          "tableFrom": "lessons",
+          "tableTo": "passages",
+          "columnsFrom": [
+            "passage_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "lessons_curriculum_order_unique": {
+          "name": "lessons_curriculum_order_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "curriculum_order"
+          ]
+        },
+        "lessons_passage_id_unique": {
+          "name": "lessons_passage_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "passage_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "lessons_order_positive": {
+          "name": "lessons_order_positive",
+          "value": "\"lessons\".\"curriculum_order\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.passage_required_concepts": {
+      "name": "passage_required_concepts",
+      "schema": "",
+      "columns": {
+        "passage_id": {
+          "name": "passage_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "concept_id": {
+          "name": "concept_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "passage_required_concepts_passage_id_passages_id_fk": {
+          "name": "passage_required_concepts_passage_id_passages_id_fk",
+          "tableFrom": "passage_required_concepts",
+          "tableTo": "passages",
+          "columnsFrom": [
+            "passage_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "passage_required_concepts_concept_id_grammar_concepts_id_fk": {
+          "name": "passage_required_concepts_concept_id_grammar_concepts_id_fk",
+          "tableFrom": "passage_required_concepts",
+          "tableTo": "grammar_concepts",
+          "columnsFrom": [
+            "concept_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "passage_required_concepts_passage_id_concept_id_pk": {
+          "name": "passage_required_concepts_passage_id_concept_id_pk",
+          "columns": [
+            "passage_id",
+            "concept_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.passages": {
+      "name": "passages",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "passages_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "start_verse_id": {
+          "name": "start_verse_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "end_verse_id": {
+          "name": "end_verse_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "difficulty_score": {
+          "name": "difficulty_score",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "curriculum_order": {
+          "name": "curriculum_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "passages_start_verse_id_verses_id_fk": {
+          "name": "passages_start_verse_id_verses_id_fk",
+          "tableFrom": "passages",
+          "tableTo": "verses",
+          "columnsFrom": [
+            "start_verse_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "passages_end_verse_id_verses_id_fk": {
+          "name": "passages_end_verse_id_verses_id_fk",
+          "tableFrom": "passages",
+          "tableTo": "verses",
+          "columnsFrom": [
+            "end_verse_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "passages_curriculum_order_unique": {
+          "name": "passages_curriculum_order_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "curriculum_order"
+          ]
+        },
+        "passages_range_unique": {
+          "name": "passages_range_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "start_verse_id",
+            "end_verse_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.review_events": {
+      "name": "review_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "review_events_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lemma_id": {
+          "name": "lemma_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "grade": {
+          "name": "grade",
+          "type": "review_grade",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reviewed_at": {
+          "name": "reviewed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "context": {
+          "name": "context",
+          "type": "review_context",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "review_events_user_reviewed_idx": {
+          "name": "review_events_user_reviewed_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "reviewed_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "review_events_user_id_users_id_fk": {
+          "name": "review_events_user_id_users_id_fk",
+          "tableFrom": "review_events",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "review_events_lemma_id_lemmas_id_fk": {
+          "name": "review_events_lemma_id_lemmas_id_fk",
+          "tableFrom": "review_events",
+          "tableTo": "lemmas",
+          "columnsFrom": [
+            "lemma_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_grammar_progress": {
+      "name": "user_grammar_progress",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "concept_id": {
+          "name": "concept_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "grammar_progress_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "studied_at": {
+          "name": "studied_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_grammar_progress_user_id_users_id_fk": {
+          "name": "user_grammar_progress_user_id_users_id_fk",
+          "tableFrom": "user_grammar_progress",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "user_grammar_progress_concept_id_grammar_concepts_id_fk": {
+          "name": "user_grammar_progress_concept_id_grammar_concepts_id_fk",
+          "tableFrom": "user_grammar_progress",
+          "tableTo": "grammar_concepts",
+          "columnsFrom": [
+            "concept_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_grammar_progress_user_id_concept_id_pk": {
+          "name": "user_grammar_progress_user_id_concept_id_pk",
+          "columns": [
+            "user_id",
+            "concept_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_lesson_progress": {
+      "name": "user_lesson_progress",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lesson_id": {
+          "name": "lesson_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "current_step": {
+          "name": "current_step",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_lesson_progress_user_id_users_id_fk": {
+          "name": "user_lesson_progress_user_id_users_id_fk",
+          "tableFrom": "user_lesson_progress",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "user_lesson_progress_lesson_id_lessons_id_fk": {
+          "name": "user_lesson_progress_lesson_id_lessons_id_fk",
+          "tableFrom": "user_lesson_progress",
+          "tableTo": "lessons",
+          "columnsFrom": [
+            "lesson_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_lesson_progress_user_id_lesson_id_pk": {
+          "name": "user_lesson_progress_user_id_lesson_id_pk",
+          "columns": [
+            "user_id",
+            "lesson_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "user_lesson_progress_step_nonneg": {
+          "name": "user_lesson_progress_step_nonneg",
+          "value": "\"user_lesson_progress\".\"current_step\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.user_reading_progress": {
+      "name": "user_reading_progress",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "passage_id": {
+          "name": "passage_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "times_read": {
+          "name": "times_read",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_read_at": {
+          "name": "last_read_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tokens_looked_up": {
+          "name": "tokens_looked_up",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_reading_progress_user_id_users_id_fk": {
+          "name": "user_reading_progress_user_id_users_id_fk",
+          "tableFrom": "user_reading_progress",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "user_reading_progress_passage_id_passages_id_fk": {
+          "name": "user_reading_progress_passage_id_passages_id_fk",
+          "tableFrom": "user_reading_progress",
+          "tableTo": "passages",
+          "columnsFrom": [
+            "passage_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_reading_progress_user_id_passage_id_pk": {
+          "name": "user_reading_progress_user_id_passage_id_pk",
+          "columns": [
+            "user_id",
+            "passage_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "user_reading_progress_counts_nonneg": {
+          "name": "user_reading_progress_counts_nonneg",
+          "value": "\"user_reading_progress\".\"times_read\" >= 0 and \"user_reading_progress\".\"tokens_looked_up\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.user_word_progress": {
+      "name": "user_word_progress",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lemma_id": {
+          "name": "lemma_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "correct_count": {
+          "name": "correct_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "incorrect_count": {
+          "name": "incorrect_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "difficulty": {
+          "name": "difficulty",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stability": {
+          "name": "stability",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "interval_days": {
+          "name": "interval_days",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "next_review_at": {
+          "name": "next_review_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_reviewed_at": {
+          "name": "last_reviewed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lookups_count": {
+          "name": "lookups_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "first_seen_at": {
+          "name": "first_seen_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "user_word_progress_due_idx": {
+          "name": "user_word_progress_due_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "next_review_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "user_word_progress_user_id_users_id_fk": {
+          "name": "user_word_progress_user_id_users_id_fk",
+          "tableFrom": "user_word_progress",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "user_word_progress_lemma_id_lemmas_id_fk": {
+          "name": "user_word_progress_lemma_id_lemmas_id_fk",
+          "tableFrom": "user_word_progress",
+          "tableTo": "lemmas",
+          "columnsFrom": [
+            "lemma_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_word_progress_user_id_lemma_id_pk": {
+          "name": "user_word_progress_user_id_lemma_id_pk",
+          "columns": [
+            "user_id",
+            "lemma_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "user_word_progress_counts_nonneg": {
+          "name": "user_word_progress_counts_nonneg",
+          "value": "\"user_word_progress\".\"correct_count\" >= 0 and \"user_word_progress\".\"incorrect_count\" >= 0 and \"user_word_progress\".\"lookups_count\" >= 0"
+        },
+        "user_word_progress_interval_nonneg": {
+          "name": "user_word_progress_interval_nonneg",
+          "value": "\"user_word_progress\".\"interval_days\" is null or \"user_word_progress\".\"interval_days\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "experience_level": {
+          "name": "experience_level",
+          "type": "experience_level",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "daily_minutes": {
+          "name": "daily_minutes",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "onboarded_at": {
+          "name": "onboarded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "disclosure_level": {
+          "name": "disclosure_level",
+          "type": "disclosure_level",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'beginner'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "users_daily_minutes_range": {
+          "name": "users_daily_minutes_range",
+          "value": "\"users\".\"daily_minutes\" is null or \"users\".\"daily_minutes\" between 1 and 240"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.lemmas": {
+      "name": "lemmas",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "lemmas_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "lemma": {
+          "name": "lemma",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gloss": {
+          "name": "gloss",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "extended_gloss": {
+          "name": "extended_gloss",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "part_of_speech": {
+          "name": "part_of_speech",
+          "type": "part_of_speech",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nt_frequency": {
+          "name": "nt_frequency",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "gloss_source_id": {
+          "name": "gloss_source_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "lemmas_nt_frequency_idx": {
+          "name": "lemmas_nt_frequency_idx",
+          "columns": [
+            {
+              "expression": "nt_frequency",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "lemmas_gloss_source_id_data_sources_id_fk": {
+          "name": "lemmas_gloss_source_id_data_sources_id_fk",
+          "tableFrom": "lemmas",
+          "tableTo": "data_sources",
+          "columnsFrom": [
+            "gloss_source_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "lemmas_lemma_unique": {
+          "name": "lemmas_lemma_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "lemma"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "lemmas_nt_frequency_nonneg": {
+          "name": "lemmas_nt_frequency_nonneg",
+          "value": "\"lemmas\".\"nt_frequency\" >= 0"
+        },
+        "lemmas_gloss_has_source": {
+          "name": "lemmas_gloss_has_source",
+          "value": "\"lemmas\".\"gloss\" is null or \"lemmas\".\"gloss_source_id\" is not null"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.morphology": {
+      "name": "morphology",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "morphology_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "pos_code": {
+          "name": "pos_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parse_code": {
+          "name": "parse_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "part_of_speech": {
+          "name": "part_of_speech",
+          "type": "part_of_speech",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "person": {
+          "name": "person",
+          "type": "person",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tense": {
+          "name": "tense",
+          "type": "tense",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "voice": {
+          "name": "voice",
+          "type": "voice",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mood": {
+          "name": "mood",
+          "type": "mood",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "case": {
+          "name": "case",
+          "type": "grammatical_case",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "number": {
+          "name": "number",
+          "type": "grammatical_number",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gender": {
+          "name": "gender",
+          "type": "gender",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "degree": {
+          "name": "degree",
+          "type": "degree",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "morphology_pos_parse_unique": {
+          "name": "morphology_pos_parse_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "pos_code",
+            "parse_code"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "morphology_pos_code_len": {
+          "name": "morphology_pos_code_len",
+          "value": "char_length(\"morphology\".\"pos_code\") = 2"
+        },
+        "morphology_parse_code_len": {
+          "name": "morphology_parse_code_len",
+          "value": "char_length(\"morphology\".\"parse_code\") = 8"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.data_sources": {
+      "name": "data_sources",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "data_sources_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "licence": {
+          "name": "licence",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attribution": {
+          "name": "attribution",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "data_sources_key_unique": {
+          "name": "data_sources_key_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "key"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.books": {
+      "name": "books",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "books_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "abbrev": {
+          "name": "abbrev",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "canonical_order": {
+          "name": "canonical_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "testament": {
+          "name": "testament",
+          "type": "testament",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "books_abbrev_unique": {
+          "name": "books_abbrev_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "abbrev"
+          ]
+        },
+        "books_testament_order_unique": {
+          "name": "books_testament_order_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "testament",
+            "canonical_order"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "books_canonical_order_positive": {
+          "name": "books_canonical_order_positive",
+          "value": "\"books\".\"canonical_order\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.chapters": {
+      "name": "chapters",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "chapters_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "book_id": {
+          "name": "book_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "number": {
+          "name": "number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "chapters_book_id_books_id_fk": {
+          "name": "chapters_book_id_books_id_fk",
+          "tableFrom": "chapters",
+          "tableTo": "books",
+          "columnsFrom": [
+            "book_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "chapters_book_number_unique": {
+          "name": "chapters_book_number_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "book_id",
+            "number"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "chapters_number_positive": {
+          "name": "chapters_number_positive",
+          "value": "\"chapters\".\"number\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.tokens": {
+      "name": "tokens",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "tokens_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "verse_id": {
+          "name": "verse_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "surface": {
+          "name": "surface",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "word": {
+          "name": "word",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "normalized": {
+          "name": "normalized",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lemma_id": {
+          "name": "lemma_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "morphology_id": {
+          "name": "morphology_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_id": {
+          "name": "source_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "tokens_lemma_idx": {
+          "name": "tokens_lemma_idx",
+          "columns": [
+            {
+              "expression": "lemma_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "tokens_morphology_idx": {
+          "name": "tokens_morphology_idx",
+          "columns": [
+            {
+              "expression": "morphology_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "tokens_verse_id_verses_id_fk": {
+          "name": "tokens_verse_id_verses_id_fk",
+          "tableFrom": "tokens",
+          "tableTo": "verses",
+          "columnsFrom": [
+            "verse_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tokens_lemma_id_lemmas_id_fk": {
+          "name": "tokens_lemma_id_lemmas_id_fk",
+          "tableFrom": "tokens",
+          "tableTo": "lemmas",
+          "columnsFrom": [
+            "lemma_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tokens_morphology_id_morphology_id_fk": {
+          "name": "tokens_morphology_id_morphology_id_fk",
+          "tableFrom": "tokens",
+          "tableTo": "morphology",
+          "columnsFrom": [
+            "morphology_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "tokens_source_id_data_sources_id_fk": {
+          "name": "tokens_source_id_data_sources_id_fk",
+          "tableFrom": "tokens",
+          "tableTo": "data_sources",
+          "columnsFrom": [
+            "source_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tokens_verse_position_unique": {
+          "name": "tokens_verse_position_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "verse_id",
+            "position"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "tokens_position_positive": {
+          "name": "tokens_position_positive",
+          "value": "\"tokens\".\"position\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.verses": {
+      "name": "verses",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "verses_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "chapter_id": {
+          "name": "chapter_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "number": {
+          "name": "number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ref": {
+          "name": "ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ordinal": {
+          "name": "ordinal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "verses_chapter_id_chapters_id_fk": {
+          "name": "verses_chapter_id_chapters_id_fk",
+          "tableFrom": "verses",
+          "tableTo": "chapters",
+          "columnsFrom": [
+            "chapter_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "verses_ref_unique": {
+          "name": "verses_ref_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "ref"
+          ]
+        },
+        "verses_ordinal_unique": {
+          "name": "verses_ordinal_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "ordinal"
+          ]
+        },
+        "verses_chapter_number_unique": {
+          "name": "verses_chapter_number_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "chapter_id",
+            "number"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "verses_number_positive": {
+          "name": "verses_number_positive",
+          "value": "\"verses\".\"number\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.grammatical_case": {
+      "name": "grammatical_case",
+      "schema": "public",
+      "values": [
+        "nominative",
+        "genitive",
+        "dative",
+        "accusative",
+        "vocative"
+      ]
+    },
+    "public.degree": {
+      "name": "degree",
+      "schema": "public",
+      "values": [
+        "comparative",
+        "superlative"
+      ]
+    },
+    "public.disclosure_level": {
+      "name": "disclosure_level",
+      "schema": "public",
+      "values": [
+        "beginner",
+        "expanded",
+        "advanced"
+      ]
+    },
+    "public.experience_level": {
+      "name": "experience_level",
+      "schema": "public",
+      "values": [
+        "none",
+        "beginner",
+        "intermediate"
+      ]
+    },
+    "public.gender": {
+      "name": "gender",
+      "schema": "public",
+      "values": [
+        "masculine",
+        "feminine",
+        "neuter"
+      ]
+    },
+    "public.grammar_progress_status": {
+      "name": "grammar_progress_status",
+      "schema": "public",
+      "values": [
+        "introduced",
+        "studied"
+      ]
+    },
+    "public.lesson_item_kind": {
+      "name": "lesson_item_kind",
+      "schema": "public",
+      "values": [
+        "vocab",
+        "grammar",
+        "reading",
+        "review"
+      ]
+    },
+    "public.mood": {
+      "name": "mood",
+      "schema": "public",
+      "values": [
+        "indicative",
+        "imperative",
+        "subjunctive",
+        "optative",
+        "infinitive",
+        "participle"
+      ]
+    },
+    "public.grammatical_number": {
+      "name": "grammatical_number",
+      "schema": "public",
+      "values": [
+        "singular",
+        "plural"
+      ]
+    },
+    "public.part_of_speech": {
+      "name": "part_of_speech",
+      "schema": "public",
+      "values": [
+        "adjective",
+        "conjunction",
+        "adverb",
+        "interjection",
+        "noun",
+        "preposition",
+        "article",
+        "demonstrative_pronoun",
+        "interrogative_indefinite_pronoun",
+        "personal_pronoun",
+        "relative_pronoun",
+        "verb",
+        "particle"
+      ]
+    },
+    "public.person": {
+      "name": "person",
+      "schema": "public",
+      "values": [
+        "first",
+        "second",
+        "third"
+      ]
+    },
+    "public.review_context": {
+      "name": "review_context",
+      "schema": "public",
+      "values": [
+        "review",
+        "lesson"
+      ]
+    },
+    "public.review_grade": {
+      "name": "review_grade",
+      "schema": "public",
+      "values": [
+        "again",
+        "hard",
+        "good",
+        "easy"
+      ]
+    },
+    "public.tense": {
+      "name": "tense",
+      "schema": "public",
+      "values": [
+        "present",
+        "imperfect",
+        "future",
+        "aorist",
+        "perfect",
+        "pluperfect"
+      ]
+    },
+    "public.testament": {
+      "name": "testament",
+      "schema": "public",
+      "values": [
+        "NT"
+      ]
+    },
+    "public.voice": {
+      "name": "voice",
+      "schema": "public",
+      "values": [
+        "active",
+        "middle",
+        "passive"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
