@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
   // monorepo root so the workspace package @gbt/shared is included.
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../.."),
-  allowedDevOrigins: ["127.0.0.1", "localhost", "192.168.0.56"],
+  allowedDevOrigins: ["127.0.0.1", "localhost", "192.168.0.57"],
   async headers() {
     return [
       {

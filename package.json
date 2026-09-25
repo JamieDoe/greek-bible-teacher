@@ -22,6 +22,7 @@
     "ingest": "pnpm --filter @gbt/api ingest",
     "seed": "pnpm --filter @gbt/api seed",
     "release": "pnpm --filter @gbt/api release",
+    "audio:generate": "pnpm --filter @gbt/api audio:generate",
     "test:e2e": "pnpm --filter @gbt/web test:e2e"
   },
   "devDependencies": {

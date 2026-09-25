@@ -21,32 +21,3 @@ export function findGreekVoice<V extends VoiceLike>(voices: readonly V[]): V | n
     (/^el[-_]GR$/i.test(v.lang) ? 4 : 0) + (v.localService ? 2 : 0) + (v.default ? 1 : 0);
   return [...greek].sort((a, b) => score(b) - score(a) || a.name.localeCompare(b.name))[0]!;
 }
-
-// Combining marks in decomposed (NFD) polytonic Greek.
-const PSILI = "̓"; // smooth breathing
-const DASIA = "̔"; // rough breathing
-const GRAVE = "̀";
-const ACUTE = "́";
-const PERISPOMENI = "͂"; // circumflex
-const YPOGEGRAMMENI = "ͅ"; // iota subscript
-const MACRON = "̄";
-const BREVE = "̆";
-
-/**
- * Converts polytonic text to the monotonic spelling Modern Greek voices expect: breathings,
- * iota subscripts, length marks and apparatus sigla go; grave and circumflex become the one
- * stress accent (tonos); diaeresis stays. Text keeps its punctuation, so voices still pause.
- */
-export function speakableText(text: string): string {
-  return text
-    .replace(/[⸀⸁⸂⸃⸄⸅]\d?/g, "")
-    .normalize("NFD")
-    .replaceAll(PSILI, "")
-    .replaceAll(DASIA, "")
-    .replaceAll(YPOGEGRAMMENI, "")
-    .replaceAll(MACRON, "")
-    .replaceAll(BREVE, "")
-    .replaceAll(GRAVE, ACUTE)
-    .replaceAll(PERISPOMENI, ACUTE)
-    .normalize("NFC");
-}

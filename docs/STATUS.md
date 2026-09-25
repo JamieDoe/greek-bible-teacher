@@ -141,11 +141,17 @@
   or device. Failed attempts are rate-limited. Migration 0004.
 - Tests: shared 120, web 30, API 198, Playwright 38.
 
+- **Pronunciation recordings** (DECISIONS 028): ElevenLabs voice "Kyriakos" (eleven_v3) for
+  every verse, word form and dictionary form in the curated passages, pre-generated with
+  `pnpm audio:generate` and committed under `apps/web/public/audio/`. They play offline, and the
+  device voice is the fallback. The spelling conversion moved to shared, and it keeps one accent
+  per word.
+
 ## Next
 
 The MVP is complete. Possible next steps, none started:
 
-- Merge PR #1 into `main`.
+- Confirm the ElevenLabs plan covers commercial use of the recordings before going public.
 - Deploy to a real VPS and take the first off-server backup.
 - The AI phase (designed only, DECISIONS 024): `POST /ai/explain`, once auth exists.
 - Prune anonymous users abandoned by a restore (no progress, no cookie in use), if they ever add
