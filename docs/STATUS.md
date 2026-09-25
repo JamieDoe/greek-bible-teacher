@@ -161,7 +161,10 @@
   each with its own passage. Curated glosses for all 242 words in those passages. Answer options
   come from the same gloss source and never include a near-synonym of the answer. All 24
   passages have ElevenLabs recordings (590 words, 78 verses).
-- Tests: shared 182, web 18, API 259, Playwright 45 passing (42 desktop and mobile, 3 PWA) plus
+- **Empty states** (DECISIONS 032): one `EmptyState` component (card, plain and inline sizes)
+  across review, lessons, Today, Learn, Progress, passage-complete, offline and not-found. The
+  review queue and Today report `nextReviewAt`, so empty screens say when words come back.
+- Tests: shared 182, web 21, API 260, Playwright 49 passing (46 desktop and mobile, 3 PWA) plus
   2 phone-only gestures skipped on desktop.
 
 ## Next

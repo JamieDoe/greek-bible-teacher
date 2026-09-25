@@ -180,6 +180,18 @@ describe("POST /review/:lemmaId", () => {
     ]);
   });
 
+  it("says when the next word comes back, for the empty queue to show", async () => {
+    expect((await queue()).nextReviewAt).toBeNull(); // nothing in review yet
+    await grade(await lemmaId("λόγος"), { grade: "good" });
+    await grade(await lemmaId("θεός"), { grade: "easy" });
+    // The sooner of the two, while it is still in the future.
+    expect((await queue()).nextReviewAt).toBe(days(1).toISOString());
+    clock.now = days(1);
+    const later = await queue();
+    expect(later.dueCount).toBe(1);
+    expect(new Date(later.nextReviewAt!).getTime()).toBeGreaterThan(days(1).getTime());
+  });
+
   it("keeps a scheduled word out of the queue until it is due, then serves it in context", async () => {
     const id = await lemmaId("λόγος");
     await grade(id, { grade: "good" });

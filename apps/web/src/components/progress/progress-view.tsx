@@ -4,6 +4,8 @@ import { progressResponseSchema, type ProgressResponse } from "@gbt/shared";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { SectionLabel } from "@/components/koine";
+import { IconCheck, IconProgress } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -73,15 +75,20 @@ function ProgressBody({ p }: { p: ProgressResponse }) {
 
   if (nothingYet) {
     return (
-      <EmptyState>
-        <span className="mt-6 block">
-          Nothing to show yet.{" "}
-          <Link href="/" className="underline underline-offset-2">
-            Start today’s lesson
-          </Link>{" "}
-          and your reading and reviews will appear here.
-        </span>
-      </EmptyState>
+      <div className="mt-[18px]">
+        <EmptyState
+          icon={IconProgress}
+          title="Your progress starts here"
+          actions={
+            <Button asChild size="lg">
+              <Link href="/">Start today’s lesson</Link>
+            </Button>
+          }
+        >
+          Words learned, Greek words read and your review accuracy build up here as you work through
+          the lessons.
+        </EmptyState>
+      </div>
     );
   }
 
@@ -183,11 +190,18 @@ function ProgressBody({ p }: { p: ProgressResponse }) {
         </details>
       </section>
 
-      {p.recentlyLearned.length > 0 && (
-        <section aria-labelledby="recent-heading" className="mt-5">
-          <SectionLabel>
-            <span id="recent-heading">Recently learned</span>
-          </SectionLabel>
+      <section aria-labelledby="recent-heading" className="mt-5">
+        <SectionLabel>
+          <span id="recent-heading">Recently learned</span>
+        </SectionLabel>
+        {p.recentlyLearned.length === 0 ? (
+          <div className="mt-2.5">
+            <EmptyState variant="inline" icon={IconCheck}>
+              A word counts as learned once its next review is {p.words.learnedThresholdDays} days
+              away. Your first ones will appear here.
+            </EmptyState>
+          </div>
+        ) : (
           <ul lang="grc" className="mt-2.5 flex flex-wrap gap-1.5">
             {p.recentlyLearned.map((w) => (
               <li
@@ -199,8 +213,8 @@ function ProgressBody({ p }: { p: ProgressResponse }) {
               </li>
             ))}
           </ul>
-        </section>
-      )}
+        )}
+      </section>
     </div>
   );
 }

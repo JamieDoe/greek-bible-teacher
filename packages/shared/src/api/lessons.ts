@@ -76,6 +76,8 @@ export const todayResponseSchema = z.object({
   onboarded: z.boolean(),
   dailyMinutes: z.number().int().nullable(),
   dueCount: z.number().int(),
+  /** When the next word not yet due comes back; null when no words are in review. */
+  nextReviewAt: z.iso.datetime().nullable(),
   /** The first lesson not yet completed, or null when all are done. */
   lesson: z
     .object({

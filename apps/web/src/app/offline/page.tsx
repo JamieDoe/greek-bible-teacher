@@ -8,9 +8,7 @@ export const metadata: Metadata = { title: "Offline" };
 export default function OfflinePage() {
   return (
     <PageShell title="You’re offline">
-      <p className="mb-6 text-muted-foreground">
-        This page needs a connection. Passages you’ve read recently are saved on this device:
-      </p>
+      <p className="mb-6 text-muted-foreground">This page needs a connection.</p>
       <SavedPassages />
     </PageShell>
   );

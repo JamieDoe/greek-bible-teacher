@@ -17,6 +17,7 @@ import {
   userWordProgress,
 } from "../db/schema";
 import { getLesson } from "../lessons/queries";
+import { nextReviewAfter } from "../review/queue";
 import { localDate, practiceDays, weekOf } from "../progress/practice";
 
 /** Everything the Today screen needs in one request. `tz` must be a validated IANA zone. */
@@ -204,6 +205,7 @@ export async function getToday(
     onboarded: user?.onboardedAt != null,
     dailyMinutes: user?.dailyMinutes ?? null,
     dueCount,
+    nextReviewAt: await nextReviewAfter(db, userId, now),
     lesson,
     lastCompleted: lastCompleted
       ? { ...lastCompleted, completedAt: lastCompleted.completedAt!.toISOString() }

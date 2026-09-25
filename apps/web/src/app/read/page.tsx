@@ -2,7 +2,7 @@ import { passagesResponseSchema } from "@gbt/shared";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { IconChevronRight } from "@/components/icons";
+import { IconChevronRight, IconRead } from "@/components/icons";
 import { EmptyState, ListSkeleton, PageShell } from "@/components/ui/states";
 import { serverGet } from "@/lib/api-server";
 
@@ -22,7 +22,13 @@ export default function ReadPage() {
 
 async function PassageList() {
   const { passages } = await serverGet("/passages", passagesResponseSchema);
-  if (passages.length === 0) return <EmptyState>No passages are available yet.</EmptyState>;
+  if (passages.length === 0) {
+    return (
+      <EmptyState icon={IconRead} title="No passages yet">
+        Passages to read appear here once the reading list has been added.
+      </EmptyState>
+    );
+  }
   return (
     <ul className="animate-[fade-in_150ms_ease-out] rounded-2xl bg-card py-1 shadow-card">
       {passages.map((p, i) => (

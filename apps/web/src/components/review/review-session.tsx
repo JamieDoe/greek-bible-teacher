@@ -8,10 +8,11 @@ import {
 } from "@gbt/shared";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { IconArrowRight, IconClose } from "@/components/icons";
+import { IconArrowRight, IconCheck, IconClose, IconLearn } from "@/components/icons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState, PageShell } from "@/components/ui/states";
 import { apiGet, apiPost } from "@/lib/api-client";
+import { nextReviewIn } from "@/lib/next-review";
 import { ensureSession } from "@/lib/session";
 import { ExerciseCard } from "./exercise-card";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,7 @@ interface SessionCard {
 type Load =
   | { status: "loading" }
   | { status: "error" }
-  | { status: "ready"; cards: SessionCard[]; dueCount: number };
+  | { status: "ready"; cards: SessionCard[]; dueCount: number; nextReviewAt: string | null };
 
 interface Props {
   /** Review exactly these words (comma-separated ids): a lesson's new or looked-up words. */
@@ -77,6 +78,7 @@ export function ReviewSession({
           status: "ready",
           cards: q.items.map((item) => ({ item, retry: false })),
           dueCount: q.dueCount,
+          nextReviewAt: q.nextReviewAt,
         });
       })
       .catch((err: unknown) => {
@@ -161,21 +163,64 @@ export function ReviewSession({
     );
   }
   if (load.cards.length === 0) {
-    return onDone ? (
-      <Shell>
-        <EmptyState>Nothing is due for review yet.</EmptyState>
-        <ContinueButton onClick={onDone} />
-      </Shell>
-    ) : (
-      <PageShell title="Review">
-        <EmptyState>
-          Nothing to review right now.{" "}
-          <Link href="/read" className="underline underline-offset-2">
-            Read a passage
-          </Link>{" "}
-          and come back later.
-        </EmptyState>
-      </PageShell>
+    const next = load.nextReviewAt && nextReviewIn(new Date(load.nextReviewAt), new Date());
+    if (onDone) {
+      // A lesson's first step, when nothing is due: say so, then move on.
+      return (
+        <div className="flex flex-1 flex-col">
+          <div className="my-auto py-10">
+            <EmptyState variant="plain" icon={IconCheck} title="Nothing due yet">
+              {next
+                ? `Your words are up to date. The next ones come back ${next}.`
+                : "Words you learn come back here when it’s time to review them."}
+            </EmptyState>
+          </div>
+          <ContinueButton onClick={onDone} />
+        </div>
+      );
+    }
+    return (
+      <StandaloneFrame progress={null} showProgress={false}>
+        <div className="my-auto py-10">
+          {next ? (
+            <EmptyState
+              variant="plain"
+              icon={IconCheck}
+              title="All caught up"
+              actions={
+                <>
+                  <Button asChild size="lg">
+                    <Link href="/read">Read a passage</Link>
+                  </Button>
+                  <Button asChild variant="ghost">
+                    <Link href="/">Back to Today</Link>
+                  </Button>
+                </>
+              }
+            >
+              No words are due right now. The next ones come back {next}.
+            </EmptyState>
+          ) : (
+            <EmptyState
+              variant="plain"
+              icon={IconLearn}
+              title="No words to review yet"
+              actions={
+                <>
+                  <Button asChild size="lg">
+                    <Link href="/">Start today’s lesson</Link>
+                  </Button>
+                  <Button asChild variant="ghost">
+                    <Link href="/read">Read a passage</Link>
+                  </Button>
+                </>
+              }
+            >
+              Words join your review as you learn them in lessons or look them up while reading.
+            </EmptyState>
+          )}
+        </div>
+      </StandaloneFrame>
     );
   }
 
@@ -224,9 +269,12 @@ export function ReviewSession({
 /** The stand-alone review screen (design "05 · Review"): ✕, one progress bar, and the count. */
 function StandaloneFrame({
   progress,
+  showProgress = true,
   children,
 }: {
   progress: { done: number; total: number } | null;
+  /** Hidden when there is nothing to review. */
+  showProgress?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -238,11 +286,15 @@ function StandaloneFrame({
               <IconClose size={22} />
             </Link>
           </Button>
-          <Progress
-            value={progress ? (100 * progress.done) / progress.total : 0}
-            aria-label="Review progress"
-            className="flex-1"
-          />
+          {showProgress ? (
+            <Progress
+              value={progress ? (100 * progress.done) / progress.total : 0}
+              aria-label="Review progress"
+              className="flex-1"
+            />
+          ) : (
+            <span className="flex-1" />
+          )}
           <span
             className="w-11 text-right font-mono text-xs text-muted-foreground"
             aria-live="polite"

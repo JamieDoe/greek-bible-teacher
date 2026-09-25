@@ -4,11 +4,12 @@ import { addToReviewResponseSchema, type ReadingCompleteResponse } from "@gbt/sh
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { SectionLabel, StageLabel } from "@/components/koine";
-import { IconArrowRight, IconClose } from "@/components/icons";
+import { IconArrowRight, IconCheck, IconClose } from "@/components/icons";
 import { CountUp } from "@/components/count-up";
 import { SuccessMark } from "@/components/success-mark";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { EmptyState } from "@/components/ui/states";
 import { apiPost } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -143,7 +144,11 @@ export function PassageComplete({
           </ul>
         </section>
       ) : (
-        <p className="mt-8 text-center text-muted-foreground">You didn’t look anything up.</p>
+        <div className="mt-8 flex justify-center">
+          <EmptyState variant="inline" icon={IconCheck}>
+            You didn’t look anything up: every word read without help.
+          </EmptyState>
+        </div>
       )}
 
       <div className="mt-auto pt-8">

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 /** Shared shells for loading, empty and error states, so every data view has all three. */
 export function PageShell({ title, children }: { title?: string; children: ReactNode }) {
@@ -12,8 +13,68 @@ export function PageShell({ title, children }: { title?: string; children: React
   );
 }
 
-export function EmptyState({ children }: { children: ReactNode }) {
-  return <p className="text-muted-foreground">{children}</p>;
+type Icon = (props: { size?: number; className?: string }) => ReactNode;
+
+/**
+ * What a screen shows when there is nothing there yet: what it is, why it's empty, and what to
+ * do next. Quiet, like the rest of the design: an icon on a lapis tint, a serif title, a line of
+ * explanation and at most two actions.
+ * - `card`: a whole screen's content, in a card.
+ * - `plain`: the same, unframed, inside a card or step that already frames it.
+ * - `inline`: one line with a small icon, for a corner of a card.
+ */
+export function EmptyState({
+  icon: Icon,
+  title,
+  children,
+  actions,
+  variant = "card",
+  headingLevel = 2,
+}: {
+  icon?: Icon;
+  title?: string;
+  children?: ReactNode;
+  actions?: ReactNode;
+  variant?: "card" | "plain" | "inline";
+  /** 1 when the empty state is the whole page (a not-found page). */
+  headingLevel?: 1 | 2 | 3;
+}) {
+  if (variant === "inline") {
+    return (
+      <p className="flex animate-[fade-in_150ms_ease-out] items-start gap-2.5 text-sm leading-snug text-ink-2">
+        {Icon && (
+          <span className="mt-px flex size-5 shrink-0 items-center justify-center rounded-full bg-accent text-primary">
+            <Icon size={12} />
+          </span>
+        )}
+        <span>{children}</span>
+      </p>
+    );
+  }
+  const Heading = `h${headingLevel}` as const;
+  return (
+    <div
+      className={cn(
+        "flex animate-[fade-in_150ms_ease-out] flex-col items-center text-center",
+        variant === "card" && "rounded-2xl bg-card px-6 py-10 shadow-card",
+      )}
+    >
+      {Icon && (
+        <span className="flex size-14 items-center justify-center rounded-full bg-accent text-primary">
+          <Icon size={26} />
+        </span>
+      )}
+      {title && (
+        <Heading className={cn("font-heading text-2xl leading-tight", Icon && "mt-4")}>
+          {title}
+        </Heading>
+      )}
+      {children && (
+        <div className="mt-2 max-w-sm text-[15px] leading-normal text-ink-2">{children}</div>
+      )}
+      {actions && <div className="mt-6 flex w-full max-w-xs flex-col gap-2.5">{actions}</div>}
+    </div>
+  );
 }
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {

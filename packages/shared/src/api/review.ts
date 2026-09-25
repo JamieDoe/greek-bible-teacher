@@ -87,6 +87,8 @@ export const reviewQueueResponseSchema = z.object({
   items: z.array(reviewItemSchema),
   /** Words due now in total (the queue may hold fewer). */
   dueCount: z.number().int(),
+  /** When the next word not yet due comes back; null when no words are in review. */
+  nextReviewAt: z.iso.datetime().nullable(),
 });
 export type ReviewQueueResponse = z.infer<typeof reviewQueueResponseSchema>;
 
