@@ -1,4 +1,4 @@
-import { LEARNED_INTERVAL_DAYS, type TodayResponse } from "@gbt/shared";
+import { LEARNED_INTERVAL_DAYS, splitSurface, type TodayResponse } from "@gbt/shared";
 import { and, asc, count, desc, eq, gte, isNotNull, isNull, lte, sql } from "drizzle-orm";
 import type { Db } from "../db/client";
 import {
@@ -144,7 +144,7 @@ export async function getToday(
 
   let passageKnown: TodayResponse["passageKnown"] = null;
   if (next) {
-    const tokenRows = await db.execute<{ word: string; before: string; known: boolean }>(sql`
+    const tokenRows = await db.execute<{ word: string; surface: string; known: boolean }>(sql`
       select t.word, t.surface, (p.next_review_at is not null) as known
       from ${passages} ps
       join ${verses} sv on sv.id = ps.start_verse_id
@@ -157,9 +157,13 @@ export async function getToday(
     passageKnown = {
       known: tokenRows.filter((r) => r.known).length,
       total: tokenRows.length,
+      // The passage's opening, with punctuation (the phone truncates it to one line).
       firstLine: tokenRows
-        .slice(0, 12)
-        .map((r) => r.word)
+        .slice(0, 24)
+        .map((r) => {
+          const { before, after } = splitSurface(r.surface, r.word);
+          return before + r.word + after;
+        })
         .join(" "),
     };
   }

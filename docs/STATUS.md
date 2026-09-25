@@ -147,6 +147,19 @@
   device voice is the fallback. The spelling conversion moved to shared, and it keeps one accent
   per word.
 
+- **Design fidelity pass** (DECISIONS 029), against the Koinē canvas's HTML source.
+  - Visual: exact tokens, radii, type and shadows, the design's icons and motion, and app-like
+    screens (no page scroll on review or lessons).
+  - Loading: skeletons, suspending only the data.
+  - Features: sense lines; a "mark new words" switch; the desktop and tablet reader with a side
+    panel; new-word card flip, transliteration, gender, declension and common forms; a grammar
+    before/after table and quick check (migration 0005); review passage context; Today details.
+- **Motion** (DECISIONS 030): answer feedback, word-panel crossfade, skeleton-to-content fades,
+  lesson steps sliding in, animated completion screens, and tab crossfades via `<ViewTransition>`.
+  Reduced motion falls back to fades. Settings is the fifth tab.
+- Tests: shared 179, web 18, API 257, Playwright 45 passing (42 desktop and mobile, 3 PWA) plus
+  2 phone-only gestures skipped on desktop.
+
 ## Next
 
 The MVP is complete. Possible next steps, none started:

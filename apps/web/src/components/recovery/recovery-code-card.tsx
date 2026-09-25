@@ -16,7 +16,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { apiPost } from "@/lib/api-client";
 
 const dateLabel = (iso: string) =>
@@ -68,7 +67,7 @@ export function RecoveryCodeCard({
   }
 
   return (
-    <Card className="gap-4 px-5">
+    <div className="flex flex-col gap-4 px-4 py-3.5">
       {fresh ? (
         <>
           <p className="font-medium">Your recovery code</p>
@@ -76,7 +75,7 @@ export function RecoveryCodeCard({
             ref={codeRef}
             tabIndex={-1}
             data-testid="recovery-code"
-            className="rounded-2xl bg-muted px-4 py-4 text-center font-mono text-xl tracking-[0.12em] outline-none sm:text-2xl"
+            className="rounded-lg bg-muted px-4 py-4 text-center font-mono text-xl tracking-[0.12em] outline-none sm:text-2xl"
           >
             {fresh.code}
           </p>
@@ -154,6 +153,6 @@ export function RecoveryCodeCard({
           Use a recovery code from another browser
         </Link>
       </p>
-    </Card>
+    </div>
   );
 }

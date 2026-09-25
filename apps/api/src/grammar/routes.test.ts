@@ -62,6 +62,21 @@ describe("GET /grammar/:slug", () => {
     expect(concept.next?.slug).toBe("eimi");
   });
 
+  it("includes the step's before/after table and quick check", async () => {
+    const res = await app.request("/grammar/article-and-case");
+    const { concept } = grammarConceptResponseSchema.parse(await res.json());
+    expect(concept.paradigm).toMatchObject({
+      from: "Subject",
+      to: "Object",
+      rows: [
+        { from: "ὁ θεός", to: "τὸν θε[όν]" },
+        { from: "ὁ λόγος", to: "τὸν λόγ[ον]" },
+      ],
+    });
+    expect(concept.quickCheck).toMatchObject({ question: "Which one is the object?", answer: 1 });
+    expect(concept.quickCheck?.options[concept.quickCheck.answer]).toBe("τὸν θεόν");
+  });
+
   it("has no previous for the first concept", async () => {
     const { concept } = grammarConceptResponseSchema.parse(
       await (await app.request("/grammar/alphabet")).json(),

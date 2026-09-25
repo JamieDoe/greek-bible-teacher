@@ -1,18 +1,18 @@
 "use client";
 
 import {
+  DECLENSION_LABELS,
   partOfSpeechLabel,
   type ReviewGrade,
   type ReviewItem,
   sm2Scheduler,
   type SrsState,
+  transliterate,
 } from "@gbt/shared";
-import { ArrowRight, Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { SectionLabel } from "@/components/koine";
-import { Badge } from "@/components/ui/badge";
+import { SectionLabel, StageLabel } from "@/components/koine";
+import { IconArrowRight, IconCheck } from "@/components/icons";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { SpeakButton } from "../speech";
@@ -33,14 +33,56 @@ function nextReviewLabel(srs: ReviewItem["srs"], grade: ReviewGrade): string {
   return days <= 1 ? "Next review tomorrow" : `Next review in ${days} days`;
 }
 
+const times = (n: number) => (n === 1 ? "once" : n === 2 ? "twice" : `${n} times`);
+const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** "Noun", "Masculine", "2nd declension": the chips under a word. */
+function wordChips(lemma: ReviewItem["lemma"]): string[] {
+  return [
+    lemma.partOfSpeech ? partOfSpeechLabel(lemma.partOfSpeech) : null,
+    lemma.gender ? capitalise(lemma.gender) : null,
+    lemma.declension ? DECLENSION_LABELS[lemma.declension] : null,
+  ].filter((c): c is string => c !== null);
+}
+
+function GreekVerse({
+  tokens,
+  className,
+}: {
+  tokens: { before: string; word: string; after: string; isTarget: boolean }[];
+  className: string;
+}) {
+  return (
+    <p lang="grc" className={className}>
+      {tokens.map((t, i) => (
+        <span key={i}>
+          {t.before}
+          {t.isTarget ? (
+            <span className="text-primary underline decoration-[1.5px] underline-offset-[5px]">
+              {t.word}
+            </span>
+          ) : (
+            t.word
+          )}
+          {t.after}{" "}
+        </span>
+      ))}
+    </p>
+  );
+}
+
 /**
- * One review card, recognition-first. New words are introduced (word, gloss, an NT example),
- * then asked; every question is multiple choice, the word alone or in its verse.
+ * One review card, recognition-first. New words are introduced on a card that flips to reveal
+ * the meaning (design "03 · Vocabulary lesson"), then asked; every question is multiple choice,
+ * the word alone or in its verse (design "05 · Review"). The answer panel sits at the foot of the
+ * screen in the layout, so nothing scrolls behind it.
  */
 export function ExerciseCard({
   item,
   retry,
   introduce = false,
+  label,
+  first = false,
   saving,
   onGrade,
   onShowAgain,
@@ -49,6 +91,10 @@ export function ExerciseCard({
   retry: boolean;
   /** Show the introduction card first even for words that aren't new. */
   introduce?: boolean;
+  /** The stage prefix for the label row, e.g. "α′ · Review" or "β′". */
+  label: string;
+  /** The first card after the skeleton: it fades in where the skeleton was, not from the side. */
+  first?: boolean;
   saving: boolean;
   onGrade: (grade: ReviewGrade, correct: boolean) => void;
   /** "Show me again": bring this introduction back later without grading. */
@@ -57,86 +103,154 @@ export function ExerciseCard({
   const [phase, setPhase] = useState<Phase>(
     (item.kind === "new" || introduce) && !retry ? "intro" : "question",
   );
+  const [initialPhase] = useState(phase);
+  const [flipped, setFlipped] = useState(false);
   const [chosen, setChosen] = useState<number | null>(null);
   const [ease, setEase] = useState<Ease>("good");
   const heading = useRef<HTMLHeadingElement>(null);
   const { exercise, lemma } = item;
   const correct = chosen === exercise.answerIndex;
+  const chips = wordChips(lemma);
 
-  useEffect(() => heading.current?.focus(), [phase]);
+  useEffect(() => heading.current?.focus({ preventScroll: true }), [phase]);
+
+  // Each card, and the question after an introduction, arrives from the right like a lesson step.
+  const enter =
+    first && phase === initialPhase
+      ? "animate-[fade-in_150ms_ease-out]"
+      : "animate-[step-in_240ms_var(--ease-sheet)]";
 
   if (phase === "intro") {
     return (
-      <section aria-labelledby="card-heading" data-lemma-id={item.lemmaId}>
-        <SectionLabel className="mb-3 text-primary">New word</SectionLabel>
-        <Card className="items-center gap-4 px-6 text-center">
-          <div className="flex w-full justify-end">
+      <section
+        key="intro"
+        aria-labelledby="card-heading"
+        data-lemma-id={item.lemmaId}
+        className={cn("flex flex-1 flex-col", enter)}
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <StageLabel label={`${label} · New word`} />
+          <span className="text-[13px] text-muted-foreground">
+            {flipped ? "Tap card to flip back" : "Tap card to flip"}
+          </span>
+        </div>
+        <div className="relative flex flex-1 flex-col rounded-3xl bg-card p-6 shadow-card">
+          <div className="absolute top-4 right-4 z-10">
             <SpeakButton text={lemma.lemma} label={`Hear ${lemma.lemma}`} />
           </div>
-          <h2
-            id="card-heading"
-            ref={heading}
-            tabIndex={-1}
-            lang="grc"
-            className="font-greek text-7xl leading-none outline-none"
-          >
-            {lemma.lemma}
-          </h2>
-          <p className="text-2xl font-semibold" data-testid="intro-gloss">
-            {lemma.gloss}
-          </p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {lemma.partOfSpeech && (
-              <Badge variant="parsing">{partOfSpeechLabel(lemma.partOfSpeech)}</Badge>
-            )}
-            <Badge variant="parsing">{lemma.ntFrequency.toLocaleString("en")}× in the NT</Badge>
-          </div>
-          {item.example && (
-            <div className="mt-2 w-full rounded-2xl bg-muted px-5 py-4 text-left">
-              <p lang="grc" className="font-greek text-xl leading-relaxed">
-                {item.example.tokens.map((t, i) => (
-                  <span key={i}>
-                    {t.before}
-                    {t.isTarget ? (
-                      <span className="text-primary underline decoration-2 underline-offset-4">
-                        {t.word}
-                      </span>
-                    ) : (
-                      t.word
-                    )}
-                    {t.after}{" "}
-                  </span>
-                ))}
+          {/* Tapping the card reveals the meaning; only the meaning animates. */}
+          <button
+            type="button"
+            aria-pressed={flipped}
+            aria-label={flipped ? "Hide the meaning" : "Show the meaning"}
+            onClick={() => setFlipped((f) => !f)}
+            className="absolute inset-0 z-0 rounded-3xl"
+          />
+          <div className="pointer-events-none relative flex flex-1 flex-col">
+            <div className="mt-9 text-center">
+              <h2
+                id="card-heading"
+                ref={heading}
+                tabIndex={-1}
+                lang="grc"
+                className="font-greek text-[76px] leading-[1.05] tracking-[-0.02em] outline-none"
+              >
+                {lemma.lemma}
+              </h2>
+              <p className="mt-1.5 font-greek text-[17px] text-muted-foreground italic">
+                {transliterate(lemma.lemma)}
               </p>
-              <SectionLabel className="mt-1">{item.example.displayRef}</SectionLabel>
+              {flipped ? (
+                <p
+                  className="mt-[18px] flex h-8 items-center justify-center text-2xl font-medium tracking-[-0.01em] animate-[meaning-in_240ms_var(--ease-sheet)]"
+                  data-testid="intro-gloss"
+                >
+                  {lemma.gloss}
+                </p>
+              ) : (
+                <p className="mt-[18px] flex h-8 items-center justify-center text-[15px] text-muted-foreground animate-[fade-in_160ms_ease-out]">
+                  Tap to see the meaning
+                </p>
+              )}
             </div>
-          )}
-        </Card>
-        <div className="mt-5 grid grid-cols-2 gap-3">
+            {chips.length > 0 && (
+              <ul
+                className="mt-[18px] flex flex-wrap justify-center gap-1.5"
+                aria-label="Word type"
+              >
+                {chips.map((c) => (
+                  <li
+                    key={c}
+                    className="inline-flex h-[30px] items-center rounded-sm bg-muted px-[11px] font-mono text-xs font-medium text-ink-2"
+                  >
+                    {c}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="mt-[22px] mb-4 h-px bg-border" />
+            <div className="flex items-baseline justify-between">
+              <SectionLabel>Forms you’ll meet</SectionLabel>
+              <span className="font-mono text-[11px] text-ink-2">
+                {lemma.ntFrequency.toLocaleString("en")}× IN THE NT
+              </span>
+            </div>
+            <ul lang="grc" className="mt-2.5 flex flex-wrap gap-1.5">
+              {lemma.forms.map((f) => (
+                <li
+                  key={f.form}
+                  className="inline-flex h-[30px] items-center rounded-sm bg-background px-[11px] font-greek text-[17px]"
+                >
+                  {f.form}
+                </li>
+              ))}
+            </ul>
+            <div className="min-h-4 flex-1" />
+            {item.example && (
+              <div className="rounded-lg bg-muted px-4 py-3.5">
+                <GreekVerse
+                  tokens={item.example.tokens}
+                  className="font-greek text-[19px] leading-[1.4]"
+                />
+                <p className="mt-1 font-mono text-[11px] text-muted-foreground uppercase">
+                  {item.example.displayRef}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2.5">
           <Button variant="outline" size="lg" onClick={onShowAgain} disabled={!onShowAgain}>
             Show me again
           </Button>
           <Button size="lg" onClick={() => setPhase("question")}>
-            Got it <Check aria-hidden="true" />
+            Got it <IconCheck size={20} strokeWidth={2} />
           </Button>
         </div>
       </section>
     );
   }
 
+  const posLine = [lemma.partOfSpeech ? partOfSpeechLabel(lemma.partOfSpeech) : null, lemma.gender]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <section aria-labelledby="card-heading" data-lemma-id={item.lemmaId} className="pb-72">
-      <SectionLabel className="text-primary">What does this mean?</SectionLabel>
+    <section
+      key="question"
+      aria-labelledby="card-heading"
+      data-lemma-id={item.lemmaId}
+      className={cn("flex flex-1 flex-col", enter)}
+    >
+      <StageLabel label={`${label} · What does this mean?`} />
       {exercise.type === "context" && exercise.context ? (
-        <div className="mt-6">
-          <p lang="grc" className="font-greek text-3xl leading-relaxed">
+        <div className="mt-8 mb-10">
+          <p lang="grc" className="font-greek text-[28px] leading-relaxed">
             {exercise.context.tokens.map((t, i) => (
               <span key={i}>
                 {t.before}
                 {t.isTarget ? (
-                  <mark className="rounded-md bg-accent px-1 text-primary underline decoration-2 underline-offset-4">
-                    {t.word}
-                  </mark>
+                  <mark className="rounded-[5px] bg-accent px-1 text-primary">{t.word}</mark>
                 ) : (
                   t.word
                 )}
@@ -144,34 +258,36 @@ export function ExerciseCard({
               </span>
             ))}
           </p>
-          <SectionLabel className="mt-2">{exercise.context.displayRef}</SectionLabel>
+          <p className="mt-2 font-mono text-[11px] text-muted-foreground uppercase">
+            {exercise.context.displayRef}
+          </p>
           <h2 id="card-heading" ref={heading} tabIndex={-1} className="sr-only">
             What does the highlighted word mean?
           </h2>
         </div>
       ) : (
-        <div className="mt-8 text-center">
+        <div className="mt-14 mb-12 text-center [@media(max-height:700px)]:mt-6 [@media(max-height:700px)]:mb-6">
           <h2
             id="card-heading"
             ref={heading}
             tabIndex={-1}
             lang="grc"
-            className="font-greek text-7xl leading-none outline-none"
+            className="font-greek text-[84px] leading-none tracking-[-0.02em] outline-none [@media(max-height:700px)]:text-[64px]"
           >
             {lemma.lemma}
           </h2>
-          {lemma.partOfSpeech && (
-            <SectionLabel className="mt-3">{partOfSpeechLabel(lemma.partOfSpeech)}</SectionLabel>
+          {posLine && (
+            <p className="mt-3 font-mono text-xs text-muted-foreground uppercase">{posLine}</p>
           )}
         </div>
       )}
       {retry && (
-        <p className="mt-4 text-center text-sm text-muted-foreground">
+        <p className="-mt-6 mb-4 text-center text-sm text-muted-foreground">
           You missed this earlier. Try again.
         </p>
       )}
 
-      <ul className="mt-8 grid gap-3">
+      <ul className="grid gap-2.5 [@media(max-height:700px)]:gap-2">
         {exercise.options.map((option, i) => {
           const isAnswer = i === exercise.answerIndex;
           const state =
@@ -186,21 +302,30 @@ export function ExerciseCard({
                   setPhase("answered");
                 }}
                 className={cn(
-                  "flex min-h-16 w-full items-center justify-between gap-3 rounded-2xl border bg-card px-5 py-4 text-left text-lg transition-colors",
-                  state === "idle" && "border-border hover:border-primary",
-                  state === "answer" && "border-2 border-correct bg-correct-soft px-[19px]",
-                  state === "wrong" && "border-2 border-rubric bg-rubric-soft px-[19px]",
-                  state === "dim" && "border-border text-muted-foreground",
+                  "pressable flex h-[60px] w-full items-center [@media(max-height:700px)]:h-[52px] justify-between gap-3 rounded-lg border px-[18px] text-left text-lg font-medium transition-colors duration-[160ms]",
+                  state === "idle" && "border-border bg-card text-foreground hover:border-primary",
+                  state === "answer" &&
+                    "border-2 border-correct bg-correct-soft px-[17px] text-foreground",
+                  state === "wrong" &&
+                    "animate-[nudge_280ms_ease-out] border-2 border-rubric bg-rubric-soft px-[17px] text-foreground",
+                  state === "dim" && "border-border bg-card text-muted-foreground",
                 )}
               >
-                <span>{option}</span>
+                <span className="truncate">{option}</span>
                 {state === "answer" && (
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-correct text-card">
-                    <Check className="size-4" aria-label="Correct answer" />
+                  <span className="flex size-[26px] shrink-0 animate-[pop-in_160ms_var(--ease-sheet)] items-center justify-center rounded-full bg-correct text-correct-soft">
+                    <IconCheck
+                      size={16}
+                      strokeWidth={2.6}
+                      className="draw-in [--draw-delay:100ms]"
+                      role="img"
+                      aria-label="Correct answer"
+                      aria-hidden={false}
+                    />
                   </span>
                 )}
                 {state === "wrong" && (
-                  <span className="shrink-0 font-mono text-xs tracking-[0.08em] text-rubric">
+                  <span className="shrink-0 animate-[fade-in_160ms_ease-out] font-mono text-xs tracking-[0.08em] text-rubric">
                     NOT QUITE
                   </span>
                 )}
@@ -210,56 +335,64 @@ export function ExerciseCard({
         })}
       </ul>
 
+      <div className="min-h-6 flex-1" />
       {phase === "answered" && (
-        <div
+        <section
           id="feedback"
-          className="fixed inset-x-0 bottom-0 z-20 rounded-t-[1.75rem] bg-card px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-[0_-12px_40px_-12px_rgb(0_0_0/0.18)]"
+          aria-live="polite"
+          className="sticky bottom-0 -mx-5 mt-2 -mb-[max(34px,env(safe-area-inset-bottom))] rounded-t-3xl bg-card px-5 pt-5 pb-[max(34px,env(safe-area-inset-bottom))] shadow-sheet animate-[rise-in_260ms_var(--ease-sheet)] sm:-mx-6 sm:px-6"
         >
-          <div className="mx-auto max-w-xl">
-            <p role="status" className="flex flex-wrap items-baseline gap-x-3">
-              <span
-                className={cn("text-xl font-semibold", correct ? "text-correct" : "text-rubric")}
-              >
-                {correct ? "Correct" : "Not quite"}
-              </span>
-              <span className="font-mono text-xs tracking-[0.08em] text-muted-foreground uppercase">
-                {nextReviewLabel(item.srs, correct ? ease : "again")}
-              </span>
-            </p>
-            <p className="mt-2">
-              <span lang="grc" className="font-greek text-lg">
-                {lemma.lemma}
-              </span>{" "}
-              {correct ? (
-                <>appears {lemma.ntFrequency.toLocaleString("en")}× in the NT.</>
-              ) : (
-                <>means “{lemma.gloss}”. It will come back shortly.</>
-              )}
-            </p>
-            {correct && (
-              <ToggleGroup
-                type="single"
-                variant="segmented"
-                aria-label="How easy was it?"
-                className="mt-4"
-                value={ease}
-                onValueChange={(v) => v && setEase(v as Ease)}
-              >
-                <ToggleGroupItem value="hard">Hard</ToggleGroupItem>
-                <ToggleGroupItem value="good">Good</ToggleGroupItem>
-                <ToggleGroupItem value="easy">Easy</ToggleGroupItem>
-              </ToggleGroup>
+          <p role="status" className="flex flex-wrap items-baseline gap-x-2.5">
+            <span className={cn("text-[17px] font-bold", correct ? "text-correct" : "text-rubric")}>
+              {correct ? "Correct" : "Not quite"}
+            </span>
+            <span className="font-mono text-[11px] text-muted-foreground uppercase">
+              {nextReviewLabel(item.srs, correct ? ease : "again")}
+            </span>
+          </p>
+          <p className="mt-1.5 text-[15px] leading-[1.45] text-ink-2">
+            <span lang="grc" className="font-greek text-foreground">
+              {lemma.lemma}
+            </span>{" "}
+            {correct ? (
+              <>
+                appears {lemma.ntFrequency.toLocaleString("en")}× in the NT.
+                {item.inPassage && (
+                  <>
+                    {" "}
+                    You’ll read it {times(item.inPassage.count)} in{" "}
+                    {item.inPassage.count === 1 ? item.inPassage.displayRef : item.inPassage.title}.
+                  </>
+                )}
+              </>
+            ) : (
+              <>means “{lemma.gloss}”. It will come back shortly.</>
             )}
-            <Button
-              size="lg"
-              className="mt-4 w-full"
-              disabled={saving}
-              onClick={() => onGrade(correct ? ease : "again", correct)}
+          </p>
+          {correct && (
+            <ToggleGroup
+              type="single"
+              variant="segmented"
+              size="sm"
+              aria-label="How easy was it?"
+              className="mt-4"
+              value={ease}
+              onValueChange={(v) => v && setEase(v as Ease)}
             >
-              Continue <ArrowRight aria-hidden="true" />
-            </Button>
-          </div>
-        </div>
+              <ToggleGroupItem value="hard">Hard</ToggleGroupItem>
+              <ToggleGroupItem value="good">Good</ToggleGroupItem>
+              <ToggleGroupItem value="easy">Easy</ToggleGroupItem>
+            </ToggleGroup>
+          )}
+          <Button
+            size="lg"
+            className="mt-4 w-full"
+            disabled={saving}
+            onClick={() => onGrade(correct ? ease : "again", correct)}
+          >
+            Continue <IconArrowRight size={20} />
+          </Button>
+        </section>
       )}
     </section>
   );

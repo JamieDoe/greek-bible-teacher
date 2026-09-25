@@ -24,11 +24,37 @@ const verseSnippetSchema = z.object({
   ),
 });
 
+/**
+ * A before/after table of forms for a grammar step, e.g. nominative → dative. In `to`, the part
+ * in [brackets] is what changed and is highlighted: "ἀρχ[ῇ]".
+ */
+export const grammarParadigmSchema = z.object({
+  from: z.string().min(1),
+  to: z.string().min(1),
+  rows: z.array(z.object({ from: z.string().min(1), to: z.string().min(1) })).min(1),
+  note: z.string().optional(),
+});
+export type GrammarParadigm = z.infer<typeof grammarParadigmSchema>;
+
+/** One recognition question closing a grammar step. */
+export const grammarQuickCheckSchema = z
+  .object({
+    question: z.string().min(1),
+    options: z.array(z.string().min(1)).min(2).max(4),
+    answer: z.number().int().nonnegative(),
+    /** One sentence, shown after answering. */
+    explanation: z.string().min(1),
+  })
+  .refine((q) => q.answer < q.options.length, "answer must index an option");
+export type GrammarQuickCheck = z.infer<typeof grammarQuickCheckSchema>;
+
 export const grammarConceptResponseSchema = z.object({
   concept: conceptSummarySchema.extend({
     /** Markdown; the "## Going deeper" section holds terminology for expanded views. */
     body: z.string(),
     terminologyLevel: z.enum(disclosureLevels),
+    paradigm: grammarParadigmSchema.nullable(),
+    quickCheck: grammarQuickCheckSchema.nullable(),
     examples: z.array(verseSnippetSchema.extend({ tokenId: z.number().int() })),
     previous: z.object({ slug: z.string(), title: z.string() }).nullable(),
     next: z.object({ slug: z.string(), title: z.string() }).nullable(),

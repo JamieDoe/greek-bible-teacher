@@ -16,10 +16,10 @@ const badgeVariants = cva(
         ghost: "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
         /** Koinē parsing chip: NOUN · DATIVE … in Geist Mono. */
-        parsing:
-          "h-7 rounded-lg bg-muted px-2.5 font-mono text-xs font-normal tracking-[0.04em] text-foreground",
+        parsing: "h-7 rounded-sm bg-muted px-2.5 font-mono text-xs font-medium text-ink-2",
         /** Koinē form chip: a Greek word form, e.g. λόγου. */
-        greek: "h-9 rounded-xl bg-muted px-3 font-greek text-lg font-normal text-foreground",
+        greek:
+          "h-[30px] rounded-sm bg-background px-[11px] font-greek text-[17px] font-normal text-foreground",
       },
     },
     defaultVariants: {

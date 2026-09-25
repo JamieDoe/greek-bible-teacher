@@ -1,4 +1,9 @@
-import type { DisclosureLevel, TokenMatcher } from "@gbt/shared";
+import type {
+  DisclosureLevel,
+  GrammarParadigm,
+  GrammarQuickCheck,
+  TokenMatcher,
+} from "@gbt/shared";
 
 /**
  * One curated grammar concept (hand-written project content). Its position in the exported
@@ -18,5 +23,11 @@ export interface GrammarConceptContent {
   /** Real NT examples: a verse ref and a word in it (the surface word or its normalised form). */
   examples: { ref: string; word: string; occurrence?: number }[];
   /** Matchers linking tokens to this concept, each with its "Why this form?" note. */
-  rules: { match: TokenMatcher; note: string }[];
+  rules: {
+    match: TokenMatcher;
+    note: string;
+  }[]; /** A before/after table of forms (see practice.ts). */
+  paradigm?: GrammarParadigm;
+  /** One recognition question at the end of the lesson (see practice.ts). */
+  quickCheck?: GrammarQuickCheck;
 }

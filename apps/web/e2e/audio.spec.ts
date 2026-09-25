@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { audioManifestSchema, spokenWordKey } from "@gbt/shared";
 import { expect, type Page, test } from "@playwright/test";
-import { openJohn } from "./helpers";
+import { expectWordOpen, openJohn } from "./helpers";
 
 // The recordings shipped with the app (pnpm audio:generate).
 const manifest = audioManifestSchema.parse(
@@ -150,7 +150,7 @@ test.describe("without recordings (device voice)", () => {
     await openJohn(page);
     await expect(page.getByRole("button", { name: "Listen" })).toHaveCount(0);
     await page.getByRole("button", { name: "λόγος", exact: true }).first().click();
-    await expect(page.getByRole("dialog")).toBeVisible();
+    await expectWordOpen(page);
     await expect(page.getByRole("button", { name: /Modern Greek voice/ })).toHaveCount(0);
   });
 });

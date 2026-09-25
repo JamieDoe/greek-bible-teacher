@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { reviewContexts, reviewGrades } from "../learning/enums";
-import { partsOfSpeech } from "../morphology/categories";
+import { genders, partsOfSpeech } from "../morphology/categories";
 
 export const reviewQueueQuerySchema = z
   .object({
@@ -27,7 +27,16 @@ export const reviewItemSchema = z.object({
     gloss: z.string(),
     partOfSpeech: z.enum(partsOfSpeech).nullable(),
     ntFrequency: z.number().int(),
+    /** Nouns: the gender the text uses, and the declension derived from it (null: unsure). */
+    gender: z.enum(genders).nullable(),
+    declension: z.union([z.literal(1), z.literal(2), z.literal(3)]).nullable(),
+    /** The forms a reader meets most often in the NT, most frequent first (up to 4). */
+    forms: z.array(z.object({ form: z.string(), count: z.number().int() })),
   }),
+  /** How often the word comes up in the passage the learner is working towards. */
+  inPassage: z
+    .object({ title: z.string(), displayRef: z.string(), count: z.number().int() })
+    .nullable(),
   /** The word's current schedule, so the client can preview the next interval (null: new). */
   srs: z
     .object({

@@ -45,6 +45,9 @@ test("MVP acceptance: onboard → daily lesson loop → Today and progress", asy
   await page.getByRole("button", { name: "Continue" }).click();
 
   await stepLabel(page, 2, "New words");
+  // A new word's card hides its meaning until it is flipped.
+  await expect(page.getByText("Tap to see the meaning")).toBeVisible();
+  await page.getByRole("button", { name: "Show the meaning" }).click();
   await expect(page.getByTestId("intro-gloss")).toBeVisible();
   await expect(page.getByText("5 to go")).toBeVisible();
   await answerAll(page, glosses);
@@ -54,12 +57,17 @@ test("MVP acceptance: onboard → daily lesson loop → Today and progress", asy
   await expect(
     page.getByRole("heading", { name: "The article and case: who is what" }),
   ).toBeVisible();
+  // The before/after table, then the quick check: pick, Check, see why, continue.
+  await expect(page.getByRole("cell", { name: "ὁ λόγος", exact: true })).toBeVisible();
+  await page.getByRole("radio", { name: "τὸν θεόν" }).click();
+  await page.getByRole("button", { name: "Check" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Correct." })).toBeVisible();
   await page.getByRole("button", { name: "Got it, continue" }).click();
 
   await stepLabel(page, 4, "Read");
   await expect(greekText(page)).toContainText("Ἐν ἀρχῇ ἦν ὁ λόγος");
-  await lookUp(page, "ἀρχῇ");
-  await lookUp(page, "φαίνει");
+  await lookUp(page, "ἀρχῇ", { embedded: true });
+  await lookUp(page, "φαίνει", { embedded: true });
   await page.getByRole("button", { name: "Finish passage" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "John 1:1–5" })).toBeVisible();
   await expect(page.getByRole("checkbox")).toHaveCount(2); // both go into review

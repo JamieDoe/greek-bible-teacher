@@ -31,9 +31,20 @@
   --input: #e0dbd1;
   --ring: #2b3fbf;
   --rubric: #b3402a;
+  --rubric-soft: #f7e5df;
   --correct: #2b6f4e;
-  --backdrop: rgb(26 25 22 / 0.32);
-  --radius: 1rem;
+  --correct-soft: #e2efe7;
+  /* Secondary ink: subtitles, chip text, lemmas (the design's #45413A). */
+  --ink-2: #45413a;
+  /* Heatmap: four lapis steps, lightness carries the meaning. */
+  --heat-0: #e0dbd1;
+  --heat-1: #c9cff4;
+  --heat-2: #8593e3;
+  --heat-3: #2b3fbf;
+  --card-shadow: 0 1px 2px rgb(26 25 22 / 0.05), 0 10px 30px rgb(26 25 22 / 0.07);
+  --sheet-shadow: 0 -12px 40px rgb(26 25 22 / 0.14);
+  --backdrop: transparent; /* the design keeps the text visible behind the word sheet */
+  --radius: 0.75rem;
   --greek-size: 1.3125rem; /* 21pt default; the reader's Aa setting overrides it */
   color-scheme: light;
 }
@@ -46,7 +57,7 @@
   --popover: #1b1a17;
   --popover-foreground: #eeeae2;
   --primary: #9aa6ff;
-  --primary-foreground: #11100e;
+  --primary-foreground: #0d1033;
   --secondary: #252320;
   --secondary-foreground: #eeeae2;
   --muted: #252320;
@@ -58,8 +69,17 @@
   --input: #312e29;
   --ring: #9aa6ff;
   --rubric: #ee8d71;
+  --rubric-soft: #3a211a;
   --correct: #7fcba2;
-  --backdrop: rgb(0 0 0 / 0.55);
+  --correct-soft: #15291f;
+  --ink-2: #cec8bd;
+  --heat-0: #312e29;
+  --heat-1: #333c7a;
+  --heat-2: #5a68c8;
+  --heat-3: #9aa6ff;
+  --card-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px rgb(0 0 0 / 0.35);
+  --sheet-shadow: 0 -12px 40px rgb(0 0 0 / 0.55);
+  --backdrop: transparent;
   color-scheme: dark;
 }
 
@@ -88,16 +108,26 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-rubric: var(--rubric);
-  --color-rubric-soft: color-mix(in oklab, var(--rubric) 12%, var(--card));
+  --color-rubric-soft: var(--rubric-soft);
   --color-correct: var(--correct);
-  --color-correct-soft: color-mix(in oklab, var(--correct) 12%, var(--card));
-  --radius-sm: calc(var(--radius) * 0.5);
-  --radius-md: calc(var(--radius) * 0.75);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.25);
-  --radius-2xl: calc(var(--radius) * 1.5);
-  --radius-3xl: calc(var(--radius) * 1.75);
-  --radius-4xl: calc(var(--radius) * 2);
+  --color-correct-soft: var(--correct-soft);
+  --color-ink-2: var(--ink-2);
+  --color-heat-0: var(--heat-0);
+  --color-heat-1: var(--heat-1);
+  --color-heat-2: var(--heat-2);
+  --color-heat-3: var(--heat-3);
+  --shadow-card: var(--card-shadow);
+  --shadow-sheet: var(--sheet-shadow);
+  /* The design's radius scale: chip 8 · button 12 · large button 14 · list 16 · card 20 · sheet 24. */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-4xl: 28px;
+  /* Motion (design system §04). */
+  --ease-sheet: cubic-bezier(0.2, 0.8, 0.2, 1);
   --text-greek: var(--greek-size);
 }
 
@@ -107,12 +137,207 @@
   }
   html {
     scrollbar-gutter: stable;
+    -webkit-text-size-adjust: 100%;
   }
   body {
-    @apply bg-background font-sans text-foreground;
+    @apply bg-background font-sans text-foreground antialiased;
+    /* Feel like an app: no rubber-band scroll chaining or pull-to-refresh, no tap flash. */
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  a,
+  button,
+  [role="button"],
+  label {
+    /* No double-tap-to-zoom delay, and no long-press callout on controls. */
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
   }
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
+  }
+}
+
+/* Tap feedback (design §04): 90 ms, scale 0.97 → 1. */
+@utility pressable {
+  transition: transform 90ms ease-out;
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+}
+
+/* Bottom sheet (design §04): 260 ms with the sheet curve, instead of vaul's 500 ms. */
+[data-slot="drawer-content"][data-vaul-drawer] {
+  transition-duration: 260ms;
+  transition-timing-function: var(--ease-sheet);
+  animation-duration: 260ms;
+  animation-timing-function: var(--ease-sheet);
+}
+
+/*
+ * Motion (design §04). Short, and it settles without overshoot: opacity plus a few pixels of
+ * movement, on the sheet curve. Each animation confirms an action or shows where something came
+ * from.
+ */
+
+/* Content arriving where its skeleton was: the shapes already match, so only a fade. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+/* A new word's meaning appearing: a short rise and fade (vocabulary reveal). */
+@keyframes meaning-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+/* The answer panel arriving from the foot of the screen. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+/* The next lesson step or review card: in from the right, the way the lesson moves. */
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+/* A wrong answer: one small shake, not a buzz. */
+@keyframes nudge {
+  20% {
+    transform: translateX(-4px);
+  }
+  45% {
+    transform: translateX(4px);
+  }
+  70% {
+    transform: translateX(-2px);
+  }
+}
+/* A badge or mark appearing: grows from 60% with a fade. */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+/* A stroke drawing itself (icons draw with pathLength 1). */
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+/* The icon's stroke draws in, after an optional --draw-delay. */
+@utility draw-in {
+  & path {
+    stroke-dasharray: 1;
+    animation: draw var(--draw-duration, 220ms) var(--ease-sheet) var(--draw-delay, 0ms) both;
+  }
+}
+
+/* Moving between tabs: the page crossfades in 150 ms; the navigation stays put. */
+::view-transition {
+  pointer-events: none;
+}
+::view-transition-old(root) {
+  display: none;
+}
+::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-group(.tab-fade) {
+  animation: none;
+}
+/*
+ * The tab bar is its own layer above the page, so the fading page (which runs underneath the
+ * fixed bar) never paints over it. It shows its new state at once, with no animation.
+ */
+::view-transition-group(tab-bar) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(tab-bar) {
+  display: none;
+}
+::view-transition-new(tab-bar) {
+  animation: none;
+}
+::view-transition-old(.tab-fade) {
+  animation: 90ms ease-out both view-fade-out;
+}
+/* The new page starts as the old one is mostly gone, so the two barely show through each other. */
+::view-transition-new(.tab-fade) {
+  animation: 150ms ease-out 60ms both fade-in;
+}
+@keyframes view-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/*
+ * Reduced motion: nothing slides, shakes, scales or draws. Movement becomes a plain fade, and
+ * transitions (tints, sheet slides, progress fills) are instant.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .pressable:active {
+    transform: none !important;
+  }
+  [data-vaul-drawer] {
+    animation-duration: 0.01ms !important;
+  }
+  @keyframes meaning-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes step-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes nudge {
+    to {
+      transform: none;
+    }
+  }
+  @keyframes draw {
+    from {
+      opacity: 0;
+    }
+  }
+  /* Dialogs (tw-animate-css): fade only, no zoom. */
+  @keyframes enter {
+    from {
+      opacity: var(--tw-enter-opacity, 1);
+    }
+  }
+  @keyframes exit {
+    to {
+      opacity: var(--tw-exit-opacity, 1);
+    }
   }
 }

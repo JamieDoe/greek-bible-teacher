@@ -1,4 +1,4 @@
-// Per-device display preferences (theme, Greek text size, first name). They live only in this
+// Per-device display preferences (theme, Greek text size, reading layout, first name). They live only in this
 // browser: the name in particular is never sent to the server (DECISIONS 022).
 
 export type ThemePreference = "system" | "light" | "dark";
@@ -7,6 +7,8 @@ export const PREF_KEYS = {
   theme: "koine-theme",
   greekSize: "koine-greek-size",
   name: "koine-name",
+  senseLines: "koine-sense-lines",
+  markNewWords: "koine-mark-new",
 } as const;
 
 /** Greek reading sizes offered by the Aa control, in px (the design's 21–27 range and around it). */

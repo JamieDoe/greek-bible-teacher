@@ -10,6 +10,7 @@ import {
   relativePronouns,
 } from "./function-words";
 import { adjectives, dative, genderNumber, genitive } from "./nouns";
+import { practice } from "./practice";
 import type { GrammarConceptContent } from "./types";
 import {
   imperative,
@@ -25,7 +26,7 @@ import { aorist, future, imperfect, middlePassive, perfect, present } from "./ve
  * The grammar curriculum, in teaching order: what John 1:1–5 needs first, then what the next
  * curated passages need (see DECISIONS 017 for the reasoning).
  */
-export const grammarContent: GrammarConceptContent[] = [
+const curriculum: GrammarConceptContent[] = [
   alphabet,
   breathingsAccents,
   articleAndCase,
@@ -53,3 +54,9 @@ export const grammarContent: GrammarConceptContent[] = [
   imperative,
   wordOrder,
 ];
+
+/** The curriculum with each concept's practice (paradigm table and quick check) attached. */
+export const grammarContent: GrammarConceptContent[] = curriculum.map((c) => ({
+  ...c,
+  ...practice[c.slug],
+}));

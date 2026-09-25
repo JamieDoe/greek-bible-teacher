@@ -19,10 +19,10 @@ export function ConceptList({ concepts }: { concepts: GrammarConceptSummary[] })
   }, []);
 
   return (
-    <ol className="divide-y divide-border overflow-hidden rounded-3xl bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04),0_12px_32px_-16px_rgb(0_0_0/0.12)]">
+    <ol className="animate-[fade-in_150ms_ease-out] divide-y divide-border overflow-hidden rounded-2xl bg-card shadow-card">
       {concepts.map((c) => (
         <li key={c.slug}>
-          <Link href={`/grammar/${c.slug}`} className="flex gap-4 px-6 py-4 hover:bg-muted">
+          <Link href={`/grammar/${c.slug}`} className="flex gap-4 px-5 py-4 hover:bg-muted">
             <span className="w-6 shrink-0 pt-1 text-right font-mono text-xs text-muted-foreground tabular-nums">
               {c.curriculumOrder}
             </span>

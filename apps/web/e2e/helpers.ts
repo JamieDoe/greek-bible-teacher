@@ -1,10 +1,34 @@
 import { reviewQueueResponseSchema } from "@gbt/shared";
 import { expect, type Page } from "@playwright/test";
 
-export const sheet = (page: Page) => page.getByRole("dialog");
+/** From 768 px the reader shows word details in a side panel instead of a bottom sheet. */
+export const isWide = (page: Page) => (page.viewportSize()?.width ?? 0) >= 768;
+
+/**
+ * Where a tapped word's details show: the sheet on phones, the side panel on wider screens.
+ * A reader inside a lesson always uses the sheet.
+ */
+export const sheet = (page: Page, embedded = false) =>
+  isWide(page) && !embedded
+    ? page.getByRole("complementary", { name: "Word detail" })
+    : page.getByRole("dialog");
+
+/** Word details are showing (for `word`, if given). */
+export async function expectWordOpen(page: Page, word?: string, embedded = false) {
+  const detail = sheet(page, embedded);
+  if (word) await expect(detail.getByRole("heading", { name: word })).toBeVisible();
+  else await expect(detail.getByTestId("gloss")).toBeVisible();
+}
+
+/** No word is showing: the sheet has gone, or the panel is back to its prompt. */
+export async function expectWordClosed(page: Page, embedded = false) {
+  if (isWide(page) && !embedded) {
+    await expect(sheet(page).getByText(/Select any word/)).toBeVisible();
+  } else await expect(sheet(page, embedded)).toBeHidden();
+}
 
 /** The reader's Greek text (the lesson header also carries a Greek stage mark). */
-export const greekText = (page: Page) => page.locator('article [lang="grc"]').first();
+export const greekText = (page: Page) => page.getByTestId("passage-text");
 
 export async function openJohn(page: Page) {
   await page.goto("/read");
@@ -13,15 +37,15 @@ export async function openJohn(page: Page) {
 }
 
 /** Taps a word, waits for the sheet and for the lookup to be recorded, then closes it. */
-export async function lookUp(page: Page, word: string) {
+export async function lookUp(page: Page, word: string, { embedded = false } = {}) {
   const recorded = page.waitForResponse(
     (r) => r.url().includes("/lookup") && r.request().method() === "POST",
   );
   await page.getByRole("button", { name: word, exact: true }).first().click();
-  await expect(sheet(page)).toBeVisible();
+  await expectWordOpen(page, undefined, embedded);
   expect((await recorded).status()).toBe(204);
   await page.keyboard.press("Escape");
-  await expect(sheet(page)).toBeHidden();
+  await expectWordClosed(page, embedded);
 }
 
 /**

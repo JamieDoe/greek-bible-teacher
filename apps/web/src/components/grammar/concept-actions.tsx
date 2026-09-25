@@ -18,7 +18,7 @@ export function DeeperSection({ source }: { source: string }) {
     <details
       key={ready ? level : "loading"}
       open={ready && level !== "beginner"}
-      className="mt-6 rounded-3xl bg-muted px-6 py-4"
+      className="mt-5 rounded-2xl bg-muted px-5 py-4"
     >
       <summary className="cursor-pointer font-heading text-xl">Going deeper: terminology</summary>
       <Markdown source={source} />

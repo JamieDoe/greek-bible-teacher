@@ -1,5 +1,5 @@
 import type { LessonResponse, LessonStep } from "@gbt/shared";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { Db } from "../db/client";
 import {
@@ -29,6 +29,8 @@ export function lessonSteps(
   items: Item[],
   concept: Concept | null,
   investigation: Extract<LessonStep, { kind: "investigate" }>["verses"],
+  /** Dictionary forms by lemma id, for the vocab step. */
+  words: ReadonlyMap<number, string> = new Map(),
 ): LessonStep[] {
   const steps: LessonStep[] = [];
   const vocab = items.filter((i) => i.kind === "vocab").map((i) => i.lemmaId!);
@@ -42,7 +44,13 @@ export function lessonSteps(
         );
         break;
       case "vocab":
-        if (steps.at(-1)?.kind !== "vocab") steps.push({ kind: "vocab", lemmaIds: vocab });
+        if (steps.at(-1)?.kind !== "vocab") {
+          steps.push({
+            kind: "vocab",
+            lemmaIds: vocab,
+            words: vocab.map((id) => words.get(id) ?? ""),
+          });
+        }
         break;
       case "grammar":
         if (concept) steps.push({ kind: "grammar", slug: concept.slug, title: concept.title });
@@ -154,6 +162,18 @@ export async function getLesson(
     ? await investigate(db, concept.id, lesson.startOrdinal, lesson.endOrdinal)
     : [];
 
+  const vocabIds = items.filter((i) => i.kind === "vocab").map((i) => i.lemmaId!);
+  const words = new Map(
+    vocabIds.length === 0
+      ? []
+      : (
+          await db
+            .select({ id: lemmas.id, lemma: lemmas.lemma })
+            .from(lemmas)
+            .where(inArray(lemmas.id, vocabIds))
+        ).map((l) => [l.id, l.lemma] as const),
+  );
+
   const [progress] = await db
     .select({
       currentStep: userLessonProgress.currentStep,
@@ -167,7 +187,7 @@ export async function getLesson(
     number: lesson.number,
     title: lesson.title,
     passage: { id: lesson.passageId, title: lesson.passageTitle },
-    steps: lessonSteps(items, concept ?? null, investigation),
+    steps: lessonSteps(items, concept ?? null, investigation, words),
     progress: progress
       ? {
           currentStep: progress.currentStep,

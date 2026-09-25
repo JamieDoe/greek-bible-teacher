@@ -8,11 +8,12 @@ import {
 } from "@gbt/shared";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { EmptyState, ErrorState, LoadingState, PageShell } from "@/components/ui/states";
+import { IconArrowRight, IconClose } from "@/components/icons";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState, ErrorState, PageShell } from "@/components/ui/states";
 import { apiGet, apiPost } from "@/lib/api-client";
 import { ensureSession } from "@/lib/session";
 import { ExerciseCard } from "./exercise-card";
-import { ArrowRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
@@ -43,6 +44,8 @@ interface Props {
   context?: "review" | "lesson";
   /** Inside a lesson: called instead of showing the stand-alone summary links. */
   onDone?: () => void;
+  /** The stage prefix for each card's label row (default "α′ · Review"). */
+  label?: string;
 }
 
 export function ReviewSession({
@@ -51,6 +54,7 @@ export function ReviewSession({
   introduceAll = false,
   context = "review",
   onDone,
+  label = "α′ · Review",
 }: Props) {
   const [load, setLoad] = useState<Load>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
@@ -135,10 +139,12 @@ export function ReviewSession({
   const Shell = onDone ? EmbeddedShell : PageShell;
 
   if (load.status === "loading") {
-    return (
-      <Shell title="Review">
-        <LoadingState label="Preparing your review…" />
-      </Shell>
+    return onDone ? (
+      <CardSkeleton />
+    ) : (
+      <StandaloneFrame progress={null}>
+        <CardSkeleton />
+      </StandaloneFrame>
     );
   }
   if (load.status === "error") {
@@ -187,6 +193,8 @@ export function ReviewSession({
         item={card.item}
         retry={card.retry}
         introduce={(introduceAll || card.reintroduce === true) && !card.retry}
+        label={label}
+        first={index === 0}
         saving={saving}
         onGrade={(g, correct) => void grade(card, g, correct)}
         onShowAgain={() => showAgain(card)}
@@ -201,8 +209,8 @@ export function ReviewSession({
 
   if (onDone) {
     return (
-      <div>
-        <p className="mb-4 text-right font-mono text-xs text-muted-foreground" aria-live="polite">
+      <div className="flex flex-1 flex-col">
+        <p className="sr-only" aria-live="polite">
           {total - done} to go
         </p>
         {exercise}
@@ -210,36 +218,63 @@ export function ReviewSession({
     );
   }
 
+  return <StandaloneFrame progress={{ done, total }}>{exercise}</StandaloneFrame>;
+}
+
+/** The stand-alone review screen (design "05 · Review"): ✕, one progress bar, and the count. */
+function StandaloneFrame({
+  progress,
+  children,
+}: {
+  progress: { done: number; total: number } | null;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-xl items-center gap-4 px-3 pt-3 sm:px-6">
+    <div className="flex h-dvh flex-col overflow-hidden">
+      <header className="shrink-0 bg-background pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex h-14 max-w-xl items-center gap-3 pr-5 pl-3">
           <Button asChild variant="ghost" size="icon" aria-label="Leave review">
             <Link href="/">
-              <X aria-hidden="true" />
+              <IconClose size={22} />
             </Link>
           </Button>
           <Progress
-            value={(100 * done) / total}
+            value={progress ? (100 * progress.done) / progress.total : 0}
             aria-label="Review progress"
-            className="h-1 flex-1"
+            className="flex-1"
           />
           <span
-            className="w-12 text-right font-mono text-xs text-muted-foreground"
+            className="w-11 text-right font-mono text-xs text-muted-foreground"
             aria-live="polite"
           >
-            {done}/{total}
+            {progress && `${progress.done}/${progress.total}`}
+            {progress && <span className="sr-only">: {progress.total - progress.done} to go</span>}
           </span>
         </div>
-        <p className="mx-auto max-w-xl px-4 pt-4 font-mono text-xs tracking-[0.08em] text-primary uppercase sm:px-6">
-          <span lang="grc" className="font-greek text-sm normal-case">
-            α′
-          </span>{" "}
-          · Review
-          <span className="sr-only">: {total - done} to go</span>
-        </p>
+        <h1 className="sr-only">Review</h1>
       </header>
-      <main className="mx-auto w-full max-w-xl flex-1 px-4 pt-4 sm:px-6">{exercise}</main>
+      <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="mx-auto flex min-h-full w-full max-w-xl flex-col px-5 pt-5">
+          {children}
+          <div className="h-[max(34px,env(safe-area-inset-bottom))] shrink-0" />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+/** A review card's shape while the queue loads. */
+function CardSkeleton() {
+  return (
+    <div role="status" aria-label="Preparing your review" className="flex flex-1 flex-col">
+      <Skeleton className="h-3 w-40" />
+      <Skeleton className="mx-auto mt-14 h-20 w-40" />
+      <Skeleton className="mx-auto mt-3 h-3 w-24" />
+      <div className="mt-12 grid gap-2.5">
+        {[0, 1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-[60px] rounded-lg" />
+        ))}
+      </div>
     </div>
   );
 }
@@ -252,7 +287,7 @@ function EmbeddedShell({ children }: { title?: string; children: React.ReactNode
 function ContinueButton({ onClick }: { onClick: () => void }) {
   return (
     <Button size="lg" className="mt-6 w-full" onClick={onClick}>
-      Continue <ArrowRight aria-hidden="true" />
+      Continue <IconArrowRight size={20} />
     </Button>
   );
 }
@@ -271,10 +306,14 @@ function Summary({
   const Shell = onDone ? EmbeddedShell : PageShell;
   return (
     <Shell>
-      <h1 ref={heading} tabIndex={-1} className="font-heading text-4xl outline-none">
+      <h1
+        ref={heading}
+        tabIndex={-1}
+        className="animate-[rise-in_320ms_var(--ease-sheet)_both] font-heading text-4xl outline-none"
+      >
         Review done
       </h1>
-      <p className="mt-2 text-muted-foreground">
+      <p className="mt-2 animate-[rise-in_320ms_var(--ease-sheet)_60ms_both] text-muted-foreground">
         {answered} {answered === 1 ? "word" : "words"}, {firstTry} right first time.
       </p>
       {onDone ? (

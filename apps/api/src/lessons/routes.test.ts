@@ -121,6 +121,14 @@ describe("GET /lessons/:id", () => {
     const vocab = l.steps[1];
     const recall = l.steps[5];
     expect(vocab?.kind === "vocab" && vocab.lemmaIds.length).toBe(5);
+    // The same five words by dictionary form, for Today's session card.
+    expect(vocab?.kind === "vocab" && vocab.words).toEqual([
+      "λόγος",
+      "θεός",
+      "ἀρχή",
+      "καί",
+      "εἰμί",
+    ]);
     expect(recall?.kind === "review_recall" && vocab?.kind === "vocab" && recall.lemmaIds).toEqual(
       vocab?.kind === "vocab" ? vocab.lemmaIds : null,
     );

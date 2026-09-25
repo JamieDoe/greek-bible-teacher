@@ -55,3 +55,15 @@ export function useLocalName() {
   const [name, setName] = usePreference(PREF_KEYS.name, "");
   return [name, (n: string) => setName(n.trim() ? n.trim().slice(0, 40) : null)] as const;
 }
+
+/** An on/off device preference, on unless turned off (sense lines, marking new words). */
+function useSwitchPreference(key: string) {
+  const [value, set] = usePreference(key, "on");
+  return [value !== "off", (on: boolean) => set(on ? null : "off")] as const;
+}
+
+/** Reader layout: verses broken into phrases at punctuation (the design's default). */
+export const useSenseLines = () => useSwitchPreference(PREF_KEYS.senseLines);
+
+/** Reader: a dotted underline on words not yet in review. */
+export const useMarkNewWords = () => useSwitchPreference(PREF_KEYS.markNewWords);
