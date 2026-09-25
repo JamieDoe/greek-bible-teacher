@@ -1,6 +1,6 @@
 /**
- * Daily lessons, one per curated passage, in order. Each teaches one grammar concept and a
- * handful of words. Lesson 1 is the vertical slice with its specified vocabulary; later
+ * Daily lessons, one per curated passage, in order. Each teaches the next grammar concept in
+ * the curriculum (from the article on) and a handful of words. Lesson 1 is the vertical slice with its specified vocabulary; later
  * lessons derive theirs at seed time (see seed-lessons.ts), never at random.
  */
 export interface LessonContent {
@@ -31,16 +31,18 @@ export const lessonContent: LessonContent[] = [
   { title: "God so loved the world", passage: "JHN 3:16", concept: "personal-pronouns" },
   { title: "If we confess our sins", passage: "1JN 1:8", concept: "demonstratives" },
   { title: "The Lamb of God", passage: "JHN 1:29", concept: "negation" },
+  { title: "The Word became flesh", passage: "JHN 1:14", concept: "aorist" },
+  { title: "My sheep hear my voice", passage: "JHN 10:27", concept: "present" },
+  { title: "Teaching with authority", passage: "MRK 1:21", concept: "imperfect" },
+  { title: "The Father has sent the Son", passage: "1JN 4:13", concept: "perfect" },
+  { title: "You are my beloved Son", passage: "MRK 1:9", concept: "middle-passive" },
+  { title: "What we have heard and seen", passage: "1JN 1:1", concept: "relative-pronouns" },
+  { title: "I am the good shepherd", passage: "JHN 10:14", concept: "adjectives" },
+  { title: "I will not leave you orphans", passage: "JHN 14:18", concept: "future" },
+  { title: "He appointed twelve", passage: "MRK 3:13", concept: "infinitives" },
+  { title: "Whoever believes in me", passage: "JHN 12:44", concept: "participles-adjectival" },
+  { title: "The first disciples", passage: "JHN 1:35", concept: "participles-adverbial" },
+  { title: "So that you may not sin", passage: "1JN 2:1", concept: "subjunctive" },
+  { title: "Have faith in God", passage: "MRK 11:22", concept: "imperative" },
+  { title: "God is spirit", passage: "JHN 4:23", concept: "word-order" },
 ];
-
-/**
- * Hand-written glosses for the slice vocabulary (source "curated"). They put the sense a
- * beginner meets in John 1 first; Dodson's fuller entries stay as the extended gloss.
- */
-export const curatedGlosses: Record<string, string> = {
-  λόγος: "word, message",
-  θεός: "God, a god",
-  ἀρχή: "beginning; ruler",
-  καί: "and, also, even",
-  εἰμί: "I am, to be",
-};

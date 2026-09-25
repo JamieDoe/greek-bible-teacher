@@ -1,7 +1,8 @@
 import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { CORPUS_BOOKS, importBooks, testApp } from "../../test/fixtures";
-import { dataSources, lemmas, lessons, passages } from "../db/schema";
+import { dataSources, lemmas, lessons, passages, tokens, verses } from "../db/schema";
+import { curatedGlosses } from "./glosses";
 import { grammarContent } from "./grammar";
 import { lessonContent } from "./lessons";
 import { passageContent } from "./passages";
@@ -24,9 +25,12 @@ const lessonVocab = () =>
     group by l.curriculum_order order by 1`);
 
 describe("seedLessons", { timeout: 60_000 }, () => {
-  it("has 6–12 passages beyond the slice, and one lesson per passage", () => {
-    expect(passageContent.length - 1).toBeGreaterThanOrEqual(6);
-    expect(passageContent.length - 1).toBeLessThanOrEqual(12);
+  it("pairs one passage with each grammar concept, from the article on, in curriculum order", () => {
+    const slugs = grammarContent.map((c) => c.slug);
+    // The alphabet and breathings come before any reading.
+    expect(lessonContent.map((l) => l.concept)).toEqual(
+      slugs.slice(slugs.indexOf("article-and-case")),
+    );
     expect(lessonContent.map((l) => l.passage)).toEqual(passageContent.map((p) => p.startRef));
   });
 
@@ -60,6 +64,39 @@ describe("seedLessons", { timeout: 60_000 }, () => {
       .innerJoin(dataSources, eq(dataSources.id, lemmas.glossSourceId))
       .where(eq(lemmas.lemma, "λόγος"));
     expect(row).toEqual({ gloss: "word, message", key: "curated" });
+  });
+
+  it("glosses exactly the words of the curated passages, all in the house style", async () => {
+    const rows = await db.execute<{
+      lemma: string;
+      pos: string | null;
+      gloss: string;
+      key: string;
+    }>(sql`
+      select distinct le.lemma, le.part_of_speech::text as pos, le.gloss, ds.key
+      from ${passages} p
+      join ${verses} sv on sv.id = p.start_verse_id
+      join ${verses} ev on ev.id = p.end_verse_id
+      join ${verses} v on v.ordinal between sv.ordinal and ev.ordinal
+      join ${tokens} t on t.verse_id = v.id
+      join ${lemmas} le on le.id = t.lemma_id
+      left join ${dataSources} ds on ds.id = le.gloss_source_id
+      where p.curriculum_order is not null`);
+    // No gloss is missing, and none is for a word the passages don't use.
+    expect(rows.map((r) => r.lemma).sort()).toEqual(
+      Object.keys(curatedGlosses)
+        .map((l) => l.normalize("NFC"))
+        .sort(),
+    );
+    for (const r of rows) {
+      expect(r.key, r.lemma).toBe("curated");
+      expect(
+        r.gloss.length,
+        `${r.lemma}: "${r.gloss}" is too long for an answer button`,
+      ).toBeLessThanOrEqual(30);
+      expect(r.gloss, r.lemma).not.toMatch(/^(a|an|I) /);
+      if (r.pos === "verb") expect(r.gloss, r.lemma).toMatch(/^to /);
+    }
   });
 
   it("is idempotent: lesson ids, items and scores are unchanged by a re-run", async () => {

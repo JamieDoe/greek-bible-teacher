@@ -5,10 +5,10 @@ import {
   reviewQueueResponseSchema,
   sessionResponseSchema,
 } from "@gbt/shared";
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { cookieFrom, importJohn, T0, testApp } from "../../test/fixtures";
-import { lemmas, reviewEvents, userWordProgress } from "../db/schema";
+import { dataSources, lemmas, reviewEvents, userWordProgress } from "../db/schema";
 
 const { app, db, clock, close } = testApp();
 let cookie = "";
@@ -82,6 +82,42 @@ describe("GET /review/queue", () => {
           .where(eq(lemmas.gloss, option));
         expect(rows.map((r) => r.pos)).toContain(item.lemma.partOfSpeech);
       }
+    }
+  });
+
+  it("prefers distractors whose gloss has the same source as the answer's", async () => {
+    // Curated and Dodson glosses read differently ("to say" / "I say"); mixing them would give
+    // the answer away. Curate a few verbs for this test, then restore them.
+    const verbs = await db
+      .select({ id: lemmas.id, gloss: lemmas.gloss, glossSourceId: lemmas.glossSourceId })
+      .from(lemmas)
+      .where(eq(lemmas.partOfSpeech, "verb"))
+      .orderBy(desc(lemmas.ntFrequency), lemmas.id)
+      .limit(8);
+    const [curated] = await db
+      .insert(dataSources)
+      .values({ key: "curated-test", name: "Test", licence: "Test", attribution: "Test" })
+      .returning({ id: dataSources.id });
+    try {
+      const words = ["walk", "carry", "build", "open", "count", "sing", "paint", "mend"];
+      for (const [i, v] of verbs.entries()) {
+        await db
+          .update(lemmas)
+          .set({ gloss: `to ${words[i]}`, glossSourceId: curated!.id })
+          .where(eq(lemmas.id, v.id));
+      }
+      const [item] = (await queue(`?lemmaIds=${verbs[4]!.id}`)).items;
+      expect(item!.exercise.options).toHaveLength(4);
+      const curatedGlosses = words.map((w) => `to ${w}`);
+      for (const option of item!.exercise.options) expect(curatedGlosses).toContain(option);
+    } finally {
+      for (const v of verbs) {
+        await db
+          .update(lemmas)
+          .set({ gloss: v.gloss, glossSourceId: v.glossSourceId })
+          .where(eq(lemmas.id, v.id));
+      }
+      await db.delete(dataSources).where(eq(dataSources.id, curated!.id));
     }
   });
 

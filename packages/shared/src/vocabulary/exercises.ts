@@ -45,10 +45,42 @@ function shuffle<T>(items: T[], rng: Rng): T[] {
 const normaliseGloss = (g: string) => g.trim().toLowerCase();
 
 /**
+ * Words that say nothing about a gloss's meaning on their own, including the "I" (and "am")
+ * that starts Dodson's verb glosses ("I say", "I am able").
+ */
+const GLOSS_FILLER = new Set(["a", "an", "the", "of", "be", "one", "s", "i", "am"]);
+
+/**
+ * The meaning words of a gloss: "to see, watch" → see, watch. Parenthesised notes go, as does
+ * the "to" that marks a verb sense (a sense that is just "to", a preposition, keeps it).
+ */
+export function glossMeaningWords(gloss: string): Set<string> {
+  const words = gloss
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, " ")
+    .split(/[,;]/)
+    .flatMap((sense) =>
+      sense
+        .trim()
+        .replace(/^to\s+(?=\S)/, "")
+        .split(/[^\p{L}]+/u),
+    )
+    .filter((w) => w !== "" && !GLOSS_FILLER.has(w));
+  return new Set(words);
+}
+
+/** Whether two glosses share a meaning word ("to see, watch" and "to see, perceive" do). */
+export function glossesOverlap(a: string, b: string): boolean {
+  const words = glossMeaningWords(a);
+  return [...glossMeaningWords(b)].some((w) => words.has(w));
+}
+
+/**
  * Picks `count` distractor glosses for a multiple-choice question. Candidates should already
  * share the target's part of speech; this prefers those closest in NT frequency (log scale),
- * skips glosses identical to the answer, to each other or to `exclude`, and varies the pick
- * with `rng` from the nearest `pool` candidates.
+ * skips glosses identical to the answer, to each other or to `exclude`, and skips near-synonyms
+ * of the answer (a shared meaning word), so there is only ever one right answer. It varies the
+ * pick with `rng` from the nearest `pool` candidates.
  */
 export function pickDistractors(
   target: { lemmaId: number; gloss: string; ntFrequency: number },
@@ -72,7 +104,7 @@ export function pickDistractors(
     )
     .filter((c) => {
       const g = normaliseGloss(c.gloss);
-      if (glosses.has(g)) return false;
+      if (glosses.has(g) || glossesOverlap(c.gloss, target.gloss)) return false;
       glosses.add(g);
       return true;
     })
