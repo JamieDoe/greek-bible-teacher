@@ -14,10 +14,15 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState, PageShell } from "@/components/ui/states";
 import { apiGet } from "@/lib/api-client";
+import { nextReviewIn } from "@/lib/next-review";
 import { ensureSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
-type Loaded = { lessons: LessonsListResponse["lessons"]; dueCount: number };
+type Loaded = {
+  lessons: LessonsListResponse["lessons"];
+  dueCount: number;
+  nextReviewAt: string | null;
+};
 
 export function LearnView() {
   const [state, setState] = useState<
@@ -39,7 +44,13 @@ export function LearnView() {
       )
       .then(
         ([l, t]) =>
-          !cancelled && setState({ status: "ready", lessons: l.lessons, dueCount: t.dueCount }),
+          !cancelled &&
+          setState({
+            status: "ready",
+            lessons: l.lessons,
+            dueCount: t.dueCount,
+            nextReviewAt: t.nextReviewAt,
+          }),
       )
       .catch((err: unknown) => {
         console.error("[learn] could not load", err);
@@ -110,7 +121,7 @@ export function LearnView() {
 
       <div className="animate-[fade-in_150ms_ease-out]">
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          {next && (
+          {next ? (
             <Card className="gap-3 px-5">
               <SectionLabel>Next lesson · {next.number}</SectionLabel>
               <h2 className="font-heading text-2xl leading-tight">{next.title}</h2>
@@ -125,12 +136,28 @@ export function LearnView() {
                 </Link>
               </Button>
             </Card>
+          ) : (
+            <Card className="gap-3 px-5">
+              <SectionLabel>Lessons</SectionLabel>
+              <h2 className="font-heading text-2xl leading-tight">
+                All {state.lessons.length} complete
+              </h2>
+              <p className="text-muted-foreground">
+                Every lesson is done. Rereading a passage is the best way to keep the Greek fresh.
+              </p>
+              <Button asChild className="mt-auto w-full">
+                <Link href="/read">Read a passage again</Link>
+              </Button>
+            </Card>
           )}
           <Card className="gap-3 px-5">
             <SectionLabel>Review</SectionLabel>
             <p className="font-heading text-4xl">{state.dueCount}</p>
             <p className="text-muted-foreground">
               {state.dueCount === 1 ? "word" : "words"} due now
+              {state.dueCount === 0 &&
+                state.nextReviewAt &&
+                ` · more ${nextReviewIn(new Date(state.nextReviewAt), new Date())}`}
             </p>
             <Button asChild variant="outline" className="mt-auto w-full">
               <Link href="/review">Start review</Link>

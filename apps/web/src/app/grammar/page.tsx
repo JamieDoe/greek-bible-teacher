@@ -2,6 +2,7 @@ import { grammarListResponseSchema } from "@gbt/shared";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ConceptList } from "@/components/grammar/concept-list";
+import { IconLearn } from "@/components/icons";
 import { EmptyState, ListSkeleton, PageShell } from "@/components/ui/states";
 import { serverGet } from "@/lib/api-server";
 
@@ -23,6 +24,12 @@ export default function GrammarPage() {
 
 async function Concepts() {
   const { concepts } = await serverGet("/grammar", grammarListResponseSchema);
-  if (concepts.length === 0) return <EmptyState>No grammar lessons are available yet.</EmptyState>;
+  if (concepts.length === 0) {
+    return (
+      <EmptyState icon={IconLearn} title="No grammar lessons yet">
+        Grammar lessons appear here once they have been added.
+      </EmptyState>
+    );
+  }
   return <ConceptList concepts={concepts} />;
 }

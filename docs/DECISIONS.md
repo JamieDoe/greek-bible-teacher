@@ -979,6 +979,45 @@ aorist to word order) had no reading. Dodson's glosses also read awkwardly on th
 - The grammar lessons' examples are unchanged.
 - The new passage choices, like the grammar prose, would benefit from a teacher's review.
 
+## 032 — Empty states that explain and point somewhere
+
+**Context.** Most empty screens were one grey sentence ("Nothing to review right now."), and
+the design canvas has none to copy. Some were worse than plain:
+
+- the empty review page had no navigation (review is an immersive screen);
+- the offline page promised saved passages and then listed none;
+- Learn simply dropped its next-lesson card once every lesson was done.
+
+**Decision.**
+
+- **One `EmptyState` component** in the canvas's quiet style: an icon on the lapis tint, a
+  serif title, one line on why it's empty, and at most two actions. It comes in three sizes:
+  - `card` for a whole screen;
+  - `plain` inside a card or lesson step that already frames it;
+  - `inline` for a corner of a card.
+
+  Each one fades in like other loaded content.
+
+- **Say when the next review is.** `GET /review/queue` and `GET /today` return `nextReviewAt`:
+  the earliest scheduled review still in the future, or null when no words are in review. The
+  web phrases it with `nextReviewIn` ("in 3 hours", "tomorrow"): minutes round up, hours and
+  days to the nearest. It is presentation only, so it lives in the web app.
+- **Where they appear:**
+  - **Review:** "All caught up" (with the next review time) or "No words to review yet", inside
+    the review frame so ✕ still leads out.
+  - **A lesson's review step:** "Nothing due yet", then Continue.
+  - **Today:** "Every lesson done", with review or rereading as the next step.
+  - **Learn:** an "All 24 complete" card in the next-lesson slot, and "more in 3 hours" under a
+    zero due count.
+  - **Progress:** a first-visit state, plus a note under "Recently learned" saying when a word
+    counts as learned.
+  - **Elsewhere:** passage-complete with no lookups, the offline page, the not-found pages for
+    passages and grammar lessons, and the (operator-facing) empty passage, grammar and source
+    lists.
+
+**Consequences.** Copy is written for the learner and says only what the data supports: for
+example, nothing claims that reading counts as review.
+
 ## Dependencies
 
 One line each, for why the dependency exists.

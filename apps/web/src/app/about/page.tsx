@@ -32,7 +32,13 @@ export default function AboutPage() {
 
 async function Sources() {
   const { sources } = await serverGet("/sources", sourcesResponseSchema);
-  if (sources.length === 0) return <EmptyState>No data sources have been imported yet.</EmptyState>;
+  if (sources.length === 0) {
+    return (
+      <EmptyState title="No sources listed yet" headingLevel={3}>
+        The sources and their licences are listed here once the Greek text has been imported.
+      </EmptyState>
+    );
+  }
   return (
     <ul className="space-y-8">
       {sources.map((s) => (

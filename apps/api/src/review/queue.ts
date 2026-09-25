@@ -9,7 +9,7 @@ import {
   stageMaxRank,
   type VocabularyCandidate,
 } from "@gbt/shared";
-import { and, asc, count, eq, gte, isNotNull, lte, ne, sql } from "drizzle-orm";
+import { and, asc, count, eq, gt, gte, isNotNull, lte, min, ne, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { Db } from "../db/client";
 import { verseSnippet } from "../reading/verse-snippet";
@@ -45,7 +45,7 @@ export async function buildReviewQueue(
     lemmaIds,
     mode = "mixed",
   }: { userId: string; now: Date; rng: Rng; lemmaIds?: number[]; mode?: "mixed" | "due" },
-): Promise<{ items: ReviewItem[]; dueCount: number }> {
+): Promise<{ items: ReviewItem[]; dueCount: number; nextReviewAt: string | null }> {
   const [due] = await db
     .select({ n: count() })
     .from(userWordProgress)
@@ -76,7 +76,16 @@ export async function buildReviewQueue(
     const item = await buildItem(db, userId, entry, rng, passage);
     if (item) items.push(item);
   }
-  return { items, dueCount };
+  return { items, dueCount, nextReviewAt: await nextReviewAfter(db, userId, now) };
+}
+
+/** When the learner's next word not yet due comes back, as ISO; null when none is scheduled. */
+export async function nextReviewAfter(db: Db, userId: string, now: Date): Promise<string | null> {
+  const [row] = await db
+    .select({ at: min(userWordProgress.nextReviewAt) })
+    .from(userWordProgress)
+    .where(and(eq(userWordProgress.userId, userId), gt(userWordProgress.nextReviewAt, now)));
+  return row?.at ? new Date(row.at).toISOString() : null;
 }
 
 /** The first curated passage the learner hasn't completed (or the last one, if all are done). */

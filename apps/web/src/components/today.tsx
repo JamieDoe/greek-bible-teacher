@@ -15,9 +15,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ErrorState } from "@/components/ui/states";
+import { EmptyState, ErrorState } from "@/components/ui/states";
 import { useLocalName } from "@/components/use-preferences";
 import { apiGet } from "@/lib/api-client";
+import { nextReviewIn } from "@/lib/next-review";
 import { ensureSession } from "@/lib/session";
 import { type StageStatus, stageStatuses } from "@/lib/stages";
 import { cn } from "@/lib/utils";
@@ -162,8 +163,33 @@ function TodayBody({
           {t.lesson && lesson ? (
             <SessionCard today={t} lesson={lesson} doneToday={!!doneToday} />
           ) : (
-            <Card className="px-5">
-              <p>You’ve finished every lesson so far. Keep reviewing; more passages are coming.</p>
+            <Card className="px-5 py-10 lg:rounded-3xl">
+              <EmptyState
+                variant="plain"
+                icon={IconCheck}
+                title="Every lesson done"
+                actions={
+                  t.dueCount > 0 ? (
+                    <>
+                      <Button asChild size="lg">
+                        <Link href="/review">
+                          Review {t.dueCount} {t.dueCount === 1 ? "word" : "words"}
+                        </Link>
+                      </Button>
+                      <Button asChild variant="ghost">
+                        <Link href="/read">Read a passage again</Link>
+                      </Button>
+                    </>
+                  ) : (
+                    <Button asChild size="lg">
+                      <Link href="/read">Read a passage again</Link>
+                    </Button>
+                  )
+                }
+              >
+                You’ve worked through every lesson. Keep your words fresh in review, and reread any
+                passage: it gets easier every time.
+              </EmptyState>
             </Card>
           )}
           {t.passage && t.passageKnown && <ContinueReading today={t} />}
@@ -188,7 +214,11 @@ function TodayBody({
               </span>
             </Link>
             {t.dueWords.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nothing due right now.</p>
+              <EmptyState variant="inline" icon={IconCheck}>
+                {t.nextReviewAt
+                  ? `Nothing due. The next words come back ${nextReviewIn(new Date(t.nextReviewAt), now)}.`
+                  : "Words you learn will show here when they’re due."}
+              </EmptyState>
             ) : (
               <ul>
                 {t.dueWords.map((w, i) => (

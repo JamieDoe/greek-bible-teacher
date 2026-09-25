@@ -41,7 +41,7 @@ test("MVP acceptance: onboard → daily lesson loop → Today and progress", asy
   await page.getByRole("link", { name: "Start session" }).click();
 
   await stepLabel(page, 1, "Review");
-  await expect(page.getByText("Nothing is due for review yet.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Nothing due yet" })).toBeVisible();
   await page.getByRole("button", { name: "Continue" }).click();
 
   await stepLabel(page, 2, "New words");
@@ -84,7 +84,9 @@ test("MVP acceptance: onboard → daily lesson loop → Today and progress", asy
 
   await stepLabel(page, 7, "Read again");
   await page.getByRole("button", { name: "Finish passage" }).click();
-  await expect(page.getByText("You didn’t look anything up.")).toBeVisible();
+  await expect(
+    page.getByText("You didn’t look anything up: every word read without help."),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Continue" }).click();
 
   await expect(page.getByRole("heading", { name: "Lesson complete" })).toBeVisible();

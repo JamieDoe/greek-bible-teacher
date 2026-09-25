@@ -78,6 +78,7 @@ describe("GET /today", () => {
   it("offers lesson 1 with its concept and passage to a new learner", async () => {
     expect(await today()).toMatchObject({
       dueCount: 0,
+      nextReviewAt: null,
       lesson: {
         number: 1,
         title: "In the beginning was the Word",
@@ -242,6 +243,8 @@ describe("GET /today: practice, known words and due words", () => {
     expect(t.passageKnown).toMatchObject({ known: 20, total: 61 });
     expect(t.passageKnown?.firstLine.startsWith("Ἐν ἀρχῇ ἦν ὁ λόγος")).toBe(true);
     expect(t.dueWords).toEqual([]);
+    // Nothing is due; the words graded "good" come back tomorrow.
+    expect(t.nextReviewAt).toBe(new Date(T0.getTime() + 86_400_000).toISOString());
   });
 
   it("rejects an unknown time zone", async () => {
