@@ -30,7 +30,12 @@ export default function WelcomePage() {
           Get started <ArrowRight aria-hidden="true" />
         </Link>
       </Button>
-      <p className="mt-4 text-center text-sm text-muted-foreground">No account needed.</p>
+      <p className="mt-4 text-center text-sm text-muted-foreground">
+        No account needed.{" "}
+        <Link href="/restore" className="text-primary underline underline-offset-2">
+          Restore progress from another device
+        </Link>
+      </p>
     </main>
   );
 }

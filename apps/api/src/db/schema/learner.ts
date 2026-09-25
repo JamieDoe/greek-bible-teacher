@@ -8,6 +8,7 @@ import {
   primaryKey,
   real,
   smallint,
+  text,
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
@@ -33,11 +34,18 @@ export const users = pgTable(
     dailyMinutes: smallint("daily_minutes"),
     onboardedAt: timestamptz("onboarded_at"),
     disclosureLevel: disclosureLevelEnum("disclosure_level").notNull().default("beginner"),
+    /** SHA-256 (hex) of the learner's recovery code; the code itself is never stored. */
+    recoveryCodeHash: text("recovery_code_hash").unique(),
+    recoveryCodeCreatedAt: timestamptz("recovery_code_created_at"),
   },
   (t) => [
     check(
       "users_daily_minutes_range",
       sql`${t.dailyMinutes} is null or ${t.dailyMinutes} between 1 and 240`,
+    ),
+    check(
+      "users_recovery_code_pair",
+      sql`(${t.recoveryCodeHash} is null) = (${t.recoveryCodeCreatedAt} is null)`,
     ),
   ],
 );

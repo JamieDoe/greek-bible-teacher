@@ -6,6 +6,7 @@ export * from "./api/progress";
 export * from "./api/reading";
 export * from "./api/review";
 export * from "./api/session";
+export * from "./identity/recovery-code";
 export * from "./learning/enums";
 export * from "./morphology/categories";
 export * from "./morphology/decode";

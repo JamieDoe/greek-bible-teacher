@@ -14,3 +14,8 @@ export function ensureSession(): Promise<SessionResponse> {
   });
   return pending;
 }
+
+/** Forgets the cached session, e.g. after this browser switched learners with a recovery code. */
+export function resetSession(): void {
+  pending = null;
+}

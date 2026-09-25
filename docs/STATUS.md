@@ -134,14 +134,22 @@
   - GitHub Actions CI with check, e2e and Docker jobs (DECISIONS 026), dry-run in a clean Linux
     container.
 - Tests: shared 113, web 30, API 189, Playwright 34.
+- CI passed on GitHub on its first run (PR #1).
+
+- **Recovery codes** (DECISIONS 027): make a code in Settings (shown once, only its hash is
+  stored) and enter it at `/restore` (linked from Welcome) to carry progress to another browser
+  or device. Failed attempts are rate-limited. Migration 0004.
+- Tests: shared 120, web 30, API 198, Playwright 38.
 
 ## Next
 
 The MVP is complete. Possible next steps, none started:
 
-- Push the branch and open a PR to `main`, so CI runs on GitHub for the first time.
+- Merge PR #1 into `main`.
 - Deploy to a real VPS and take the first off-server backup.
 - The AI phase (designed only, DECISIONS 024): `POST /ai/explain`, once auth exists.
+- Prune anonymous users abandoned by a restore (no progress, no cookie in use), if they ever add
+  up.
 - The deferred design extras (DECISIONS 022): sense lines, declension chips, placement check,
   reminders.
 

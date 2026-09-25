@@ -691,6 +691,55 @@ Details:
     differently from macOS. The app renders only NFC, so the test now checks the rendered
     passage, precomposed forms and each combining mark on its own.
 
+## 027 — Recovery codes: carrying anonymous progress to another browser
+
+**Context.** Progress belongs to an anonymous user identified only by an httpOnly cookie
+(CLAUDE.md: identity without auth). Clearing cookies or changing device loses it, with no way
+back. Full sign-in is a bigger step and needs personal data (an email address). A recovery code
+fixes the loss without collecting anything.
+
+**Decision.**
+
+- **Format.** 80 random bits (`crypto.randomBytes(10)`) written as 16 Crockford base-32
+  characters in groups of four, e.g. `K7QM-3XJ9-PT2W-HV8C`.
+  - There's no I, L, O or U. On entry, case, spaces, hyphens and pasted dashes are ignored, and
+    O, I and L are read as 0, 1 and 1.
+  - Encoding and normalising are pure functions in `packages/shared` and are tested there. The
+    restore request schema normalises the input.
+- **Storage.** Only a SHA-256 hash (`users.recovery_code_hash`, unique) and its creation time,
+  in migration 0004, which is additive; a check constraint keeps the two columns together.
+  - A fast hash is enough because the secret is 80 random bits: there is no dictionary to try,
+    unlike a password.
+  - The code is shown once, when it is made. Afterwards the app knows only its date.
+- **API:**
+  - `POST /me/recovery-code` makes a code, or replaces the old one, and returns it once.
+  - `POST /session/restore` takes `{ code }`. On a match it points this browser's session
+    cookie at that learner and returns the session. Otherwise it answers 404
+    `recovery_code_not_found`.
+  - The session response gains `recoveryCodeCreatedAt`.
+- **Guessing.** Failed restores are limited to 10 per IP per hour, in every environment, not
+  only production (025). Only failures count. At 80 bits, guessing is hopeless even without the
+  limit.
+- **Restoring replaces, never merges.** The browser's previous anonymous user is left as it was
+  and is no longer referenced; the UI says so before restoring. Device-only preferences (name,
+  text size, theme) stay on each device.
+- **UI:**
+  - A "Keep your progress" card in Settings: make a code, shown once with Copy; replace it
+    behind a shadcn AlertDialog.
+  - A `/restore` page, linked from Welcome and Settings.
+  - After a restore, the cached session promise is reset and the app returns to Today.
+
+**Consequences.**
+
+- No personal data is collected, and anyone holding a code can open that learner's progress;
+  the UI says so.
+- Abandoned anonymous users accumulate after restores. They are small, and pruning them can
+  come later.
+- When sign-in arrives, it can attach to the same `users` row. A code can then become a way
+  back into an account instead of the only one.
+- Dependencies: the `alert-dialog` registry component (restyled), with no new package, since
+  `radix-ui` already includes it.
+
 ## Dependencies
 
 One line each, for why the dependency exists.

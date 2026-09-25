@@ -79,7 +79,11 @@ export interface RateLimits {
   requests: WindowCounter | null;
   /** New anonymous users per client IP per hour; null when off. */
   newSessions: WindowCounter | null;
+  /** Failed recovery-code attempts per client IP per hour; always on (DECISIONS 027). */
+  restoreFailures: WindowCounter;
 }
+
+export const RESTORE_FAILURES_PER_HOUR = 10;
 
 export function createRateLimits(env: {
   RATE_LIMIT_PER_MINUTE: number;
@@ -92,5 +96,6 @@ export function createRateLimits(env: {
       env.NEW_SESSIONS_PER_HOUR > 0
         ? new WindowCounter(env.NEW_SESSIONS_PER_HOUR, 3_600_000)
         : null,
+    restoreFailures: new WindowCounter(RESTORE_FAILURES_PER_HOUR, 3_600_000),
   };
 }

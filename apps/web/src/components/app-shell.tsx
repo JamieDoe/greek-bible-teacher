@@ -24,7 +24,14 @@ const TABS = [
 ] as const;
 
 /** Immersive screens (reading, a lesson in progress, onboarding) hide the navigation. */
-const IMMERSIVE = [/^\/read\/\d+/, /^\/lesson\//, /^\/review/, /^\/onboarding/, /^\/welcome/];
+const IMMERSIVE = [
+  /^\/read\/\d+/,
+  /^\/lesson\//,
+  /^\/review/,
+  /^\/onboarding/,
+  /^\/welcome/,
+  /^\/restore/,
+];
 
 export function Wordmark({ className }: { className?: string }) {
   return (

@@ -4,6 +4,7 @@ import { DAILY_MINUTE_OPTIONS, sessionResponseSchema } from "@gbt/shared";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ScreenHeader, SectionLabel } from "@/components/koine";
+import { RecoveryCodeCard } from "@/components/recovery/recovery-code-card";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,7 @@ import { ensureSession } from "@/lib/session";
 
 export function SettingsView() {
   const [minutes, setMinutes] = useState<number | null>(null);
+  const [recoveryCreatedAt, setRecoveryCreatedAt] = useState<string | null | undefined>();
   const [saveError, setSaveError] = useState(false);
   const [theme, setTheme] = useTheme();
   const [greekSize, setGreekSize] = useGreekSize();
@@ -24,7 +26,10 @@ export function SettingsView() {
 
   useEffect(() => {
     ensureSession()
-      .then(({ user }) => setMinutes(user.dailyMinutes ?? 10))
+      .then(({ user }) => {
+        setMinutes(user.dailyMinutes ?? 10);
+        setRecoveryCreatedAt(user.recoveryCodeCreatedAt);
+      })
       .catch((err: unknown) => console.error("[settings] could not load session", err));
   }, []);
 
@@ -88,6 +93,9 @@ export function SettingsView() {
           </p>
         </div>
       </Card>
+
+      <SectionLabel className="mt-8 mb-3">Keep your progress</SectionLabel>
+      <RecoveryCodeCard createdAt={recoveryCreatedAt} onCreated={setRecoveryCreatedAt} />
 
       <SectionLabel className="mt-8 mb-3">Reading</SectionLabel>
       <Card className="gap-0 py-0">
