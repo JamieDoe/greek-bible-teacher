@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { buildChoices, chooseExerciseType, pickDistractors, seededRng } from "./exercises";
+import {
+  buildChoices,
+  chooseExerciseType,
+  glossesOverlap,
+  glossMeaningWords,
+  pickDistractors,
+  seededRng,
+} from "./exercises";
 
 describe("chooseExerciseType", () => {
   it("asks new words on their own, then alternates with context", () => {
@@ -56,8 +63,45 @@ describe("pickDistractors", () => {
     expect(picked.map((p) => p.gloss)).not.toContain("a king");
   });
 
+  it("never offers a near-synonym of the answer, so only one option is right", () => {
+    const see = { lemmaId: 10, gloss: "to see, watch", ntFrequency: 58 };
+    const verbs = [
+      { lemmaId: 11, gloss: "to see, perceive", ntFrequency: 60 },
+      { lemmaId: 12, gloss: "to see, behold", ntFrequency: 22 },
+      { lemmaId: 13, gloss: "to love", ntFrequency: 143 },
+      { lemmaId: 14, gloss: "to write", ntFrequency: 190 },
+      { lemmaId: 15, gloss: "to teach", ntFrequency: 96 },
+    ];
+    for (let seed = 0; seed < 20; seed++) {
+      const picked = pickDistractors(see, verbs, { rng: seededRng(seed) });
+      expect(picked.map((p) => p.lemmaId).sort()).toEqual([13, 14, 15]);
+    }
+  });
+
   it("returns fewer when there are not enough distinct candidates", () => {
     expect(pickDistractors(target, candidates.slice(0, 3), { rng: seededRng(1) })).toHaveLength(1);
+  });
+});
+
+describe("glossMeaningWords", () => {
+  it("keeps the meaning words, dropping a verb's 'to', notes in brackets and articles", () => {
+    expect([...glossMeaningWords("to see, watch")]).toEqual(["see", "watch"]);
+    expect([...glossMeaningWords("to beget; (passive) be born")]).toEqual(["beget", "born"]);
+    expect([...glossMeaningWords("to send (out)")]).toEqual(["send"]);
+    expect([...glossMeaningWords("a house")]).toEqual(["house"]);
+    // A preposition's "to" is its meaning.
+    expect([...glossMeaningWords("into, to, for")]).toEqual(["into", "to", "for"]);
+  });
+
+  it("finds overlaps between near-synonyms only", () => {
+    expect(glossesOverlap("to know", "to know, come to know")).toBe(true);
+    expect(glossesOverlap("to speak, talk", "to say, speak, tell")).toBe(true);
+    expect(glossesOverlap("man, husband", "person, human, man")).toBe(true);
+    expect(glossesOverlap("to be, exist", "to be able, can")).toBe(false);
+    expect(glossesOverlap("to love", "love")).toBe(true);
+    expect(glossesOverlap("to love", "to write")).toBe(false);
+    // Dodson's first-person verbs ("I say", "I am able") share only their "I".
+    expect(glossesOverlap("I say, speak", "I am powerful, am able")).toBe(false);
   });
 });
 

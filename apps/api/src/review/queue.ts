@@ -177,6 +177,7 @@ async function buildItem(
     .select({
       lemma: lemmas.lemma,
       gloss: lemmas.gloss,
+      glossSourceId: lemmas.glossSourceId,
       partOfSpeech: lemmas.partOfSpeech,
       ntFrequency: lemmas.ntFrequency,
       correctCount: userWordProgress.correctCount,
@@ -196,16 +197,29 @@ async function buildItem(
     hasContext: context !== null,
   });
 
-  // Distractors from the same part of speech; words like the article (the only lemma of its
-  // kind) top up from any part of speech, still nearest in frequency.
+  // Distractors come from the same part of speech and, first, the same gloss source: curated
+  // glosses and Dodson's are written differently ("to love" / "I love"), and a mixed set would
+  // give the answer away. Words like the article (the only lemma of its kind) top up from any
+  // part of speech. Each tier stays nearest in frequency.
   const target = { lemmaId, gloss: lemma.gloss, ntFrequency: lemma.ntFrequency };
-  const samePos = await distractorCandidates(db, lemmaId, lemma.ntFrequency, lemma.partOfSpeech);
-  let distractors = pickDistractors(target, samePos, { count: 3, pool: DISTRACTOR_POOL, rng });
-  if (distractors.length < 3) {
-    const anyPos = await distractorCandidates(db, lemmaId, lemma.ntFrequency, undefined);
+  const tiers: [PartOfSpeech | null | undefined, number | null | undefined][] = [
+    [lemma.partOfSpeech, lemma.glossSourceId],
+    [lemma.partOfSpeech, undefined],
+    [undefined, lemma.glossSourceId],
+    [undefined, undefined],
+  ];
+  let distractors: { lemmaId: number; gloss: string; ntFrequency: number }[] = [];
+  for (const [partOfSpeech, glossSourceId] of tiers) {
+    if (distractors.length >= 3) break;
+    const candidates = await distractorCandidates(db, {
+      lemmaId,
+      ntFrequency: lemma.ntFrequency,
+      partOfSpeech,
+      glossSourceId,
+    });
     distractors = [
       ...distractors,
-      ...pickDistractors(target, anyPos, {
+      ...pickDistractors(target, candidates, {
         count: 3 - distractors.length,
         pool: DISTRACTOR_POOL,
         rng,
@@ -242,12 +256,23 @@ async function buildItem(
   };
 }
 
-/** Glossed lemmas nearest in NT frequency (log scale), optionally of one part of speech. */
+/**
+ * Glossed lemmas nearest in NT frequency (log scale), optionally of one part of speech and one
+ * gloss source (undefined: any).
+ */
 function distractorCandidates(
   db: Db,
-  lemmaId: number,
-  ntFrequency: number,
-  partOfSpeech: PartOfSpeech | null | undefined,
+  {
+    lemmaId,
+    ntFrequency,
+    partOfSpeech,
+    glossSourceId,
+  }: {
+    lemmaId: number;
+    ntFrequency: number;
+    partOfSpeech: PartOfSpeech | null | undefined;
+    glossSourceId: number | null | undefined;
+  },
 ) {
   return db
     .select({
@@ -265,6 +290,9 @@ function distractorCandidates(
           : partOfSpeech === null
             ? sql`${lemmas.partOfSpeech} is null`
             : eq(lemmas.partOfSpeech, partOfSpeech),
+        glossSourceId === undefined
+          ? undefined
+          : sql`${lemmas.glossSourceId} is not distinct from ${glossSourceId}`,
       ),
     )
     .orderBy(

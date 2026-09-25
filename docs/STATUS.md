@@ -157,7 +157,11 @@
 - **Motion** (DECISIONS 030): answer feedback, word-panel crossfade, skeleton-to-content fades,
   lesson steps sliding in, animated completion screens, and tab crossfades via `<ViewTransition>`.
   Reduced motion falls back to fades. Settings is the fifth tab.
-- Tests: shared 179, web 18, API 257, Playwright 45 passing (42 desktop and mobile, 3 PWA) plus
+- **Full curriculum** (DECISIONS 031): 24 lessons, one per grammar concept from the article on,
+  each with its own passage. Curated glosses for all 242 words in those passages. Answer options
+  come from the same gloss source and never include a near-synonym of the answer. All 24
+  passages have ElevenLabs recordings (590 words, 78 verses).
+- Tests: shared 182, web 18, API 259, Playwright 45 passing (42 desktop and mobile, 3 PWA) plus
   2 phone-only gestures skipped on desktop.
 
 ## Next
@@ -169,13 +173,14 @@ The MVP is complete. Possible next steps, none started:
 - The AI phase (designed only, DECISIONS 024): `POST /ai/explain`, once auth exists.
 - Prune anonymous users abandoned by a restore (no progress, no cookie in use), if they ever add
   up.
-- The deferred design extras (DECISIONS 022): sense lines, declension chips, placement check,
-  reminders.
+- The remaining design extras (DECISIONS 029): reminders, the pronunciation toggle and the
+  placement check.
 
 ## Known issues / open questions
 
-- **Dodson glosses verbs in the first person** ("I shine, appear, seem" for φαίνει). That is
-  the lexicon's convention. Curated glosses for the slice words may read better in Phase 4/5.
+- **Dodson glosses verbs in the first person** ("I shine, appear, seem"). Every word in the
+  curated passages now has a curated gloss (DECISIONS 031); Dodson's remain as extended glosses
+  and for the rest of the NT.
 - **Next streams not-found pages with HTTP 200** plus `noindex` under `loading.tsx`. This is
   documented Next behaviour.
 - The MorphGNT morphology is CC BY-SA 3.0, with share-alike obligations for that data

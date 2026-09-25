@@ -921,6 +921,64 @@ instant, and the press scale is off. Crossfades stay.
 **Consequences.** Without View Transitions support, the tab switch simply cuts. Playwright waits
 for elements to stop moving, so the tests needed no changes.
 
+## 031 — A full curriculum, and curated glosses for every word in it
+
+**Context.** The first corpus had 10 passages, one per lesson, teaching concepts 3–12 (the
+article to negation). A daily learner would finish it in two weeks, and 14 grammar lessons (the
+aorist to word order) had no reading. Dodson's glosses also read awkwardly on the cards:
+
+- verbs in the first person ("I shine, appear, seem");
+- nouns with articles ("a day");
+- no gloss at all for four corpus words (Moses, Capernaum, προσκαλέομαι, ἐκπλήσσομαι).
+
+**Decision.**
+
+- **One lesson per concept, from the article on: 24 lessons.** Lessons 11–24 each pair a new
+  passage with the next concept in the curriculum. Candidates were windows of 2–5 verses in
+  John, 1–3 John and Mark, scored for:
+  - how often the concept occurs (its `grammar_concept_rules`);
+  - `passageDifficulty`;
+  - how many later concepts it would need first.
+
+  I then chose complete sense units by judgement over the raw top scores, which often start
+  mid-sentence. Several continue earlier reading: John 1:14–17 finishes the prologue, and
+  1 John 4:13–14 follows 4:7–10. Adverbial participles and word order have no matcher rules, so
+  their passages (John 1:35–37, John 4:23–24) were chosen by reading. The seed test now asserts
+  one lesson per concept in curriculum order, replacing the "6–12 passages beyond the slice"
+  bound, which described only the initial corpus.
+
+- **Curated glosses for all 242 words of the curated passages** (`content/glosses.ts`, source
+  `curated`). Dodson stays as the extended gloss. House style:
+  - verbs as "to …", nouns without an English article;
+  - the sense the passages use first ("to be necessary, must; bind" for δέω, which also covers
+    δεῖ);
+  - British spelling;
+  - 30 characters or fewer, so a gloss fits an answer button.
+
+  A test asserts that exactly the passages' words are glossed, and checks the style.
+
+- **Answer options match the answer's gloss source.** Options are tiered:
+  1. same part of speech and same gloss source;
+  2. same part of speech;
+  3. same gloss source;
+  4. anything.
+
+  This matters because a curated "to love" among Dodson's "I …" glosses would give itself away.
+  Every noun and verb in the corpus fills its options from the first tier. Eleven words in small
+  classes (the article, some pronouns and particles) top up from the second.
+
+- **No near-synonyms among the options.** `pickDistractors` now skips any candidate that shares
+  a meaning word with the answer (`glossesOverlap`). Without it, "to see, watch" and "to see,
+  perceive" could appear on the same card. Filler words (articles, a verb's "to", Dodson's
+  "I") and notes in brackets don't count.
+
+**Consequences.**
+
+- The new passages' recordings were generated with the same voice and settings: 281 clips,
+  about 5,300 characters. All 24 passages now have word and verse audio.
+- The grammar lessons' examples are unchanged.
+- The new passage choices, like the grammar prose, would benefit from a teacher's review.
+
 ## Dependencies
 
 One line each, for why the dependency exists.

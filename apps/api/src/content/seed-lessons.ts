@@ -17,7 +17,8 @@ import {
 } from "../db/schema";
 import { ruleMatchesToken } from "../grammar/matching";
 import { IngestError } from "../ingest/errors";
-import { curatedGlosses, type LessonContent, VOCAB_PER_LESSON } from "./lessons";
+import { curatedGlosses } from "./glosses";
+import { type LessonContent, VOCAB_PER_LESSON } from "./lessons";
 
 const startVerse = alias(verses, "start_verse");
 const endVerse = alias(verses, "end_verse");
@@ -57,7 +58,7 @@ async function passageLemmas(db: DbOrTx, startOrdinal: number, endOrdinal: numbe
 
 /**
  * Seeds lessons and their items, each passage's required concepts and difficulty score, and
- * the curated slice glosses. Run after passages and grammar are seeded. Idempotent.
+ * the curated glosses. Run after passages and grammar are seeded. Idempotent.
  */
 export async function seedLessons(db: Db, content: LessonContent[]): Promise<number> {
   const allPassages = await passageRows(db);
@@ -73,7 +74,7 @@ export async function seedLessons(db: Db, content: LessonContent[]): Promise<num
   const conceptOrderById = new Map(concepts.map((c) => [c.id, c.order]));
 
   return db.transaction(async (tx) => {
-    // Curated glosses for the slice vocabulary
+    // Curated glosses for every word in the curated passages
     const [curated] = await tx
       .insert(dataSources)
       .values({
