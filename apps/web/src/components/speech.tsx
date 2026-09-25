@@ -4,6 +4,7 @@ import { type AudioManifest, speakableText } from "@gbt/shared";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { loadAudioManifest, playClip, stopClip, verseClipUrl, wordClipUrl } from "@/lib/audio";
+import { IconSpeaker } from "@/components/icons";
 import { findGreekVoice } from "@/lib/speech";
 
 // The Greek voice's name is the store snapshot: a stable string, where voice objects may be
@@ -49,26 +50,6 @@ export function useGreekVoice() {
   }, []);
 
   return { available: name !== null, speak, stop };
-}
-
-function SpeakerIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="20"
-      height="20"
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M11 5 6 9H3v6h3l5 4V5z" />
-      <path d="M15.5 8.5a5 5 0 0 1 0 7" />
-      <path d="M18.5 5.5a9 9 0 0 1 0 13" />
-    </svg>
-  );
 }
 
 /** The recordings manifest once loaded; null until then or when there is none. */
@@ -118,9 +99,9 @@ export function SpeakButton({ text, label }: { text: string; label: string }) {
       onClick={say}
       aria-label={`${label} (Modern Greek voice)`}
       title="Hear it (Modern Greek voice)"
-      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-foreground hover:opacity-80"
+      className="pressable inline-flex size-11 shrink-0 items-center justify-center rounded-md bg-muted text-foreground hover:bg-border"
     >
-      <SpeakerIcon />
+      <IconSpeaker size={20} />
     </button>
   );
 }
@@ -165,14 +146,14 @@ export function ListenToPassage({ verses }: { verses: readonly { ref: string; te
   }
 
   return (
-    <div className="mt-3 flex items-center gap-3 text-sm">
+    <div className="flex items-center gap-3 text-[13px]">
       <button
         type="button"
         aria-pressed={playing}
         onClick={() => (playing ? stop() : void play())}
-        className="inline-flex h-11 items-center gap-2 rounded-xl bg-accent px-4 hover:opacity-80"
+        className="pressable inline-flex h-9 items-center gap-2 rounded-md bg-muted px-3 font-medium hover:bg-border"
       >
-        <SpeakerIcon />
+        <IconSpeaker size={18} />
         {playing ? "Stop" : "Listen"}
       </button>
       <span className="text-muted-foreground">

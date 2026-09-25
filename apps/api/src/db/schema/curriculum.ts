@@ -1,4 +1,4 @@
-import type { TokenMatcher } from "@gbt/shared";
+import type { GrammarParadigm, GrammarQuickCheck, TokenMatcher } from "@gbt/shared";
 import { sql } from "drizzle-orm";
 import {
   check,
@@ -26,6 +26,9 @@ export const grammarConcepts = pgTable(
     body: text("body").notNull(),
     /** Lowest disclosure level at which technical terminology is shown. */
     terminologyLevel: disclosureLevelEnum("terminology_level").notNull().default("expanded"),
+    /** The grammar step's before/after table and quick check (validated when seeded). */
+    paradigm: jsonb("paradigm").$type<GrammarParadigm>(),
+    quickCheck: jsonb("quick_check").$type<GrammarQuickCheck>(),
   },
   (t) => [check("grammar_concepts_order_positive", sql`${t.curriculumOrder} > 0`)],
 );

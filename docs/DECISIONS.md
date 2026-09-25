@@ -802,6 +802,125 @@ The text is fixed, so audio can be generated once instead of synthesised live.
 - New passages need `pnpm audio:generate -- --yes`, and only the new clips are generated.
 - Before the app is public, confirm the ElevenLabs plan covers commercial use.
 
+## 029 — Design fidelity pass against the Koinē canvas
+
+**Context.** The user asked for the app to match the Claude Design canvas "Koinē — Greek NT
+learning PWA" as closely as possible: its colours, type sizes and radii, and its features. The
+canvas's artboards are real HTML, so exact values could be read from the source. 022 had worked
+from a PDF export. The user chose to match the design on mobile Today and on the word sheet, to
+build features 1–7, and to skip reminders, the pronunciation toggle and the placement check.
+They also asked for skeleton loading that suspends only what loads, and for a PWA that feels
+like a native app.
+
+**Decision.**
+
+- **Tokens as the canvas states them.**
+  - Radius scale: chip 8, button 12, large button 14, list 16, card 20, sheet 24. The old
+    1rem-based scale made every corner 4–8px too round.
+  - The secondary ink `ink-2` (#45413A / #CEC8BD), and exact soft tints.
+  - Heatmap steps as solid colours; the canvas's card and sheet shadows (light and dark).
+  - Dark-mode ink on lapis: #0D1033.
+  - Mono labels at 11px/500; serif headings at weight 400 with −0.01em tracking, sized per
+    screen.
+- **Components edited in place** (022 approach):
+  - Segmented control: the size variant had been overriding the height, so segments rendered at
+    32px.
+  - Radio: a check, not a dot.
+  - Switch: 50×30, added from the shadcn registry.
+  - Skeleton: from the shadcn registry.
+  - Also Slider, Progress (420 ms fill) and Drawer (260 ms with the sheet curve, no scrim).
+  - The canvas's own 12 icons replace lucide on design screens.
+- **App feel.**
+  - No overscroll or rubber-banding, no tap flash, no double-tap zoom delay on controls; 16px
+    inputs, so iOS doesn't zoom on focus.
+  - A 90 ms press state and the motion timings from design §04; reduced motion falls back to
+    crossfades.
+  - Lesson and review screens use a full-height frame: a fixed header, and a content area that
+    only scrolls if it must. The answer panel sits at the foot of that flow, not over padding.
+    This fixes the review screen scrolling on phones; spacing tightens on short screens so it
+    fits an iPhone SE.
+- **Loading.** Server pages render their heading at once and suspend only the data
+  (`<Suspense>` with skeletons). Client screens keep their fixed parts, such as Today's date and
+  greeting, and show skeletons where data goes. Full-screen routes (reader, grammar lesson) have
+  shaped `loading.tsx` skeletons. Each skeleton has the same shape as its loaded screen (cards,
+  rows, tiles and heatmap), so content settles in place instead of jumping.
+- **Navigation.** Settings is the fifth tab (bottom bar and sidebar), not a link hidden in the
+  sidebar footer. Every page is centred in the space beside the sidebar.
+- **Features.**
+  1. Sense lines: a shared `senseLines` breaks at clause punctuation, with a verse-number
+     margin. The words are real spaced text, so the passage reads, copies and searches correctly.
+  2. A "Mark new words" switch. Both switches are device preferences in Settings.
+  3. The wide reader, 768px and up (tablet and desktop, per the canvas note): a 360/440px word
+     panel replaces the sheet, with an empty prompt and "You know N of M words here". The header
+     is 72px with Finish in it; there is a Greek book title (`greekBookTitle`), a chapter
+     numeral, and Greek scaled 27/21.
+  4. New-word card:
+     - a flip that reveals the meaning (only the meaning animates; the card itself stays put);
+     - a transliteration (a shared SBL-style `transliterate`);
+     - gender, and declension derived from the genitive (`nounDeclension`, which returns null
+       when unsure);
+     - "Forms you'll meet": the top four forms in the NT.
+  5. Grammar step: a before/after table and a quick check, stored as JSON columns (migration
+     0005).
+     - All 26 concepts have a quick check; 12 have a table.
+     - A test checks that every Greek form they teach occurs in the NT. It caught γράφεται,
+       which doesn't, and it was replaced.
+     - The full lesson text stays under "Read the full lesson".
+  6. Review context: "You'll read it twice in John 1:4", from the current passage.
+  7. Today: new words named, "N of M this week", and the avatar linking to Settings. Mobile Today
+     shows only the session and reading cards; the stats and due cards are desktop only.
+- **Deliberately kept where the design differs** (CLAUDE.md requires them):
+  - Simple / More / Full in the word panel;
+  - Hard / Good / Easy;
+  - Read again, and the review-accuracy tile;
+  - the heatmap table view, and the Listen control.
+- Onboarding has two steps, so its progress bar has two segments rather than the design's three.
+
+**Consequences.** Values come from the canvas source rather than estimates, and side-by-side
+screenshots against the rendered artboards confirmed the main screens. If the canvas changes,
+this is the file-by-file map to update. Transliteration and declension are rules; a teacher's
+review of the grammar content should cover them too.
+
+## 030 — Motion
+
+**Context.** With the fidelity pass done, the user asked where animation would improve how the
+app feels, and then for all six suggestions. Design §04 sets the timings: 90 ms tap, 120 ms word
+tint, 160 ms answer tint, a 220 ms check draw, 260 ms sheets on the sheet curve and 420 ms
+progress fills, with reduced motion falling back to crossfades.
+
+**Decision.** Quick, quiet motion: 90–260 ms, opacity plus 4–16px of movement on the sheet curve,
+nothing that overshoots. Each animation confirms an action or shows where something came from.
+All of it is CSS keyframes in `globals.css`, plus React's `<ViewTransition>`, which Next 16 ships
+and documents (`next/dist/docs/01-app/02-guides/view-transitions.md`). No new dependencies.
+
+1. **Answer feedback:** the chosen option tints (160 ms); the right answer's badge grows in and
+   its check draws (icon paths carry `pathLength=1`, so `draw-in` works on any icon). A wrong
+   choice shakes once by 4px. The answer panel rises 12px.
+2. **Reader:** the word tint and its ring change together (120 ms). On wide screens the side
+   panel's content crossfades between words.
+3. **Skeleton to content:** a 150 ms fade. The skeletons share their screen's layout, so nothing
+   moves. These are client screens that load with `setState`, which doesn't trigger view
+   transitions, so this is a CSS fade.
+4. **Steps:** each new lesson step and review card slides in 16px from the right. The first one
+   after a skeleton only fades. Lessons have no back step, so there is no reverse slide.
+5. **Completion:** the success mark arrives in sequence (rings, then the disc, then the check
+   drawing), then the heading lines rise in. On the passage screen the counts step up once,
+   with the total rising from its previous value. `CountUp` gives screen readers the final
+   number straight away.
+6. **Tabs:** tab links tag their navigation `tab` (`Link transitionTypes`). A `<ViewTransition>`
+   around the page crossfades only for that type: the old page fades out in 90 ms and the new
+   one in over 150 ms after a 60 ms wait, and the navigation stays still. The phone tab bar has
+   its own view-transition layer above the page. Without it, the page snapshot, which runs under
+   the fixed bar, painted over the bar during the fade. In-page links and the browser's back
+   gesture cut, as before.
+
+**Reduced motion.** The reduced-motion query redefines each moving keyframe as a plain fade (the
+shake becomes nothing, and dialogs fade without zooming). Transitions and the sheet slide are
+instant, and the press scale is off. Crossfades stay.
+
+**Consequences.** Without View Transitions support, the tab switch simply cuts. Playwright waits
+for elements to stop moving, so the tests needed no changes.
+
 ## Dependencies
 
 One line each, for why the dependency exists.

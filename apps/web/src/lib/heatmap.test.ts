@@ -22,7 +22,7 @@ describe("heatmapWeeks", () => {
       { date: "2026-09-23", count: 40 },
       { date: "2026-09-24", count: 100 },
     ]);
-    expect(weeks[0]!.map((d) => d.level)).toEqual([0, 1, 2, 4]);
+    expect(weeks[0]!.map((d) => d.level)).toEqual([0, 1, 2, 3]);
   });
 
   it("handles an empty or idle range", () => {

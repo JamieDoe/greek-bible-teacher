@@ -1,7 +1,7 @@
 "use client";
 
 import { sessionResponseSchema } from "@gbt/shared";
-import { ArrowRight, ChevronLeft } from "lucide-react";
+import { IconArrowRight, IconBack } from "@/components/icons";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,7 @@ export function RestoreForm() {
         className="-ml-2"
         onClick={() => (window.history.length > 1 ? router.back() : router.push("/"))}
       >
-        <ChevronLeft aria-hidden="true" />
+        <IconBack size={22} />
       </Button>
       <h1 className="mt-8 font-heading text-4xl leading-tight">Restore your progress</h1>
       <p className="mt-3 text-muted-foreground">
@@ -93,7 +93,7 @@ export function RestoreForm() {
           disabled={status.state === "saving" || code.trim() === ""}
         >
           {status.state === "saving" ? "Checking…" : "Restore progress"}{" "}
-          <ArrowRight aria-hidden="true" />
+          <IconArrowRight size={20} />
         </Button>
       </form>
     </main>

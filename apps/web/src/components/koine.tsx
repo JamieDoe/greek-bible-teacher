@@ -1,5 +1,3 @@
-import { ChevronLeft } from "lucide-react";
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -8,7 +6,7 @@ export function SectionLabel({ children, className }: { children: ReactNode; cla
   return (
     <p
       className={cn(
-        "font-mono text-xs tracking-[0.08em] text-muted-foreground uppercase",
+        "font-mono text-[11px] font-medium tracking-[0.08em] text-muted-foreground uppercase",
         className,
       )}
     >
@@ -20,18 +18,25 @@ export function SectionLabel({ children, className }: { children: ReactNode; cla
 /** Greek ordinal markers used for session stages: α′ β′ γ′ δ′. */
 export const STAGE_MARKS = ["α′", "β′", "γ′", "δ′"] as const;
 
-/** Inner-screen header: back chevron and a title (Settings, grammar lessons…). */
-export function ScreenHeader({ title, back = "/" }: { title: string; back?: string }) {
+/**
+ * A stage label such as "β′ · New word": the Greek ordinal stays lower case (and in Literata)
+ * while the rest takes the mono capitals.
+ */
+export function StageLabel({ label, className }: { label: string; className?: string }) {
+  const [mark, ...rest] = label.split(" · ");
+  const isMark = mark !== undefined && /^\p{Script=Greek}+′?$/u.test(mark);
   return (
-    <header className="mb-6 flex items-center gap-2">
-      <Link
-        href={back}
-        aria-label="Back"
-        className="-ml-2 inline-flex size-11 items-center justify-center rounded-xl hover:bg-muted"
-      >
-        <ChevronLeft className="size-6" aria-hidden="true" />
-      </Link>
-      <h1 className="text-xl font-semibold">{title}</h1>
-    </header>
+    <SectionLabel className={cn("text-primary", className)}>
+      {isMark ? (
+        <>
+          <span lang="grc" className="font-greek text-[13px] normal-case">
+            {mark}
+          </span>
+          {rest.length > 0 && ` · ${rest.join(" · ")}`}
+        </>
+      ) : (
+        label
+      )}
+    </SectionLabel>
   );
 }

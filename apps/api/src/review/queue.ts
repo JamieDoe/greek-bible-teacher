@@ -14,6 +14,7 @@ import { alias } from "drizzle-orm/pg-core";
 import type { Db } from "../db/client";
 import { verseSnippet } from "../reading/verse-snippet";
 import { toSrsState } from "./progress";
+import { occurrencesInPassage, wordFacts } from "./word-facts";
 import {
   lemmas,
   passages,
@@ -69,9 +70,10 @@ export async function buildReviewQueue(
     ];
   }
 
+  const passage = await currentPassage(db, userId);
   const items: ReviewItem[] = [];
   for (const entry of plan) {
-    const item = await buildItem(db, userId, entry, rng);
+    const item = await buildItem(db, userId, entry, rng, passage);
     if (item) items.push(item);
   }
   return { items, dueCount };
@@ -82,6 +84,7 @@ async function currentPassage(db: Db, userId: string) {
   const rows = await db
     .select({
       id: passages.id,
+      title: passages.title,
       startOrdinal: startVerse.ordinal,
       endOrdinal: endVerse.ordinal,
       completedAt: userReadingProgress.completedAt,
@@ -168,6 +171,7 @@ async function buildItem(
   userId: string,
   { lemmaId, kind }: { lemmaId: number; kind: QueueKind },
   rng: Rng,
+  passage: Awaited<ReturnType<typeof currentPassage>>,
 ): Promise<ReviewItem | null> {
   const [lemma] = await db
     .select({
@@ -215,10 +219,12 @@ async function buildItem(
     rng,
   );
 
+  const facts = await wordFacts(db, lemmaId, lemma.lemma, lemma.partOfSpeech === "noun");
   const srs = toSrsState(lemma.progress);
   return {
     lemmaId,
     kind,
+    inPassage: passage ? await occurrencesInPassage(db, lemmaId, passage) : null,
     srs: srs && {
       ...srs,
       nextReviewAt: srs.nextReviewAt.toISOString(),
@@ -230,6 +236,7 @@ async function buildItem(
       gloss: lemma.gloss,
       partOfSpeech: lemma.partOfSpeech,
       ntFrequency: lemma.ntFrequency,
+      ...facts,
     },
     exercise: { type, context: type === "context" ? context : null, options, answerIndex },
   };

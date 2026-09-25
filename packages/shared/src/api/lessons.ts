@@ -23,7 +23,12 @@ const snippetToken = z.object({
 /** The daily loop, in order. Steps are derived from a lesson's items (see DECISIONS 018). */
 export const lessonStepSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("review_due") }),
-  z.object({ kind: z.literal("vocab"), lemmaIds: z.array(z.number().int()) }),
+  z.object({
+    kind: z.literal("vocab"),
+    lemmaIds: z.array(z.number().int()),
+    /** The same words' dictionary forms, in order (Today lists them). */
+    words: z.array(z.string()),
+  }),
   z.object({ kind: z.literal("grammar"), slug: z.string(), title: z.string() }),
   z.object({ kind: z.literal("reading"), passageId: z.number().int() }),
   z.object({

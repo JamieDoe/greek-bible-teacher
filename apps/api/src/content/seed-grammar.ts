@@ -1,4 +1,4 @@
-import { tokenMatcherSchema } from "@gbt/shared";
+import { grammarParadigmSchema, grammarQuickCheckSchema, tokenMatcherSchema } from "@gbt/shared";
 import { and, asc, eq, inArray, notInArray, or, sql } from "drizzle-orm";
 import type { Db } from "../db/client";
 import {
@@ -97,6 +97,8 @@ export async function seedGrammar(db: Db, concepts: GrammarConceptContent[]): Pr
         summarySimple: c.summarySimple.trim(),
         body: c.body.trim(),
         terminologyLevel: c.terminologyLevel ?? ("expanded" as const),
+        paradigm: c.paradigm ? grammarParadigmSchema.parse(c.paradigm) : null,
+        quickCheck: c.quickCheck ? grammarQuickCheckSchema.parse(c.quickCheck) : null,
       };
       const [row] = await tx
         .insert(grammarConcepts)

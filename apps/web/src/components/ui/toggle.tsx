@@ -14,7 +14,7 @@ const toggleVariants = cva(
         outline: "border border-input bg-transparent hover:bg-muted",
         /** Koinē segmented control item; the track comes from ToggleGroup. */
         segmented:
-          "h-10 flex-1 rounded-lg bg-transparent text-muted-foreground hover:bg-transparent hover:text-foreground data-[state=on]:bg-card data-[state=on]:font-semibold data-[state=on]:text-foreground data-[state=on]:shadow-[0_1px_2px_rgb(0_0_0/0.08)] dark:data-[state=on]:bg-border",
+          "flex-1 bg-transparent text-muted-foreground hover:bg-transparent hover:text-foreground data-[state=on]:bg-card data-[state=on]:font-semibold data-[state=on]:text-foreground data-[state=on]:shadow-[0_1px_3px_rgb(0_0_0/0.12)] dark:data-[state=on]:bg-border",
       },
       size: {
         default:
@@ -23,6 +23,11 @@ const toggleVariants = cva(
         lg: "h-9 min-w-9 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
       },
     },
+    // Segments fill the track (48 px, or 40 px when small) less its 3 px padding.
+    compoundVariants: [
+      { variant: "segmented", size: "default", class: "h-[42px] rounded-[9px] px-2 text-sm" },
+      { variant: "segmented", size: "sm", class: "h-[34px] rounded-[9px] px-2 text-sm" },
+    ],
     defaultVariants: {
       variant: "default",
       size: "default",

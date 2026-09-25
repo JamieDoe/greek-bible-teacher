@@ -85,6 +85,27 @@ describe("GET /review/queue", () => {
     }
   });
 
+  it("describes each word for its card: gender, derived declension, common forms, passage", async () => {
+    const q = await queue(
+      `?lemmaIds=${await lemmaId("λόγος")},${await lemmaId("ζωή")},${await lemmaId("φῶς")},${await lemmaId("εἰμί")}`,
+    );
+    const [logos, zoe, phos, eimi] = q.items;
+    expect(logos!.lemma).toMatchObject({ gender: "masculine", declension: 2 });
+    expect(zoe!.lemma).toMatchObject({ gender: "feminine", declension: 1 });
+    expect(phos!.lemma).toMatchObject({ gender: "neuter", declension: 3 }); // genitive φωτός
+    expect(eimi!.lemma).toMatchObject({ gender: null, declension: null }); // not a noun
+
+    // The most frequent forms first (counts are John's, the only book imported here).
+    expect(logos!.lemma.forms.length).toBeLessThanOrEqual(4);
+    const counts = logos!.lemma.forms.map((f) => f.count);
+    expect(counts).toEqual([...counts].sort((a, b) => b - a));
+    expect(logos!.lemma.forms.map((f) => f.form)).toContain("λόγος");
+
+    // The learner's current passage is John 1:1–5: λόγος occurs there 3 times, all in 1:1.
+    expect(logos!.inPassage).toEqual({ title: "John 1:1–5", displayRef: "John 1:1", count: 3 });
+    expect(zoe!.inPassage).toEqual({ title: "John 1:1–5", displayRef: "John 1:4", count: 2 });
+  });
+
   it("returns exactly the requested words (e.g. those looked up), skipping unknown ids", async () => {
     const [logos, arche] = [await lemmaId("λόγος"), await lemmaId("ἀρχή")];
     const q = await queue(`?lemmaIds=${arche},${logos},999999`);

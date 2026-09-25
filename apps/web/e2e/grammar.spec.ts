@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { openJohn } from "./helpers";
+import { openJohn, sheet } from "./helpers";
 
 test("a word's “Why this form?” note leads to its grammar lesson, which can be marked studied", async ({
   page,
@@ -7,11 +7,11 @@ test("a word's “Why this form?” note leads to its grammar lesson, which can 
   await openJohn(page);
   await page.getByRole("button", { name: "τὸν", exact: true }).first().click();
 
-  const sheet = page.getByRole("dialog");
-  await expect(sheet.getByTestId("gloss")).toContainText("the");
-  await expect(sheet.getByText("Why this form?")).toBeVisible();
-  await expect(sheet.getByText(/Accusative article/)).toBeVisible();
-  await sheet.getByRole("link", { name: "The article and case: who is what" }).click();
+  const detail = sheet(page);
+  await expect(detail.getByTestId("gloss")).toContainText("the");
+  await expect(detail.getByText("Why this form?")).toBeVisible();
+  await expect(detail.getByText(/Accusative article/)).toBeVisible();
+  await detail.getByRole("link", { name: "The article and case: who is what" }).click();
 
   await expect(
     page.getByRole("heading", { level: 1, name: "The article and case: who is what" }),

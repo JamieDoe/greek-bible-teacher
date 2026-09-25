@@ -34,7 +34,7 @@ function Slider({
     >
       <SliderPrimitive.Track
         data-slot="slider-track"
-        className="relative grow overflow-hidden rounded-full bg-border data-horizontal:h-1.5 data-horizontal:w-full data-vertical:h-full data-vertical:w-1"
+        className="relative grow overflow-hidden rounded-full bg-border data-horizontal:h-1 data-horizontal:w-full data-vertical:h-full data-vertical:w-1"
       >
         <SliderPrimitive.Range
           data-slot="slider-range"
@@ -48,7 +48,7 @@ function Slider({
           // The thumb is what receives focus (role="slider"), so it carries the name.
           aria-label={ariaLabel}
           aria-labelledby={ariaLabelledBy}
-          className="relative block size-6 shrink-0 rounded-full border-2 border-primary bg-card shadow-sm ring-ring/30 transition-[color,box-shadow] select-none after:absolute after:-inset-2.5 hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden active:ring-4 disabled:pointer-events-none disabled:opacity-50"
+          className="relative block size-6 shrink-0 rounded-full bg-white shadow-[0_1px_4px_rgb(0_0_0/0.25)] ring-ring/30 transition-[color,box-shadow] select-none after:absolute after:-inset-2.5 hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden active:ring-4 disabled:pointer-events-none disabled:opacity-50"
         />
       ))}
     </SliderPrimitive.Root>

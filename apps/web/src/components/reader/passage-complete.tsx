@@ -1,14 +1,16 @@
 "use client";
 
 import { addToReviewResponseSchema, type ReadingCompleteResponse } from "@gbt/shared";
-import { Check, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { SectionLabel } from "@/components/koine";
+import { SectionLabel, StageLabel } from "@/components/koine";
+import { IconArrowRight, IconClose } from "@/components/icons";
+import { CountUp } from "@/components/count-up";
+import { SuccessMark } from "@/components/success-mark";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { apiPost } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 
 export interface LookedUpWord {
   lemmaId: number;
@@ -62,30 +64,38 @@ export function PassageComplete({
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col px-4 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6">
-      {!inLesson && (
-        <Button asChild variant="ghost" size="icon" className="-ml-2" aria-label="Close">
-          <Link href="/">
-            <X aria-hidden="true" />
-          </Link>
-        </Button>
-      )}
-      <div className="mt-6 flex flex-col items-center text-center">
-        <span className="flex size-24 items-center justify-center rounded-full ring-8 ring-accent">
-          <span className="flex size-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <Check className="size-8" aria-hidden="true" />
-          </span>
-        </span>
-        <SectionLabel className="mt-6 text-primary">Passage complete</SectionLabel>
-        <h1 ref={heading} tabIndex={-1} className="mt-2 font-heading text-5xl outline-none">
+    <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col px-5 pt-[calc(env(safe-area-inset-top)+10px)] pb-[max(34px,env(safe-area-inset-bottom))]">
+      <div className="-ml-2 h-11">
+        {!inLesson && (
+          <Button asChild variant="ghost" size="icon" aria-label="Close">
+            <Link href="/">
+              <IconClose size={22} />
+            </Link>
+          </Button>
+        )}
+      </div>
+      <div className="mt-2 flex flex-col items-center text-center">
+        <SuccessMark />
+        <StageLabel
+          label="δ′ · Passage complete"
+          className="mt-[18px] animate-[rise-in_320ms_var(--ease-sheet)_160ms_both]"
+        />
+        <h1
+          ref={heading}
+          tabIndex={-1}
+          className="mt-2 animate-[rise-in_320ms_var(--ease-sheet)_200ms_both] font-heading text-4xl outline-none"
+        >
           {title}
         </h1>
-        <p lang="grc" className="mt-3 font-greek text-xl text-muted-foreground italic">
+        <p
+          lang="grc"
+          className="mt-2 animate-[rise-in_320ms_var(--ease-sheet)_240ms_both] font-greek text-lg text-ink-2 italic"
+        >
           {closingLine}
         </p>
       </div>
 
-      <dl className="mt-8 grid grid-cols-3 gap-3" data-testid="passage-stats">
+      <dl className="mt-6 grid grid-cols-3 gap-2" data-testid="passage-stats">
         <Stat value={result.wordsInPassage} label="Greek words read" />
         <Stat
           value={Math.max(0, result.wordsInPassage - lookedUpTokens)}
@@ -95,22 +105,22 @@ export function PassageComplete({
       </dl>
 
       {lookedUp.length > 0 ? (
-        <section className="mt-8" aria-labelledby="looked-up-heading">
+        <section className="mt-5" aria-labelledby="looked-up-heading">
           <div className="flex items-baseline justify-between">
             <SectionLabel>
               <span id="looked-up-heading">Words you looked up</span>
             </SectionLabel>
-            <span className="text-sm text-muted-foreground">Added to review</span>
+            <span className="text-[13px] text-muted-foreground">Added to review</span>
           </div>
-          <ul className="mt-2 divide-y divide-border">
-            {lookedUp.map((w) => (
-              <li key={w.lemmaId}>
-                <label className="flex cursor-pointer items-center gap-4 py-3.5">
-                  <span lang="grc" className="w-28 shrink-0 font-greek text-2xl">
+          <ul className="mt-1.5">
+            {lookedUp.map((w, i) => (
+              <li key={w.lemmaId} className={cn(i > 0 && "border-t border-border")}>
+                <label className="flex h-[54px] cursor-pointer items-center gap-3">
+                  <span lang="grc" className="w-[108px] shrink-0 truncate font-greek text-[19px]">
                     {w.word}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-muted-foreground">
-                    <span lang="grc" className="font-greek">
+                  <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+                    <span lang="grc" className="font-greek text-ink-2">
                       {w.lemma}
                     </span>
                     {w.gloss ? ` · ${w.gloss}` : ""}
@@ -137,26 +147,29 @@ export function PassageComplete({
       )}
 
       <div className="mt-auto pt-8">
-        <p className="text-center text-muted-foreground">
+        <p className="mb-3.5 text-center text-sm text-muted-foreground">
           {result.timesRead > 1 ? `Read ${result.timesRead} times. ` : "First read-through. "}
           That’s{" "}
-          <strong className="text-foreground">
-            {result.totalWordsRead.toLocaleString("en")}
-          </strong>{" "}
+          <span className="font-semibold text-foreground">
+            <CountUp
+              value={result.totalWordsRead}
+              from={Math.max(0, result.totalWordsRead - result.wordsInPassage)}
+            />
+          </span>{" "}
           Greek words read in total.
         </p>
         {status === "error" && (
-          <p role="alert" className="mt-2 text-center text-sm text-rubric">
+          <p role="alert" className="mb-2 text-center text-sm text-rubric">
             Couldn’t save to your review. Please try again.
           </p>
         )}
         <Button
           size="lg"
-          className="mt-4 w-full"
+          className="w-full"
           disabled={status === "saving"}
           onClick={() => void done()}
         >
-          {inLesson ? "Continue" : "Done for today"} <Check aria-hidden="true" />
+          {inLesson ? "Continue" : "Done for today"} <IconArrowRight size={20} />
         </Button>
         {!inLesson && (
           <Button variant="ghost" className="mt-2 w-full" onClick={onReadAgain}>
@@ -170,9 +183,11 @@ export function PassageComplete({
 
 function Stat({ value, label }: { value: number; label: string }) {
   return (
-    <Card size="sm" className="gap-1 px-4 text-left">
-      <dt className="text-sm leading-snug text-muted-foreground">{label}</dt>
-      <dd className="order-first font-heading text-4xl">{value.toLocaleString("en")}</dd>
-    </Card>
+    <div className="flex flex-col rounded-xl bg-card px-3 py-3.5 shadow-card">
+      <dt className="mt-1.5 text-xs leading-[1.3] text-muted-foreground">{label}</dt>
+      <dd className="order-first font-greek text-[30px] leading-none">
+        <CountUp value={value} />
+      </dd>
+    </div>
   );
 }

@@ -5,13 +5,14 @@ import {
   type LessonsListResponse,
   todayResponseSchema,
 } from "@gbt/shared";
-import { ArrowRight, Check, ChevronRight } from "lucide-react";
+import { IconArrowRight, IconCheck, IconChevronRight } from "@/components/icons";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { SectionLabel } from "@/components/koine";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ErrorState, LoadingState, PageShell } from "@/components/ui/states";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorState, PageShell } from "@/components/ui/states";
 import { apiGet } from "@/lib/api-client";
 import { ensureSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -52,7 +53,38 @@ export function LearnView() {
   if (state.status === "loading") {
     return (
       <PageShell title="Learn">
-        <LoadingState label="Loading lessons…" />
+        <div role="status" aria-label="Loading lessons">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Card className="gap-3 px-5">
+              <Skeleton className="h-3 w-28" />
+              <Skeleton className="h-7 w-3/4" />
+              <Skeleton className="h-5 w-1/2" />
+              <Skeleton className="mt-2 h-12 w-full rounded-md" />
+            </Card>
+            <Card className="gap-3 px-5">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-10 w-10" />
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="mt-auto h-12 w-full rounded-md" />
+            </Card>
+          </div>
+          <Skeleton className="mt-10 h-3 w-24" />
+          <Card className="mt-3 gap-0 py-2">
+            <ul className="divide-y divide-border">
+              {Array.from({ length: 6 }, (_, i) => (
+                <li key={i} className="flex items-center gap-4 px-6 py-4">
+                  <Skeleton className="size-8 shrink-0 rounded-full" />
+                  <span className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-2/5" />
+                    <Skeleton className="h-3.5 w-3/5" />
+                  </span>
+                  <Skeleton className="size-4 shrink-0" />
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <Skeleton className="mt-6 h-[72px] w-full rounded-2xl" />
+        </div>
       </PageShell>
     );
   }
@@ -73,95 +105,101 @@ export function LearnView() {
   const next = state.lessons.find((l) => l.status !== "completed");
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 pt-8 pb-12 sm:px-6 lg:pt-12">
-      <h1 className="font-heading text-5xl">Learn</h1>
+    <main className="mx-auto w-full max-w-3xl px-5 pt-[calc(env(safe-area-inset-top)+16px)] pb-8 lg:px-14 lg:pt-12">
+      <h1 className="font-heading text-[34px] lg:text-[40px]">Learn</h1>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        {next && (
-          <Card className="gap-3 px-6">
-            <SectionLabel>Next lesson · {next.number}</SectionLabel>
-            <h2 className="font-heading text-2xl leading-tight">{next.title}</h2>
+      <div className="animate-[fade-in_150ms_ease-out]">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          {next && (
+            <Card className="gap-3 px-5">
+              <SectionLabel>Next lesson · {next.number}</SectionLabel>
+              <h2 className="font-heading text-2xl leading-tight">{next.title}</h2>
+              <p className="text-muted-foreground">
+                {next.passageTitle}
+                {next.conceptTitle ? ` · ${next.conceptTitle}` : ""}
+              </p>
+              <Button asChild className="mt-2 w-full">
+                <Link href={`/lesson/${next.id}`}>
+                  {next.status === "in_progress" ? "Continue" : "Start"}{" "}
+                  <IconArrowRight size={20} />
+                </Link>
+              </Button>
+            </Card>
+          )}
+          <Card className="gap-3 px-5">
+            <SectionLabel>Review</SectionLabel>
+            <p className="font-heading text-4xl">{state.dueCount}</p>
             <p className="text-muted-foreground">
-              {next.passageTitle}
-              {next.conceptTitle ? ` · ${next.conceptTitle}` : ""}
+              {state.dueCount === 1 ? "word" : "words"} due now
             </p>
-            <Button asChild className="mt-2 w-full">
-              <Link href={`/lesson/${next.id}`}>
-                {next.status === "in_progress" ? "Continue" : "Start"}{" "}
-                <ArrowRight aria-hidden="true" />
-              </Link>
+            <Button asChild variant="outline" className="mt-auto w-full">
+              <Link href="/review">Start review</Link>
             </Button>
           </Card>
-        )}
-        <Card className="gap-3 px-6">
-          <SectionLabel>Review</SectionLabel>
-          <p className="font-heading text-4xl">{state.dueCount}</p>
-          <p className="text-muted-foreground">{state.dueCount === 1 ? "word" : "words"} due now</p>
-          <Button asChild variant="outline" className="mt-auto w-full">
-            <Link href="/review">Start review</Link>
-          </Button>
-        </Card>
-      </div>
+        </div>
 
-      <section aria-labelledby="lessons-heading" className="mt-10">
-        <SectionLabel>
-          <span id="lessons-heading">All lessons</span>
-        </SectionLabel>
-        <Card className="mt-3 gap-0 py-2">
-          <ol className="divide-y divide-border">
-            {state.lessons.map((l) => (
-              <li key={l.id}>
-                <Link
-                  href={`/lesson/${l.id}`}
-                  className="flex items-center gap-4 px-6 py-4 hover:bg-muted"
-                >
-                  <span
-                    className={cn(
-                      "flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs",
-                      l.status === "completed"
-                        ? "bg-correct-soft text-correct"
-                        : "bg-muted text-muted-foreground",
-                    )}
+        <section aria-labelledby="lessons-heading" className="mt-10">
+          <SectionLabel>
+            <span id="lessons-heading">All lessons</span>
+          </SectionLabel>
+          <Card className="mt-3 gap-0 py-2">
+            <ol className="divide-y divide-border">
+              {state.lessons.map((l) => (
+                <li key={l.id}>
+                  <Link
+                    href={`/lesson/${l.id}`}
+                    className="flex items-center gap-4 px-6 py-4 hover:bg-muted"
                   >
-                    {l.status === "completed" ? (
-                      <Check className="size-4" aria-label="Completed" />
-                    ) : (
-                      l.number
+                    <span
+                      className={cn(
+                        "flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-xs",
+                        l.status === "completed"
+                          ? "bg-correct-soft text-correct"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {l.status === "completed" ? (
+                        <IconCheck
+                          size={16}
+                          role="img"
+                          aria-label="Completed"
+                          aria-hidden={false}
+                        />
+                      ) : (
+                        l.number
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold">{l.title}</span>
+                      <span className="block truncate text-sm text-muted-foreground">
+                        {l.passageTitle}
+                        {l.conceptTitle ? ` · ${l.conceptTitle}` : ""}
+                      </span>
+                    </span>
+                    {l.status === "in_progress" && (
+                      <span className="font-mono text-xs tracking-[0.08em] text-primary">
+                        IN PROGRESS
+                      </span>
                     )}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-semibold">{l.title}</span>
-                    <span className="block truncate text-sm text-muted-foreground">
-                      {l.passageTitle}
-                      {l.conceptTitle ? ` · ${l.conceptTitle}` : ""}
-                    </span>
-                  </span>
-                  {l.status === "in_progress" && (
-                    <span className="font-mono text-xs tracking-[0.08em] text-primary">
-                      IN PROGRESS
-                    </span>
-                  )}
-                  <ChevronRight
-                    className="size-5 shrink-0 text-muted-foreground"
-                    aria-hidden="true"
-                  />
-                </Link>
-              </li>
-            ))}
-          </ol>
-        </Card>
-      </section>
+                    <IconChevronRight size={18} className="shrink-0 text-muted-foreground" />
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </Card>
+        </section>
 
-      <Link
-        href="/grammar"
-        className="mt-6 flex items-center justify-between rounded-2xl bg-accent px-6 py-5 text-primary hover:opacity-90"
-      >
-        <span>
-          <span className="block font-semibold">Grammar lessons</span>
-          <span className="block text-sm">Short, one idea at a time, in reading order</span>
-        </span>
-        <ChevronRight aria-hidden="true" />
-      </Link>
+        <Link
+          href="/grammar"
+          className="mt-6 flex items-center justify-between rounded-2xl bg-accent px-6 py-5 text-primary hover:opacity-90"
+        >
+          <span>
+            <span className="block font-semibold">Grammar lessons</span>
+            <span className="block text-sm">Short, one idea at a time, in reading order</span>
+          </span>
+          <IconChevronRight size={18} />
+        </Link>
+      </div>
     </main>
   );
 }

@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { greekText, openJohn, sheet } from "./helpers";
+import { expectWordClosed, expectWordOpen, greekText, isWide, openJohn, sheet } from "./helpers";
 
 const word = (page: Page, text: string) =>
   page.getByRole("button", { name: text, exact: true }).first();
@@ -21,7 +21,7 @@ test.describe("reader", () => {
     await openJohn(page);
     const result = await page.evaluate(async () => {
       await document.fonts.ready;
-      const el = document.querySelector('article [lang="grc"]')!;
+      const el = document.querySelector('[data-testid="passage-text"]')!;
       const family = getComputedStyle(el).fontFamily.split(",")[0]!.trim().replace(/['"]/g, "");
       const loaded = [...document.fonts].some(
         (f) => f.family.replace(/['"]/g, "") === family && f.status === "loaded",
@@ -55,17 +55,27 @@ test.describe("reader", () => {
     const scrollBefore = await page.evaluate(() => window.scrollY);
 
     await logos.click();
-    await expect(sheet(page)).toBeVisible();
-    await expect(sheet(page).getByRole("heading", { name: "λόγος" })).toBeVisible();
+    await expectWordOpen(page, "λόγος");
     await expect(sheet(page).getByTestId("gloss")).toContainText("word");
 
     await page.keyboard.press("Escape");
-    await expect(sheet(page)).toBeHidden();
+    await expectWordClosed(page);
     await expect(logos).toBeFocused();
     expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
   });
 
+  test("tapping the selected word again closes its details", async ({ page }) => {
+    await openJohn(page);
+    await word(page, "θεόν").click();
+    await expectWordOpen(page, "θεόν");
+    if (isWide(page)) {
+      await word(page, "θεόν").click();
+      await expectWordClosed(page);
+    }
+  });
+
   test("tapping outside the panel dismisses it", async ({ page }) => {
+    test.skip(isWide(page), "the side panel stays beside the text; Esc, ✕ or the word close it");
     await openJohn(page);
     await word(page, "θεόν").click();
     await expect(sheet(page)).toBeVisible();
@@ -75,6 +85,7 @@ test.describe("reader", () => {
   });
 
   test("swiping the panel down dismisses it", async ({ page }) => {
+    test.skip(isWide(page), "a bottom-sheet gesture; wide screens use the side panel");
     await openJohn(page);
     await word(page, "ἀρχῇ").click();
     const handle = sheet(page).locator('[data-slot="drawer-handle"]');
@@ -82,6 +93,8 @@ test.describe("reader", () => {
     await sheet(page).evaluate((el) =>
       Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished)),
     );
+    // vaul ignores drags in the first 500 ms after opening (the sheet animates in 260 ms).
+    await page.waitForTimeout(550);
     const box = (await handle.boundingBox())!;
     const x = box.x + box.width / 2;
     const y = box.y + box.height / 2;
@@ -130,8 +143,10 @@ test.describe("reader", () => {
     await sheet(page).getByRole("button", { name: "Add to review" }).click();
     expect((await added).ok()).toBe(true);
     await expect(sheet(page).getByRole("button", { name: "In review" })).toBeDisabled();
-    await sheet(page).getByRole("button", { name: "Back to text" }).click();
-    await expect(sheet(page)).toBeHidden();
+    await sheet(page)
+      .getByRole("button", { name: isWide(page) ? "Close" : "Back to text" })
+      .click();
+    await expectWordClosed(page);
     await page.reload();
     await expect(word(page, "λόγος")).not.toHaveAttribute("data-new", /.*/);
     await expect(word(page, "θεόν")).toHaveAttribute("data-new", "true");
@@ -139,15 +154,18 @@ test.describe("reader", () => {
 
   test("Greek text size is adjustable and remembered on the device", async ({ page }) => {
     await openJohn(page);
-    const size = () => greekText(page).evaluate((el) => getComputedStyle(el).fontSize);
-    expect(await size()).toBe("21px");
+    // Phones read at the chosen size; wide screens scale it by the design's 27/21.
+    const px = (n: number) => (isWide(page) ? (n * 9) / 7 : n).toFixed(1);
+    const size = () =>
+      greekText(page).evaluate((el) => parseFloat(getComputedStyle(el).fontSize).toFixed(1));
+    expect(await size()).toBe(px(21));
     await page.getByRole("button", { name: "Text size" }).click();
     const slider = page.getByRole("slider", { name: "Greek text size" });
     await slider.focus();
     await page.keyboard.press("ArrowRight");
-    await expect.poll(size).toBe("24px");
+    await expect.poll(size).toBe(px(24));
     await page.keyboard.press("Escape");
     await page.reload();
-    await expect.poll(size).toBe("24px");
+    await expect.poll(size).toBe(px(24));
   });
 });

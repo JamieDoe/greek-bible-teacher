@@ -32,6 +32,8 @@ export async function getConcept(
       ...summaryColumns,
       body: grammarConcepts.body,
       terminologyLevel: grammarConcepts.terminologyLevel,
+      paradigm: grammarConcepts.paradigm,
+      quickCheck: grammarConcepts.quickCheck,
     })
     .from(grammarConcepts)
     .where(eq(grammarConcepts.slug, slug));
